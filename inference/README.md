@@ -19,7 +19,7 @@ sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
 
    > TARGET_ARCH=x86 表示x86平台
    TARGET_ARCH=soc 表示小盒子上编译
-   TARGET_ARCH=arm-pcie 表示国产ARM CPU上编译
+   TARGET_ARCH=arm64 表示国产ARM CPU上编译
    
    > appname=face_detect 人脸检测
      appname=openpose    人体骨骼检测
@@ -27,13 +27,13 @@ sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
      appname=retinaface  人脸检测
      
    ```` 
-   ./compile.sh [appname] [target_arch]
-   example: ./compile.sh face_detect x86-pcie
+   ./compile.sh [target_arch]
+   example: ./compile.sh x86
    
 3. 运行方法
-   > cd ./release/face_detect
+   > cd ./release/facedetect_demo
 
-   > ./x86/example_demo --help 查看命行帮助信息     
+   > ./x86/facedetect_demo --help 查看命行帮助信息     
 
 4. 相关模型请从下面网盘下载，如有问题，请联系技术支持 
    
