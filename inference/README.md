@@ -1,4 +1,26 @@
-Inference framework based BMNNSDK2.
+# Inference介绍
+
+Inference 提供一个简易的基于Pipeline的高性能加速框架，使用该框架能够将前处理/推理/后处理分别运行在3个线程上，最大化的实现并行, 用户只需要继承一个类，然后实现自己的前处理/后处理/就可以实现整个流程了。
+
+Inference的主要结构设计如下图： 
+
+![avatar](res/inference_pipe.jpg)
+
+# 代码集成使用说明
+
+目录examples下有想相关的例子可以参考。目前提供了如下例子：
+| 目录 | 说明 | 模型个数
+|---|---|---| 
+| face_detect | Sequeezenet 人脸检测  | 1
+| face_recognition | 演示多个模型如何串联 | 3
+| openpose | OpenPose 18个关键点 | 1
+| retinaface | Retinaface 人脸检测 | 1
+| yolov5 | yolov5s 对象检测 | 1
+
+# 编译使用说明
+Inference framework 依赖 BMNNSDK2. 请到算能官网（www.sophgo.com) 进行下载，解压、安装。bmnnsdk2的安装方法可以参考如下链接： 
+> https://sophgo-doc.gitbook.io/bmnnsdk2-bm1684/
+
 > Ubuntu 16.04 安装QT依赖：
 ````
 sudo apt install qtbase5-dev
@@ -16,7 +38,10 @@ sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
 
 1. export REL_TOP=$bmnnsdk_dir 根据实际位置修改为BMNNSDK跟路径
 2. 各个平台编译
-
+   ---
+   > **NOTE**  
+   如果需要本地显示最终的结果需要手工编辑CMakeLists.txt，找到USE_QTGUI 选项， 设置为ON。
+   ---
    > TARGET_ARCH=x86 表示x86平台
    TARGET_ARCH=soc 表示小盒子上编译
    TARGET_ARCH=arm64 表示国产ARM CPU上编译
