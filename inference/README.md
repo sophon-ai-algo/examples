@@ -2,11 +2,20 @@
 
 Inference 提供一个简易的基于Pipeline的高性能加速框架，使用该框架能够将前处理/推理/后处理分别运行在3个线程上，最大化的实现并行, 用户只需要继承一个类，然后实现自己的前处理/后处理/就可以实现整个流程了。
 
+主要目录结构和模块说明：
+| 目录 | 功能说明 
+|---|---| 
+|[bmgui-lite](./bmgui-lite) | 由于BMNNSDK2自带的OpenCV没有显示功能，此模块提供bm:imshow来显示视频，作为补充。
+|[bmgui](./bmgui) | 存放Inference用来GUI显示视频的模块 
+|[bmutility](./bmutility) | 提供了特别多的基础库，字符串、定时器等
+|[cvs10](./cvs10) | 提供了算能一路的参考实现
+|[ddr_reduction](./ddr_reduction) | 提供一种节约DDR占用的软件实现方案
+
 Inference的主要结构设计如下图： 
 
 ![avatar](res/inference_pipe.jpg)
 
-# 代码集成使用说明
+# 示例代码集成使用说明
 
 目录examples下有想相关的例子可以参考。目前提供了如下例子：
 | 目录 | 说明 | 模型个数
