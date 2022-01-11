@@ -1,0 +1,33 @@
+{
+  "max_show_windows": 16,
+  "cards": [
+    {
+      "devid": 0,
+      "cameras": [
+        {
+          "address": "/home/yuan/yuebing.264",
+          "chan_num": 100
+        }
+      ]
+    },
+    {
+      "devid": 0,
+      "cameras": [
+        {
+          "address": "/home/yuan/yuebing.264",
+          "chan_num": 100
+        }
+      ]
+    },
+    {
+      "devid": 0,
+      "cameras": [
+        {
+          "address": "/home/yuan/yuebing.264",
+          "chan_num": 100
+        }
+      ]
+    }
+  ]
+}
+
