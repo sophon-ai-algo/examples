@@ -1,0 +1,15 @@
+{
+  "max_show_windows": 16,
+  "cards": [
+    {
+      "devid": 0,
+      "cameras": [
+        {
+          "address": "/home/yuan/100new.264",
+          "chan_num": 20
+        }
+      ]
+    }
+  ]
+}
+
