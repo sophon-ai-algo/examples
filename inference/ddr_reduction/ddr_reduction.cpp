@@ -77,6 +77,9 @@ private:
         AVDictionary *opts = NULL;
         av_dict_set_int(&opts, "sophon_idx", dev_id, 0x0);
 
+        // compressed format to reduce memory use.
+        av_dict_set_int(&opts, "output_format", 101, 0);
+
         if (avcodec_open2(dec_ctx, pCodec, &opts) < 0) {
             std::cout << "Unable to open codec";
             avcodec_free_context(&dec_ctx);
@@ -105,7 +108,48 @@ public:
 
     }
 
-    int put_packet(AVPacket* pkt) override
+    int decode_video2(AVCodecContext* dec_ctx, AVFrame *frame, int *got_picture, AVPacket* pkt)
+    {
+        int ret;
+        *got_picture = 0;
+        ret = avcodec_send_packet(dec_ctx, pkt);
+        if (ret == AVERROR_EOF) {
+            ret = 0;
+        }
+        else if (ret < 0) {
+            fprintf(stderr, "Error sending a packet for decoding, %s\n", av_err2str(ret));
+            return -1;
+        }
+
+        while (ret >= 0) {
+            ret = avcodec_receive_frame(dec_ctx, frame);
+            if (ret == AVERROR(EAGAIN)) {
+                printf("need more data!\n");
+                ret = 0;
+                break;
+            }else if (ret == AVERROR_EOF) {
+                printf("File end!\n");
+                avcodec_flush_buffers(dec_ctx);
+                ret = 0;
+                break;
+            }
+            else if (ret < 0) {
+                fprintf(stderr, "Error during decoding\n");
+                break;
+            }
+            //printf("saving frame %3d\n", dec_ctx->frame_number);
+            *got_picture += 1;
+            break;
+        }
+
+        if (*got_picture > 1) {
+            printf("got picture %d\n", *got_picture);
+        }
+
+        return ret;
+    }
+
+    int put_packet(AVPacket* pkt, int64_t *p_id) override
     {
         std::shared_ptr<PacketItem> pkt_item = std::make_shared<PacketItem>(m_dev_id);
 
@@ -114,15 +158,64 @@ public:
 
         // add to list
         m_list_lock.lock();
+        while (m_map_packets.size() > 8) {
+            ListHead *pos;
+            pos = list_back(&m_list_packets);
+            PacketItem *item = LIST_HOST_ENTRY(pos, PacketItem, entry);
+            m_total_packet_bytes-=item->pkt.size;
+            list_del(&item->entry);
+            m_map_packets.erase(item->id);
+        }
+
         list_push_front(&pkt_item->entry, &m_list_packets);
         m_map_packets[pkt_item->id] = pkt_item;
         m_list_lock.unlock();
 
+        if (p_id) *p_id = pkt_item->id;
+        
         // update statistic
         m_total_recv_packet_num++;
         m_total_packet_bytes += pkt->size;
 
         return 0;
+    }
+
+    int put_packet(AVPacket *pkt, std::function<void(int64_t, AVFrame*)> cb) override
+    {
+        std::shared_ptr<PacketItem> pkt_item = std::make_shared<PacketItem>(m_dev_id);
+
+        av_packet_ref(&pkt_item->pkt, pkt);
+        pkt_item->id = m_uid++;
+
+        // add to list
+        m_list_lock.lock();
+        while (m_map_packets.size() > 8) {
+            ListHead *pos;
+            pos = list_back(&m_list_packets);
+            PacketItem *item = LIST_HOST_ENTRY(pos, PacketItem, entry);
+            m_total_packet_bytes-=item->pkt.size;
+            list_del(&item->entry);
+            m_map_packets.erase(item->id);
+        }
+
+        list_push_front(&pkt_item->entry, &m_list_packets);
+        m_map_packets[pkt_item->id] = pkt_item;
+        m_list_lock.unlock();
+
+        if (cb != nullptr) {
+            int got_frame = 0;
+            AVFrame* frame = av_frame_alloc();
+            decode_video2(m_decoder, frame, &got_frame, pkt);
+            if (got_frame) {
+                cb(pkt_item->id, frame);
+            }
+
+            av_frame_free(&frame);
+        }
+
+        // update statistic
+        m_total_recv_packet_num++;
+        m_total_packet_bytes += pkt->size;
     }
 
     int seek_frame(int64_t ref_id, AVFrame *frame, int *got_frame, int64_t *p_id) override {
@@ -140,7 +233,9 @@ public:
         }else{
             PacketItem *pkt_item;
             bool ok = false;
+            int loop_times=0;
             list_for_each_entry_next(pkt_item, &m_list_packets, PacketItem, entry) {
+                loop_times++;
                 if (pkt_item->id > ref_id) {
                     next_id = pkt_item->id;
                     ok = true;
@@ -182,7 +277,7 @@ public:
             //
             // decode from key pkt to pkt with ref_id
             //
-            ret = avcodec_decode_video2(m_decoder, frame, got_frame, &item_iterate->pkt);
+            ret = decode_video2(m_decoder, frame, got_frame, &item_iterate->pkt);
             if (ret < 0) {
                 std::cout << "avcodec_decode_video2() err=" << ret << std::endl;
                 assert(0);
@@ -209,7 +304,7 @@ public:
             av_frame_unref(frame);
         }
 
-        std::printf("before search [%d], after decode[%d]\n", debug_prefore_search_times, debug_after_decode_times);
+        //std::printf("before search [%d], after decode[%d]\n", debug_prefore_search_times, debug_after_decode_times);
 
         return ret >=0 ? 0: -1;
     }
@@ -220,7 +315,6 @@ public:
         if (find_item == m_map_packets.end()) {
              return 0;
         }
-
 
         std::shared_ptr<PacketItem> pkt_item = find_item->second;
         m_total_packet_bytes-=pkt_item->pkt.size;

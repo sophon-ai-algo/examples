@@ -7,8 +7,9 @@
 
 #include "inference.h"
 #include "bmcv_api_ext.h"
+#include "common_types.h"
 
-class FaceDetector : public bm::DetectorDelegate<bm::FrameBaseInfo, bm::FrameInfo> {
+class FaceDetector : public bm::DetectorDelegate<bm::cvs10FrameBaseInfo, bm::cvs10FrameInfo> {
     bm::BMNNContextPtr bmctx_;
     bm::BMNNNetworkPtr bmnet_;
     bool               is4N_;
@@ -33,12 +34,12 @@ public:
     FaceDetector(bm::BMNNContextPtr bmctx, int max_batch=4);
     ~FaceDetector();
 
-    virtual int preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::FrameInfo>& frame_info) override ;
-    virtual int forward(std::vector<bm::FrameInfo>& frame_info) override ;
-    virtual int postprocess(std::vector<bm::FrameInfo> &frame_info) override;
+    virtual int preprocess(std::vector<bm::cvs10FrameBaseInfo>& frames, std::vector<bm::cvs10FrameInfo>& frame_info) override ;
+    virtual int forward(std::vector<bm::cvs10FrameInfo>& frame_info) override ;
+    virtual int postprocess(std::vector<bm::cvs10FrameInfo> &frame_info) override;
 private:
-    int extract_facebox_cpu(bm::FrameInfo &frame_info);
-    bm::BMNNTensorPtr get_output_tensor(const std::string &name, bm::FrameInfo& frame_info, float scale);
+    int extract_facebox_cpu(bm::cvs10FrameInfo &frame_info);
+    bm::BMNNTensorPtr get_output_tensor(const std::string &name, bm::cvs10FrameInfo& frame_info, float scale);
     void generate_proposal(const float *          scores,
                            const float *          bbox_deltas,
                            const float            scale_factor,

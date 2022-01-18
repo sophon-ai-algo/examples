@@ -14,12 +14,12 @@ message(STATUS "opencv_inc_dirs=${opencv_inc_dirs}")
 message(STATUS "opencv_link_dirs=${opencv_link_dirs}")
 
 # app
-add_library(ddrreduction ddr_reduction.cpp)
+add_library(ddr_reduction ddr_reduction.cpp)
 
 add_executable(dr_demo ddr_reduction_unittest.cpp)
 if (USE_QTGUI)
-    target_link_libraries(dr_demo ddrreduction bmutility ${opencv_link_libs} ${ffmpeg_link_libs} ${bmnnsdk_link_libs} bmgui-lite)
+    target_link_libraries(dr_demo ddr_reduction bmutility ${opencv_link_libs} ${ffmpeg_link_libs} ${bmnnsdk_link_libs} bmgui-lite)
 else()
-    target_link_libraries(dr_demo ddrreduction bmutility ${opencv_link_libs} ${ffmpeg_link_libs} ${bmnnsdk_link_libs})
+    target_link_libraries(dr_demo ddr_reduction bmutility ${opencv_link_libs} ${ffmpeg_link_libs} ${bmnnsdk_link_libs})
 endif()
 

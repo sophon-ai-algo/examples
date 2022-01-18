@@ -14,15 +14,16 @@ set(src_files main.cpp worker.cpp)
 add_definitions(-DHAVE_FACEDETECT_MODULE=1)
 list(APPEND src_files face_detector.cpp face_extract.cpp resnet50.cpp)
 
-include_directories(${common_inc_dirs} ${bmnnsdk_inc_dirs} ${ffmpeg_inc_dirs} ${opencv_inc_dirs})
+include_directories(${common_inc_dirs} ${bmnnsdk_inc_dirs} ${ffmpeg_inc_dirs} ${opencv_inc_dirs}
+        ${TOP}/ddr_reduction)
 link_directories(${ffmpeg_link_dirs} ${bmnnsdk_link_dirs} ${opencv_link_dirs})
 
 
 add_executable(cvs10 ${src_files})
 if (USE_QTGUI)
-    target_link_libraries(cvs10 bmutility ${opencv_link_libs} ${ffmpeg_link_libs} ${bmnnsdk_link_libs} bmtracker bmgui jsoncpp)
+    target_link_libraries(cvs10 bmutility ${opencv_link_libs} ${ffmpeg_link_libs} ${bmnnsdk_link_libs} ddr_reduction bmtracker bmgui jsoncpp)
 else()
-    target_link_libraries(cvs10 bmutility ${opencv_link_libs} ${ffmpeg_link_libs} ${bmnnsdk_link_libs} bmtracker jsoncpp pthread)
+    target_link_libraries(cvs10 bmutility ${opencv_link_libs} ${ffmpeg_link_libs} ${bmnnsdk_link_libs} ddr_reduction bmtracker jsoncpp pthread)
 endif()
 
 

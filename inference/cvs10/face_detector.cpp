@@ -73,7 +73,7 @@ void FaceDetector::calc_resized_HW(int image_h, int image_w, int *p_h, int *p_w)
 }
 
 
-int FaceDetector::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::FrameInfo> &frame_infos)
+int FaceDetector::preprocess(std::vector<bm::cvs10FrameBaseInfo>& frames, std::vector<bm::cvs10FrameInfo> &frame_infos)
 {
 #if 1
     int ret = 0;
@@ -95,7 +95,7 @@ int FaceDetector::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector
             num = left;
         }
 
-        bm::FrameInfo finfo;
+        bm::cvs10FrameInfo finfo;
         //1. Resize
         bm_image resized_imgs[MAX_BATCH];
         ret = bm::BMImage::create_batch(handle, m_net_h, m_net_w, FORMAT_RGB_PLANAR, DATA_TYPE_EXT_1N_BYTE, resized_imgs, num, 64);
@@ -103,7 +103,6 @@ int FaceDetector::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector
 
         for(int i = 0;i < num; ++i) {
             bm_image image1;
-            //FrameBaseInfo frameBaseInfo;
             bm::BMImage::from_avframe(handle, frames[start_idx + i].avframe, image1, true);
             ret = bmcv_image_vpp_convert(handle, 1, image1, &resized_imgs[i]);
             assert(BM_SUCCESS == ret);
@@ -122,7 +121,6 @@ int FaceDetector::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector
 
             finfo.frames.push_back(frames[start_idx + i]);
             bm_image_destroy(image1);
-            assert(frames[start_idx+i].avframe == nullptr);
 #ifdef DEBUG
             if (frames[start_idx].chan_id == 0)
                  std::cout << "[" << frames[start_idx].chan_id << "]total index =" << start_idx + i << std::endl;
@@ -198,7 +196,7 @@ int FaceDetector::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector
     return 0;
 }
 
-int FaceDetector::forward(std::vector<bm::FrameInfo>& frame_infos)
+int FaceDetector::forward(std::vector<bm::cvs10FrameInfo>& frame_infos)
 {
 #if 1
     int ret = 0;
@@ -234,7 +232,7 @@ int FaceDetector::forward(std::vector<bm::FrameInfo>& frame_infos)
     return 0;
 }
 
-int FaceDetector::postprocess(std::vector<bm::FrameInfo> &frames)
+int FaceDetector::postprocess(std::vector<bm::cvs10FrameInfo> &frames)
 {
     for(int i=0;i < frames.size(); ++i) {
 
@@ -251,10 +249,6 @@ int FaceDetector::postprocess(std::vector<bm::FrameInfo> &frames)
         for(int j = 0; j < frame_info.frames.size(); ++j) {
 
             auto& reff = frame_info.frames[j];
-            if (reff.avpkt) {
-                av_packet_unref(reff.avpkt);
-                av_packet_free(&reff.avpkt);
-            }
 
             if (reff.avframe) {
                 av_frame_unref(reff.avframe);
@@ -274,7 +268,7 @@ int FaceDetector::postprocess(std::vector<bm::FrameInfo> &frames)
     }
 }
 
-bm::BMNNTensorPtr FaceDetector::get_output_tensor(const std::string &name, bm::FrameInfo& frame_info, float scale=1.0) {
+bm::BMNNTensorPtr FaceDetector::get_output_tensor(const std::string &name, bm::cvs10FrameInfo& frame_info, float scale=1.0) {
     int output_tensor_num = frame_info.output_tensors.size();
     int idx = bmnet_->outputName2Index(name);
     if (idx < 0 && idx > output_tensor_num-1) {
@@ -286,7 +280,7 @@ bm::BMNNTensorPtr FaceDetector::get_output_tensor(const std::string &name, bm::F
     return tensor;
 }
 
-int FaceDetector::extract_facebox_cpu(bm::FrameInfo &frame_info)
+int FaceDetector::extract_facebox_cpu(bm::cvs10FrameInfo &frame_info)
 {
     int image_n = frame_info.frames.size();
 

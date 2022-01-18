@@ -23,7 +23,7 @@ Resnet::~Resnet()
 
 }
 
-int Resnet::preprocess(std::vector<bm::FrameBaseInfo> &frames, std::vector<bm::FrameInfo> &of)
+int Resnet::preprocess(std::vector<bm::cvs10FrameBaseInfo> &frames, std::vector<bm::cvs10FrameInfo> &of)
 {
     int ret = 0;
     bm_handle_t handle = m_bmctx->handle();
@@ -43,7 +43,7 @@ int Resnet::preprocess(std::vector<bm::FrameBaseInfo> &frames, std::vector<bm::F
             num = left;
         }
 
-        bm::FrameInfo finfo;
+        bm::cvs10FrameInfo finfo;
         //1. Resize
         bm_image resized_imgs[MAX_BATCH];
         ret = bm::BMImage::create_batch(handle, m_net_h, m_net_w, FORMAT_BGR_PLANAR, DATA_TYPE_EXT_1N_BYTE,
@@ -53,6 +53,7 @@ int Resnet::preprocess(std::vector<bm::FrameBaseInfo> &frames, std::vector<bm::F
         for (int i = 0; i < num; ++i) {
             bm_image image1;
             //FrameBaseInfo frameBaseInfo;
+
             bm::BMImage::from_avframe(handle, frames[start_idx + i].avframe, image1, true);
             ret = bmcv_image_vpp_convert(handle, 1, image1, &resized_imgs[i]);
             assert(BM_SUCCESS == ret);
@@ -71,7 +72,7 @@ int Resnet::preprocess(std::vector<bm::FrameBaseInfo> &frames, std::vector<bm::F
 
             finfo.frames.push_back(frames[start_idx + i]);
             bm_image_destroy(image1);
-            assert(frames[start_idx + i].avframe == nullptr);
+
 #ifdef DEBUG
             if (frames[start_idx].chan_id == 0)
                  std::cout << "[" << frames[start_idx].chan_id << "]total index =" << start_idx + i << std::endl;
@@ -125,7 +126,7 @@ int Resnet::preprocess(std::vector<bm::FrameBaseInfo> &frames, std::vector<bm::F
     }
 }
 
-int Resnet::forward(std::vector<bm::FrameInfo> &frame_infos)
+int Resnet::forward(std::vector<bm::cvs10FrameInfo> &frame_infos)
 {
     int ret = 0;
     for(int b = 0; b < frame_infos.size(); ++b) {
@@ -140,7 +141,7 @@ int Resnet::forward(std::vector<bm::FrameInfo> &frame_infos)
     }
 }
 
-int Resnet::postprocess(std::vector<bm::FrameInfo> &frameinfos)
+int Resnet::postprocess(std::vector<bm::cvs10FrameInfo> &frameinfos)
 {
     for(int i=0;i < frameinfos.size(); ++i) {
 
@@ -165,7 +166,7 @@ int Resnet::postprocess(std::vector<bm::FrameInfo> &frameinfos)
     }
 }
 
-void Resnet::extract_feature_cpu(bm::FrameInfo &frame_info) {
+void Resnet::extract_feature_cpu(bm::cvs10FrameInfo &frame_info) {
 
     int frameNum = frame_info.frames.size();
     frame_info.out_datums.resize(frameNum);
@@ -192,7 +193,7 @@ void Resnet::extract_feature_cpu(bm::FrameInfo &frame_info) {
     }
 }
 
-bm::BMNNTensorPtr Resnet::get_output_tensor(const std::string &name, bm::FrameInfo& frame_info, float scale=1.0) {
+bm::BMNNTensorPtr Resnet::get_output_tensor(const std::string &name, bm::cvs10FrameInfo& frame_info, float scale=1.0) {
     int output_tensor_num = frame_info.output_tensors.size();
     int idx = m_bmnet->outputName2Index(name);
     if (idx < 0 && idx > output_tensor_num - 1) {
