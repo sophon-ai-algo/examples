@@ -95,12 +95,12 @@ public:
     }
 
     virtual int on_read_frame(AVPacket *pkt) {
-        ddrr->put_packet(pkt);
+        ddrr->put_packet(pkt, nullptr);
         return  0;
     }
 
     virtual void on_read_eof(AVPacket *pkt) {
-        ddrr->put_packet(pkt);
+        ddrr->put_packet(pkt, 0);
     }
 
     static void RunTest(int loop)
@@ -144,12 +144,12 @@ public:
 
     int on_read_frame(AVPacket *pkt) override
     {
-        if (m_ddrr) m_ddrr->put_packet(pkt);
+        if (m_ddrr) m_ddrr->put_packet(pkt, 0);
         return 0;
     }
 
     void on_read_eof(AVPacket *pkt) override {
-        if (m_ddrr) m_ddrr->put_packet(pkt);
+        if (m_ddrr) m_ddrr->put_packet(pkt, 0);
     }
 
     void random_seek_frame(int frame_num) {
@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
         loop = atoi(argv[1]);
     }
 
-    //TestDecoderSequence::RunTest(loop);
-    TestDecoderRandom::RunTest(loop);
+    TestDecoderSequence::RunTest(loop);
+    //TestDecoderRandom::RunTest(loop);
 
 }

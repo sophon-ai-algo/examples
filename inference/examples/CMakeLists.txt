@@ -24,6 +24,6 @@ if (${TARGET_ARCH} STREQUAL "x86")
 endif()
 
 add_subdirectory(openpose)
-add_subdirectory(rvm)
+
 
 

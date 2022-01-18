@@ -2,10 +2,27 @@ builddir=cmake-build-debug
 
 set -e
 rm -fr $builddir
+
+supported_arch="x86 arm64 mips64 soc"
 function build_app() 
 {
     if [ $# != 1 ]; then
         echo "usage: bulid_app [x86|arm64|mips64|soc"
+        return 1
+    fi
+
+    local verify=false
+    for ia in ${supported_arch[@]} 
+    do 
+        if [ "$ia" == "$1" ];then
+            verify=true
+            break
+        fi
+    done
+    
+    if [ "$verify" == "false" ];then
+        echo "usage: build_app x86|arm64|mips64|soc"
+        return 1
     fi
 
     local target_arch=$1
@@ -62,6 +79,9 @@ function build_all() {
 	for arch in ${target_arch_list[@]}
 	do
 		build_app $arch
+        if [ "$?" == "1" ];then
+            break
+        fi
 		release_example_apps $arch
 	done
 }

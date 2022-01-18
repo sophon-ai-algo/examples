@@ -155,7 +155,7 @@ void FaceExtract::extract_facefeature_cpu(bm::FeatureFrameInfo &frame_info) {
         const void *out_data = (const void *) output_tensor->get_cpu_data();
         auto output_shape = output_tensor->get_shape();
         int out_c = output_shape->dims[1];
-        int out_n = output_shape->dims[2];
+        int out_n = output_shape->dims[0];
 
         for (int n = 0; n < out_n; n++) {
             const float *data = (const float *) out_data + out_c * n;

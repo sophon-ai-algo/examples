@@ -31,7 +31,9 @@ public:
 
     virtual ~DDRReduction() {}
 
-    virtual int put_packet(AVPacket *pkt) = 0;
+    virtual int put_packet(AVPacket *pkt, int64_t *p_id) = 0;
+
+    virtual int put_packet(AVPacket *pkt, std::function<void(int64_t, AVFrame*)> cb) = 0;
 
     virtual int seek_frame(int64_t reference_id, AVFrame *frame, int *got_frame, int64_t *p_id) = 0;
 

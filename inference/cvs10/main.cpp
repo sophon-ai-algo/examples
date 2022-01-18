@@ -18,10 +18,10 @@ enum ModelType {
 int main(int argc, char *argv[])
 {
     const char *base_keys="{help | 0 | Print help information.}"
-                          "{model_type | 0 | Model Type(0: face_detect 1: resnet50)}"
+                          "{model_type | 1 | Model Type(0: face_detect 1: resnet50)}"
                           "{bmodel | /data/models/cvs10.bmodel | input bmodel path}"
                           "{max_batch | 4 | Max batch size}"
-                          "{output | None | Output stream URL}"
+                          "{enable_l2_ddr_reduction | 1 | L2 ddr reduction}"
                           "{feat_delay | 1000 | feature delay in msec}"
                           "{feat_num | 8 | feature num per channel}"
                           "{skip | 1 | skip N frames to detect}"
@@ -36,12 +36,14 @@ int main(int argc, char *argv[])
     }
 
     std::string bmodel_file = parser.get<std::string>("bmodel");
-    std::string output_url = parser.get<std::string>("output");
     int skip = parser.get<int>("skip");
     int model_type = parser.get<int>("model_type");
     int total_num = parser.get<int>("num");
     int feature_delay = parser.get<int>("feat_delay");
     int feature_num = parser.get<int>("feat_num");
+
+    int enable_l2_ddrr = parser.get<int>("enable_l2_ddr_reduction");
+
     Config cfg;
     if (!cfg.valid_check(total_num)) {
         std::cout << "ERROR:cameras.json config error, please check!" << std::endl;
@@ -77,7 +79,7 @@ int main(int argc, char *argv[])
         bm::BMNNContextPtr contextPtr = std::make_shared<bm::BMNNContext>(handle, bmodel_file);
 
         int max_batch = parser.get<int>("max_batch");
-        std::shared_ptr<bm::DetectorDelegate<bm::FrameBaseInfo, bm::FrameInfo>> detector;
+        std::shared_ptr<bm::DetectorDelegate<bm::cvs10FrameBaseInfo, bm::cvs10FrameInfo>> detector;
         if (MODEL_FACE_DETECT == model_type) {
             detector = std::make_shared<FaceDetector>(contextPtr, max_batch);
         }else if (MODEL_RESNET50 == model_type) {
@@ -86,7 +88,8 @@ int main(int argc, char *argv[])
 
         std::cout << "start_chan_index=" << start_chan_index << ", channel_num=" << channel_num << std::endl;
         OneCardInferAppPtr appPtr = std::make_shared<OneCardInferApp>(appStatis, gui,
-                tqp, contextPtr, output_url, start_chan_index, channel_num, skip, feature_delay, feature_num);
+                tqp, contextPtr, start_chan_index, channel_num, skip, feature_delay, feature_num,
+                enable_l2_ddrr);
         start_chan_index += channel_num;
 
         // set detector delegator

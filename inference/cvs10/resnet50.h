@@ -7,8 +7,9 @@
 
 #include "inference.h"
 #include "bmcv_api_ext.h"
+#include "common_types.h"
 
-class Resnet : public bm::DetectorDelegate<bm::FrameBaseInfo, bm::FrameInfo>  {
+class Resnet : public bm::DetectorDelegate<bm::cvs10FrameBaseInfo, bm::cvs10FrameInfo>  {
     bm::BMNNContextPtr m_bmctx;
     bm::BMNNNetworkPtr m_bmnet;
 
@@ -23,13 +24,13 @@ public:
     Resnet(bm::BMNNContextPtr bmctx, int max_batch);
     ~Resnet();
 
-    virtual int preprocess(std::vector<bm::FrameBaseInfo> &in, std::vector<bm::FrameInfo> &of) override;
-    virtual int forward(std::vector<bm::FrameInfo> &frames) override;
-    virtual int postprocess(std::vector<bm::FrameInfo> &frames) override;
+    virtual int preprocess(std::vector<bm::cvs10FrameBaseInfo> &in, std::vector<bm::cvs10FrameInfo> &of) override;
+    virtual int forward(std::vector<bm::cvs10FrameInfo> &frames) override;
+    virtual int postprocess(std::vector<bm::cvs10FrameInfo> &frames) override;
 
 private:
-    bm::BMNNTensorPtr get_output_tensor(const std::string &name, bm::FrameInfo& frame_info, float scale);
-    void extract_feature_cpu(bm::FrameInfo& frame);
+    bm::BMNNTensorPtr get_output_tensor(const std::string &name, bm::cvs10FrameInfo& frame_info, float scale);
+    void extract_feature_cpu(bm::cvs10FrameInfo& frame);
 };
 
 

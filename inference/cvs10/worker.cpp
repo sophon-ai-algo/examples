@@ -13,11 +13,9 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
         enable_outputer = true;
     }
 
-    m_detectorDelegate->set_detected_callback([this, enable_outputer](bm::FrameInfo &frameInfo) {
+    m_detectorDelegate->set_detected_callback([this, enable_outputer](bm::cvs10FrameInfo &frameInfo) {
         for (int frame_idx = 0; frame_idx < frameInfo.frames.size(); ++frame_idx) {
             int ch = frameInfo.frames[frame_idx].chan_id;
-
-            //std::cout << "chan=" << ch << std::endl;
 
             m_appStatis.m_chan_statis[ch]++;
             m_appStatis.m_statis_lock.lock();
@@ -37,46 +35,6 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
             jpgframe.datum = frameInfo.out_datums[i];
             m_guiReceiver->pushFrame(jpgframe);
 #endif
-
-            //
-
-            if (enable_outputer) {
-
-                std::shared_ptr<bm::ByteBuffer> buf = frameInfo.out_datums[frame_idx].toByteBuffer();
-                std::string base64_str = bm::base64_enc(buf->data(), buf->size());
-
-                AVPacket sei_pkt;
-                av_init_packet(&sei_pkt);
-                AVPacket *pkt1 = frameInfo.frames[frame_idx].avpkt;
-                av_packet_copy_props(&sei_pkt, pkt1);
-                sei_pkt.stream_index = pkt1->stream_index;
-
-                AVCodecID codec_id = m_chans[ch]->decoder->get_video_codec_id();
-
-                if (codec_id == AV_CODEC_ID_H264) {
-                    int packet_size = h264sei_calc_packet_size(base64_str.length());
-                    AVBufferRef *buf = av_buffer_alloc(packet_size << 1);
-                    //assert(packet_size < 16384);
-                    int real_size = h264sei_packet_write(buf->data, true, (uint8_t *) base64_str.data(),
-                                                         base64_str.length());
-                    sei_pkt.data = buf->data;
-                    sei_pkt.size = real_size;
-                    sei_pkt.buf = buf;
-
-                } else if (codec_id == AV_CODEC_ID_H265) {
-                    int packet_size = h264sei_calc_packet_size(base64_str.length());
-                    AVBufferRef *buf = av_buffer_alloc(packet_size << 1);
-                    int real_size = h265sei_packet_write(buf->data, true, (uint8_t *) base64_str.data(),
-                                                         base64_str.length());
-                    sei_pkt.data = buf->data;
-                    sei_pkt.size = real_size;
-                    sei_pkt.buf = buf;
-                }
-
-                m_chans[ch]->outputer->InputPacket(&sei_pkt);
-                m_chans[ch]->outputer->InputPacket(frameInfo.frames[frame_idx].avpkt);
-                av_packet_unref(&sei_pkt);
-            }
         }
     });
 
@@ -95,11 +53,15 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
     int cpu_num = std::thread::hardware_concurrency();
     int tpu_num = 1;
     param.preprocess_thread_num = cpu_num;
-    param.preprocess_queue_size = 10*m_channel_num;
+    param.preprocess_queue_size = std::max(m_channel_num, 8);
     param.inference_thread_num = tpu_num;
-    param.inference_queue_size = 4*m_channel_num;
+    param.inference_queue_size = m_channel_num;
     param.postprocess_thread_num = cpu_num;
-    param.postprocess_queue_size = 5*m_channel_num;
+    param.postprocess_queue_size = m_channel_num;
+    param.preprocess_blocking_push = true;
+    param.inference_blocking_push = true;
+    param.postprocess_blocking_push = true;
+
     m_inferPipe.init(param, m_detectorDelegate);
 
     //feature
@@ -109,8 +71,8 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
         int ch = m_channel_start + i;
         std::cout << "push id=" << ch << std::endl;
         TChannelPtr pchan = std::make_shared<TChannel>();
-        pchan->decoder = new bm::StreamDecoder(ch);
-        if (enable_outputer) pchan->outputer = new bm::FfmpegOutputer();
+        pchan->demuxer = new bm::StreamDemuxer(ch);
+        //if (enable_outputer) pchan->outputer = new bm::FfmpegOutputer();
         pchan->channel_id = ch;
 
         std::string media_file;
@@ -119,38 +81,70 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
         av_dict_set(&opts, "output_format", "101", 18);
         av_dict_set(&opts, "extra_frame_buffer_num", "5", 0);
 
-        pchan->decoder->set_avformat_opend_callback([this, pchan](AVFormatContext *ifmt) {
-            if (pchan->outputer) {
-                size_t pos = m_output_url.rfind(":");
-                std::string base_url = m_output_url.substr(0, pos);
-                int base_port = std::strtol(m_output_url.substr(pos + 1).c_str(), 0, 10);
-                std::string url = bm::format("%s:%d", base_url.c_str(), base_port + pchan->channel_id);
-                pchan->outputer->OpenOutputStream(url, ifmt);
+        pchan->demuxer->set_avformat_opend_callback([this, pchan](AVFormatContext *ifmt) {
+            // create DDR reduction
+            if (m_use_l2_ddrr) {
+                pchan->m_ddrr = DDRReduction::create(this->m_dev_id, ifmt->streams[0]->codecpar->codec_id);
+            }else{
+                pchan->create_video_decoder(m_dev_id, ifmt);
             }
         });
 
-        pchan->decoder->set_avformat_closed_callback([this, pchan]() {
-            if (pchan->outputer) pchan->outputer->CloseOutputStream();
+        pchan->demuxer->set_avformat_closed_callback([this, pchan]() {
+            //if (pchan->outputer) pchan->outputer->CloseOutputStream();
         });
 
+        pchan->demuxer->set_read_Frame_callback([this, pchan, ch](AVPacket* pkt){
+            int ret = 0;
+            if (pchan->m_ddrr) {
+                pchan->m_ddrr->put_packet(pkt, [this, pchan, ch](int64_t pkt_id, AVFrame *frame){
+                    bm::cvs10FrameBaseInfo fbi;
+                    fbi.seq = pchan->seq++;
+                    fbi.chan_id = ch;
+                    fbi.ddrr = pchan->m_ddrr;
+                    fbi.pkt_id = pkt_id;
 
-        pchan->decoder->set_decoded_frame_callback([this, pchan, ch](const AVPacket* pkt, const AVFrame *frame){
-            bm::FrameBaseInfo fbi;
-            fbi.seq = pchan->seq++;
-            fbi.chan_id = ch;
-            if (m_skipN > 0) {
-                if (fbi.seq % (m_skipN+1) != 0) fbi.skip = true;
-            }
+                    if (m_skipN > 0) {
+                        if (fbi.seq % (m_skipN+1) != 0) fbi.skip = true;
+                    }
 
 #if 0
-            if (ch == 0) std::cout << " seq = " << fbi.seq << " skip= " << fbi.skip << std::endl;
+                    if (ch == 0) std::cout << " seq = " << fbi.seq << " skip= " << fbi.skip << std::endl;
 #endif
-            if(!fbi.skip) {
-                fbi.avframe = av_frame_alloc();
-                fbi.avpkt = av_packet_alloc();
-                av_frame_ref(fbi.avframe, frame);
-                av_packet_ref(fbi.avpkt, pkt);
-                m_inferPipe.push_frame(&fbi);
+                    if(!fbi.skip) {
+                        fbi.avframe = av_frame_alloc();
+                        av_frame_ref(fbi.avframe, frame);
+                        m_inferPipe.push_frame(&fbi);
+                    }
+
+                });
+            }else{
+                //not use ddr reduction
+                int got_picture = 0;
+                AVFrame *frame = av_frame_alloc();
+                pchan->decode_video2(pchan->m_decoder, frame, &got_picture, pkt);
+                if (got_picture) {
+                    bm::cvs10FrameBaseInfo fbi;
+                    fbi.seq = pchan->seq++;
+                    fbi.chan_id = ch;
+                    fbi.ddrr = pchan->m_ddrr;
+                    fbi.pkt_id = 0;
+
+                    if (m_skipN > 0) {
+                        if (fbi.seq % (m_skipN + 1) != 0) fbi.skip = true;
+                    }
+
+#if 0
+                    if (ch == 0) std::cout << " seq = " << fbi.seq << " skip= " << fbi.skip << std::endl;
+#endif
+                    if (!fbi.skip) {
+                        fbi.avframe = av_frame_alloc();
+                        av_frame_ref(fbi.avframe, frame);
+                        m_inferPipe.push_frame(&fbi);
+                    }
+                }
+
+                av_frame_free(&frame);
             }
 
             uint64_t current_time = bm::gettime_msec();
@@ -173,10 +167,8 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
 
         });
 
-        pchan->decoder->open_stream(urls[i % urls.size()], true, opts);
+        pchan->demuxer->open_stream(urls[i % urls.size()], nullptr, true, opts);
         av_dict_free(&opts);
-        //pchan->decoder->open_stream("rtsp://admin:hk123456@11.73.11.99/test", false, opts);
-        //std::this_thread::sleep_for(std::chrono::seconds(100));
         m_chans[ch] = pchan;
     }
 }
