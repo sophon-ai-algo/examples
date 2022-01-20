@@ -1,7 +1,6 @@
-## Note
+## Note 
 
-multimedia_samples makefile for SDK, the source code is from /middleware-soc/samples/
-it include the below 8 samples:
+This module include the below 8 samples:  
  *  ff_bmcv_transcode
  *  ff_video_decode
  *  ff_video_encode
