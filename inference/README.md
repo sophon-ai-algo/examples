@@ -26,8 +26,9 @@ Inference的主要结构设计如下图：
 | retinaface | Retinaface 人脸检测 | 1
 | yolov5 | yolov5s 对象检测 | 1
 
-# 编译使用说明
-Inference framework 依赖 BMNNSDK2. 请到算能官网（www.sophgo.com) 进行下载，解压、安装。bmnnsdk2的安装方法可以参考如下链接： 
+# 编译方法
+## 依赖安装
+Inference framework 依赖 BMNNSDK2. 请到算能官网（www.sophgo.com) 进行下载，解压、安装。  bmnnsdk2的安装方法可以参考如下链接： 
 > https://sophgo-doc.gitbook.io/bmnnsdk2-bm1684/
 
 > Ubuntu 16.04 安装QT依赖：
@@ -44,13 +45,14 @@ sudo apt-get install -y libeigen3-dev
 ```
 sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
 ```
-
+## 编译指令
+---
 1. export REL_TOP=$bmnnsdk_dir 根据实际位置修改为BMNNSDK跟路径
 2. 各个平台编译
    ---
    > **NOTE**  
    如果需要本地显示最终的结果需要手工编辑CMakeLists.txt，找到USE_QTGUI 选项， 设置为ON。
-   ---
+   
    > TARGET_ARCH=x86 表示x86平台
    TARGET_ARCH=soc 表示小盒子上编译
    TARGET_ARCH=arm64 表示国产ARM CPU上编译
@@ -64,12 +66,21 @@ sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
    ./compile.sh [target_arch]
    example: ./compile.sh x86
    
-3. 运行方法
+## 运行方法
+---
    > cd ./release/facedetect_demo
 
    > ./x86/facedetect_demo --help 查看命行帮助信息     
 
-4. 相关模型请从下面网盘下载，如有问题，请联系技术支持 
+相关模型请从下面网盘下载，如有问题，请联系技术支持 
    
    链接：https://pan.baidu.com/s/16d5E_NTj4ubVPkPmR6GG5A 
    提取码：sp2w 
+
+## 客户端服务器模式运行
+---
+> 演示程序支持远程显示，应用于SE5/SM5等没有本地界面的平台，检测程序在设备端进行检测，然后讲结果发送到一个指定的目的地址，客户端负责接收带有结果的流，然后显示。
+具体配置方法，请参考[SE5-OpenPose-Demo配置文档.docx](./SE5-OpenPose-Demo-Config.docx)  
+
+> 客户端的源代码请参考如下链接：https://github.com/sophon-ai-algo/face_demo_client
+
