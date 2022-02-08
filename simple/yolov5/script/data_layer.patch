@@ -1,0 +1,26 @@
+9,10c9,10
+<   name: "x.1"
+<   type: "DummyData"
+---
+>   name: "data"
+>   type: "Data"
+12,22d11
+<   dummy_data_param {
+<     data_filler {
+<       type: "gaussian"
+<     }
+<     shape {
+<       dim: 1
+<       dim: 3
+<       dim: 1280
+<       dim: 1280
+<     }
+<     dtype: FP32
+---
+>   include {
+>     phase: TEST
+>   }
+>   data_param {
+>     source: "__dataset_path__"
+>     batch_size: __batch_size__
+>     backend: LMDB
