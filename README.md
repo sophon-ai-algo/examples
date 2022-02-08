@@ -34,7 +34,10 @@ BMNNSDK2是算能科技基于其自主研发的 AI 芯片所定制的深度学�
 
 | 样例名称 | 语言 | 适配BMNNSDK2版本 | 简介 |
 |---|---|---|---|
-| [YoloV5](./simple/yolov5) |  c++ | >=2.6.0 | 使用bmcv/opencv做前处理，bmrt推理的示例程序 |
+| [YoloV5](./simple/yolov5) |  c++/python | >=2.6.0 | 使用bmcv/opencv做前处理，bmrt推理的示例程序 |
+|[centernet](./simple/centernet) | c++/python | >=2.6.0 | CenterNet 推理示例，采用BMCV做前后处理。 |
+|[retinaface](./simple/retinaface) | c++/python | >=2.6.0 | RetinaFace 推理示例，采用BMCV做前后处理。 |
+|[yolox](./simple/yolox) | c++/python | >=2.6.0 | YOLOX 推理示例，采用BMCV做前后处理。 |
 
 ## 文档
 
