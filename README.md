@@ -38,7 +38,7 @@ BMNNSDK2是算能科技基于其自主研发的 AI 芯片所定制的深度学�
 |[centernet](./simple/centernet) | c++/python | >=2.6.0 | CenterNet 推理示例，采用BMCV做前后处理。 |
 |[retinaface](./simple/retinaface) | c++/python | >=2.6.0 | RetinaFace 推理示例，采用BMCV做前后处理。 |
 |[yolox](./simple/yolox) | c++/python | >=2.6.0 | YOLOX 推理示例，采用BMCV做前后处理。 |
-
+|[yolov4](./simple/yolov4) | c++/python | >=2.6.0 | YOLOV3/YOLOV4 推理示例，采用BMCV做前后处理。 |
 ## 文档
 
 参考社区网站[产品文档](https://developer.sophon.cn/document/index.html)获取相关文档。
