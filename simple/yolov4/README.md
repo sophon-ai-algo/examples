@@ -4,7 +4,8 @@ This is a simple demo to run yolov3/yolov4 with BMNNSDK2
 
 # 2. Usage
 
-put this demo dir to the bmnnsdk dir and enter docker, and init bmnnsdk firstly
+- init bmnnsdk2 first
+- export sdk_dir=$BMNNSDK_DIR(it's sdk absolute path)
 
 ## 2.1 cpp demo usage:
 
