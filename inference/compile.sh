@@ -30,12 +30,12 @@ function build_app()
     rm -fr $builddir;
     mkdir $builddir; cd $builddir
     
-    cmake_params="-DTARGET_ARCH=$target_arch"
+    cmake_params="-DTARGET_ARCH=$target_arch -DUSE_QTGUI=OFF"
     
     if [ "$target_arch" == "arm64" -o "$target_arch" == "soc" ]; then
-        cmake_params="$cmake_params -DCMAKE_TOOLCHAIN_FILE=toolchain-aarch64-linux.cmake -DUSE_QTGUI=OFF"
+        cmake_params="$cmake_params -DCMAKE_TOOLCHAIN_FILE=toolchain-aarch64-linux.cmake"
     elif [ "$target_arch" == "mips64" ];then
-        cmake_params="$cmake_params -DCMAKE_TOOLCHAIN_FILE=toolchain-mips64-linux.cmake -DUSE_QTGUI=OFF"
+        cmake_params="$cmake_params -DCMAKE_TOOLCHAIN_FILE=toolchain-mips64-linux.cmake"
     fi
     
     if [ "$1" == "client" ]; then
