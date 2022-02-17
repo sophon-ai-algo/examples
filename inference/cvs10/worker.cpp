@@ -26,15 +26,6 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
                 m_chans[ch]->tracker->update(frameInfo.out_datums[frame_idx].obj_rects, frameInfo.out_datums[frame_idx].track_rects);
             }
             // display
-#if USE_QTGUI
-            bm::UIFrame jpgframe;
-            jpgframe.jpeg_data = frameInfo.frames[i].jpeg_data;
-            jpgframe.chan_id = ch;
-            jpgframe.h = frameInfo.frames[i].height;
-            jpgframe.w = frameInfo.frames[i].width;
-            jpgframe.datum = frameInfo.out_datums[i];
-            m_guiReceiver->pushFrame(jpgframe);
-#endif
         }
     });
 
