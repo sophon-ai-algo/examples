@@ -51,7 +51,8 @@ sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
 2. 各个平台编译
    ---
    > **NOTE**  
-   如果需要本地显示最终的结果需要手工编辑CMakeLists.txt，找到USE_QTGUI 选项， 设置为ON。
+   如果需要本地显示最终的结果需要手工编辑./compile.sh 找到USE_QTGUI 选项， 设置为ON。
+   SOC平台，需要下载自定义的QT支持库，可以联系技术支持。
    
    > TARGET_ARCH=x86 表示x86平台
    TARGET_ARCH=soc 表示小盒子上编译
@@ -62,9 +63,12 @@ sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
      appname=yolov5      物体检测
      appname=retinaface  人脸检测
      
-   ```` 
+   ```` bash
    ./compile.sh [target_arch]
-   example: ./compile.sh x86
+   example: ./compile.sh x86 # x85平台
+   ./compile.sh soc # SOC平台
+   ````
+   
    
 ## 运行方法
 ---
