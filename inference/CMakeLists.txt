@@ -22,7 +22,13 @@ if (NOT DEFINED TARGET_ARCH)
 endif()
 
 if (USE_QTGUI)
-    set(Qt5Widgets_DIR /opt/Qt5.12.9/5.12.9/gcc_64/lib/cmake/Qt5Widgets)
+    if (${TARGET_ARCH} STREQUAL "soc")
+        set(QTDIR /opt/qt5.14-18.04-soc)
+        set(Qt5Widgets_DIR /opt/qt5.14-18.04-soc/lib/cmake/Qt5Widgets)
+    else()
+        set(QTDIR /opt/Qt5.12.9/5.12.9/gcc_64)
+        set(Qt5Widgets_DIR /opt/Qt5.12.9/5.12.9/gcc_64/lib/cmake/Qt5Widgets)
+    endif()
 endif()
 
 # User need to set this before compiling.
@@ -40,10 +46,10 @@ set(bmnnsdk_inc_dirs ${BMNNSDK2_TOP}/include
 
 set(bm_opencv_inc_dirs  ${BMNNSDK2_TOP}/include/opencv/opencv4)
 set(bm_ffmpeg_inc_dirs  ${BMNNSDK2_TOP}/include/ffmpeg ${BMNNSDK2_TOP}/include/bmlib)
-set(bm_ffmpeg_link_libs avfilter avformat avcodec avutil swresample swscale bmvideo bmjpuapi bmjpulite)
+set(bm_ffmpeg_link_libs avfilter avformat avcodec avutil swresample swscale)
 set(bm_opencv_link_libs opencv_core opencv_imgproc opencv_imgcodecs opencv_videoio opencv_dnn)
 
-set(bmnnsdk_link_libs bmrt bmcv bmlib boost_system boost_filesystem protobuf gflags glog pthread
+set(bmnnsdk_link_libs bmrt bmcv bmvideo bmjpuapi bmjpulite bmlib boost_system boost_filesystem protobuf gflags glog pthread
         CACHE INTERNAL "")
 
 if (${TARGET_ARCH} STREQUAL "x86")
@@ -102,6 +108,7 @@ message(STATUS "common_inc=${common_inc_dirs}")
 add_subdirectory(bmutility)
 if (USE_QTGUI)
     add_subdirectory(bmgui)
+    add_subdirectory(bmgui-lite)
 endif()
 add_subdirectory(third_party/jsoncpp)
 

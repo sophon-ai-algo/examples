@@ -12,6 +12,7 @@ link_directories(${ffmpeg_link_dirs} ${bmnnsdk_link_dirs} ${opencv_link_dirs})
 
 message(STATUS "opencv_inc_dirs=${opencv_inc_dirs}")
 message(STATUS "opencv_link_dirs=${opencv_link_dirs}")
+message(STATUS "total libs:${opencv_link_libs} ${ffmpeg_link_libs} ${bmnnsdk_link_libs}")
 
 # app
 add_library(ddr_reduction ddr_reduction.cpp)
