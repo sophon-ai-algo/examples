@@ -77,7 +77,7 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
     int cpu_num = std::thread::hardware_concurrency();
     int tpu_num = 1;
     param.preprocess_thread_num = cpu_num;
-    param.preprocess_queue_size = m_channel_num;
+    param.preprocess_queue_size = std::max(m_channel_num, 4);
     param.inference_thread_num = tpu_num;
     param.inference_queue_size = m_channel_num;
     param.postprocess_thread_num = cpu_num;

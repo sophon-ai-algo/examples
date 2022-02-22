@@ -103,7 +103,8 @@ int FaceDetector::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector
         for(int i = 0;i < num; ++i) {
             bm_image image1;
             //FrameBaseInfo frameBaseInfo;
-            bm::BMImage::from_avframe(handle, frames[start_idx + i].avframe, image1, true);
+            ret = bm::BMImage::from_avframe(handle, frames[start_idx + i].avframe, image1, true);
+            assert(ret == 0);
             ret = bmcv_image_vpp_convert(handle, 1, image1, &resized_imgs[i]);
             assert(BM_SUCCESS == ret);
 

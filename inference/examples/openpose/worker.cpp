@@ -84,6 +84,7 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
     param.preprocess_blocking_push = true;
     param.inference_blocking_push = true;
     param.postprocess_blocking_push = true;
+    param.batch_num = m_batch_num;
     m_inferPipe.init(param, m_detectorDelegate);
 
     for(int i = 0; i < m_channel_num; ++i) {

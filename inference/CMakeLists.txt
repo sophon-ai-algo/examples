@@ -46,7 +46,7 @@ set(bmnnsdk_inc_dirs ${BMNNSDK2_TOP}/include
 
 set(bm_opencv_inc_dirs  ${BMNNSDK2_TOP}/include/opencv/opencv4)
 set(bm_ffmpeg_inc_dirs  ${BMNNSDK2_TOP}/include/ffmpeg ${BMNNSDK2_TOP}/include/bmlib)
-set(bm_ffmpeg_link_libs avfilter avformat avcodec avutil swresample swscale)
+set(bm_ffmpeg_link_libs avfilter avformat avcodec avutil avdevice swresample swscale)
 set(bm_opencv_link_libs opencv_core opencv_imgproc opencv_imgcodecs opencv_videoio opencv_dnn)
 
 set(bmnnsdk_link_libs bmrt bmcv bmvideo bmjpuapi bmjpulite bmlib boost_system boost_filesystem protobuf gflags glog pthread
