@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
         }
 
         OneCardInferAppPtr appPtr = std::make_shared<OneCardInferApp>(appStatis, gui,
-                tqp, contextPtr, output_url, start_chan_index, channel_num, skip);
+                tqp, contextPtr, output_url, start_chan_index, channel_num, skip, max_batch);
         start_chan_index += channel_num;
         // set detector delegator
         appPtr->setDetectorDelegate(detector);

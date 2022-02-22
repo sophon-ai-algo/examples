@@ -39,12 +39,14 @@ class OneCardInferApp {
     int m_dev_id;
     int m_skipN;
     std::string m_output_url;
+    int m_max_batch;
 
     bm::BMInferencePipe<bm::FrameBaseInfo, bm::FrameInfo> m_inferPipe;
     std::map<int, TChannelPtr> m_chans;
     std::vector<std::string> m_urls;
 public:
-    OneCardInferApp(AppStatis& statis,bm::VideoUIAppPtr gui, bm::TimerQueuePtr tq, bm::BMNNContextPtr ctx, std::string& output_url, int start_index, int num, int skip = 0):
+    OneCardInferApp(AppStatis& statis,bm::VideoUIAppPtr gui, bm::TimerQueuePtr tq, bm::BMNNContextPtr ctx,
+        std::string& output_url, int start_index, int num, int skip = 0, int max_batch=1):
     m_detectorDelegate(nullptr), m_channel_num(num), m_bmctx(ctx), m_appStatis(statis)
     {
         m_guiReceiver = gui;
@@ -53,7 +55,7 @@ public:
         m_channel_start = start_index;
         m_skipN = skip;
         m_output_url = output_url;
-
+        m_max_batch = max_batch;
     }
 
     ~OneCardInferApp()

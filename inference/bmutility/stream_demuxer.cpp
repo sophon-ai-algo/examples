@@ -159,7 +159,9 @@ int StreamDemuxer::get_codec_type(int stream_index, int *p_codec_type)
                 int64_t now_time = av_gettime() - m_start_time;
                 if (pts_time > now_time) {
                     int64_t delta = pts_time - now_time;
-                    av_usleep(delta);
+                    if (delta < 100000) {
+                      av_usleep(delta);
+                    }
                 }
             }
 

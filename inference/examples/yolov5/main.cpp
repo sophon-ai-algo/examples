@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
         std::shared_ptr<YoloV5> detector = std::make_shared<YoloV5>(contextPtr, max_batch);
 
         OneCardInferAppPtr appPtr = std::make_shared<OneCardInferApp>(appStatis, gui,
-                tqp, contextPtr, output_url, start_chan_index, channel_num, skip);
+                tqp, contextPtr, output_url, start_chan_index, channel_num, skip, max_batch);
         start_chan_index += channel_num;
         // set detector delegator
         appPtr->setDetectorDelegate(detector);
