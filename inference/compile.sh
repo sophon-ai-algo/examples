@@ -51,7 +51,7 @@ function build_app()
 
 function release_example_apps() {
     local arch=$1
-    local all_app_list="openpose_demo yolov5s_demo facedetect_demo retinaface_demo safe_hat_detect_demo"
+    local all_app_list="openpose_demo yolov5s_demo facedetect_demo retinaface_demo safe_hat_detect_demo video_stitch_demo"
     if [[ $arch == "soc" ]];then
         all_app_list="openpose_demo yolov5s_demo facedetect_demo safe_hat_detect_demo"
     fi

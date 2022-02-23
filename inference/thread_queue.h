@@ -175,9 +175,12 @@ err:
         return queue_size;
     }
 
-    void drop(int num){
+    void drop(int num=0){
         int queue_size;
         pthread_mutex_lock(&m_qmtx);
+	if (num == 0) {
+            num = this->size_impl();
+        }
         if (this->size_impl() < num)
             return;
         if(m_type == 0){

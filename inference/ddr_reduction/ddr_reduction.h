@@ -16,6 +16,7 @@ extern "C" {
 
 #include <iostream>
 #include <memory>
+#include <functional>
 
 struct DDRReductionStat {
     int queue_packet_num;
