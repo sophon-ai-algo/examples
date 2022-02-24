@@ -111,6 +111,7 @@ if (USE_QTGUI)
     add_subdirectory(bmgui-lite)
 endif()
 add_subdirectory(third_party/jsoncpp)
+add_subdirectory(third_party/live555)
 
 if (USE_BM_FFMPEG)
    add_subdirectory(examples)
