@@ -21,14 +21,14 @@ namespace bm {
 
         using OnDecodedFrameCallback    = std::function<void(CvMatPtr)>;
         using OnStreamEofCallback       = std::function<void()>;
-        using OnCvCaptureEventCallback  = std::function<void(std::shared_ptr<cv::VideoCapture>)>;
+        using OnCvCaptureEventCallback  = std::function<void(cv::VideoCapture&)>;
 
         OnDecodedFrameCallback   m_OnDecodedFrameFunc   {nullptr};
         OnCvCaptureEventCallback m_OnCvCaptureOpenedFunc{nullptr};
         OnCvCaptureEventCallback m_onCvCaptureClosedFunc{nullptr};
 
     protected:
-        std::shared_ptr<cv::VideoCapture> m_p_cvcap;
+        cv::VideoCapture m_cvcap;
         std::list<cv::Mat*> m_list_packets;
 
         bool m_is_waiting_iframe{true};

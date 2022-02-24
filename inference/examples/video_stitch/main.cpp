@@ -11,14 +11,14 @@
 
 const char* APP_ARG_STRING= //"{bmodel | /data/models/yolov5s_4batch_int8.bmodel | input bmodel path}"
                        "{bmodel | /data/models/yolov5s_1batch_fp32.bmodel | input bmodel path}"
-                       "{max_batch | 1 | Max batch size}";
+                       "{max_batch | 4 | Max batch size}";
 
 
 int main(int argc, char *argv[])
 {
     const char *base_keys="{help | 0 | Print help information.}"
-                     "{skip | 1 | skip N frames to detect}"
-                     "{num | 1 | Channels to run}";
+                     "{skip | 2 | skip N frames to detect}"
+                     "{num | 4 | Channels to run}";
 
     std::string keys;
     keys = base_keys;
@@ -31,6 +31,10 @@ int main(int argc, char *argv[])
 
     std::string bmodel_file = parser.get<std::string>("bmodel");
     int total_num = parser.get<int>("num");
+    if (total_num != 4) {
+        std::cerr << "Only support 2x2 layout, make the num be equal to 4!!";
+        return -1;
+    }
     Config cfg;
     if (!cfg.valid_check(total_num)) {
         std::cout << "ERROR:cameras.json config error, please check!" << std::endl;

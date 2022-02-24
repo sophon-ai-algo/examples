@@ -33,13 +33,13 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
         pchan->mat = new cv::Mat;
 
 
-        pchan->decoder->set_cvcapture_opened_callback([this, url](std::shared_ptr<cv::VideoCapture> pCap) {
-            if (pCap != nullptr && pCap->isOpened()) {
-                pCap->set(cv::CAP_PROP_OUTPUT_YUV, PROP_TRUE);
+        pchan->decoder->set_cvcapture_opened_callback([this, url](cv::VideoCapture& cap) {
+            if (cap.isOpened()) {
+                cap.set(cv::CAP_PROP_OUTPUT_YUV, PROP_TRUE);
 
-                int fps    = pCap->get(cv::CAP_PROP_FPS);
-                int height = (int)pCap->get(cv::CAP_PROP_FRAME_HEIGHT);
-                int width  = (int)pCap->get(cv::CAP_PROP_FRAME_WIDTH);
+                int fps    = cap.get(cv::CAP_PROP_FPS);
+                int height = (int)cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+                int width  = (int)cap.get(cv::CAP_PROP_FRAME_WIDTH);
                 std::cout << url             << " opened!"
                           << "\tfps: "       << fps
                           << "\theight: "    << height
@@ -47,7 +47,7 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
             }
         });
 
-        pchan->decoder->set_cvcapture_closed_callback([this, url](std::shared_ptr<cv::VideoCapture> pCap) {
+        pchan->decoder->set_cvcapture_closed_callback([this, url](cv::VideoCapture& cap) {
             std::cout << url << " closed!";
         });
 

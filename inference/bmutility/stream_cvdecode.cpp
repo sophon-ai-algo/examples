@@ -5,10 +5,10 @@
 #include "stream_cvdecode.h"
 
 namespace bm {
-    CvStreamDecoder::CvStreamDecoder(int id) 
-     : m_observer(nullptr)  {
+    CvStreamDecoder::CvStreamDecoder(int id)
+            : m_observer(nullptr)  {
         std::cout << "CvStreamDecoderEvents() ctor..." << std::endl;
-        m_p_cvcap = std::make_shared<cv::VideoCapture>();
+        m_cvcap = cv::VideoCapture();
         m_is_waiting_iframe = true;
         m_id = id;
     }
@@ -24,12 +24,10 @@ namespace bm {
 
     void CvStreamDecoder::on_video_capture_closed() {
         clear_packets();
-        if (m_p_cvcap != nullptr && m_p_cvcap->isOpened()) {
-            m_p_cvcap->release();
+        if (m_cvcap.isOpened()) {
+            m_cvcap.release();
         }
     }
-
-
 
     void CvStreamDecoder::clear_packets() {
         while (m_list_packets.size() > 0) {
@@ -43,27 +41,27 @@ namespace bm {
     int CvStreamDecoder::open_stream(std::string url, bool repeat)
     {
         m_url = url;
-        if (m_p_cvcap != nullptr) {
-            if (!m_p_cvcap->open(m_url, cv::CAP_ANY, 0)) {
-                std::cerr << "open " << url << " failed!" << std::endl;
-                return -1;
-            }
-            if (m_OnCvCaptureOpenedFunc != nullptr) {
-                m_OnCvCaptureOpenedFunc(m_p_cvcap);
-            }
-            m_keep_running = true;
-            m_thread_reading = new std::thread([&] {
-                while (m_keep_running) {
-                    CvMatPtr p_frame = new cv::Mat;
-                    bool ret = m_p_cvcap->read(*p_frame);
-                    if (!ret || p_frame->empty()) {
-                        std::cerr << m_url << " cv read frame failed" << std::endl;
-                        continue;
-                    }
-                    m_OnDecodedFrameFunc(p_frame);
-                }
-            });
+
+        if (!m_cvcap.open(m_url, cv::CAP_ANY, 0)) {
+            std::cerr << "open " << url << " failed!" << std::endl;
+            return -1;
         }
+        if (m_OnCvCaptureOpenedFunc != nullptr) {
+            m_OnCvCaptureOpenedFunc(m_cvcap);
+        }
+        m_keep_running = true;
+        m_thread_reading = new std::thread([&] {
+            while (m_keep_running) {
+                CvMatPtr p_frame = new cv::Mat;
+                bool ret = m_cvcap.read(*p_frame);
+                if (!ret || p_frame->empty()) {
+                    std::cerr << m_url << " cv read frame failed" << std::endl;
+                    continue;
+                }
+                m_OnDecodedFrameFunc(p_frame);
+            }
+        });
+
         return 0;
     }
 
@@ -74,8 +72,8 @@ namespace bm {
             delete m_thread_reading;
             m_thread_reading = nullptr;
         }
-        if (m_p_cvcap != nullptr && m_p_cvcap->isOpened()) {
-            m_p_cvcap->release();
+        if (m_cvcap.isOpened()) {
+            m_cvcap.release();
             std::cout << "close" << m_url << std::endl;
         }
         return 0;

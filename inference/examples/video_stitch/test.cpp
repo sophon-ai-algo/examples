@@ -39,37 +39,37 @@ int main(int argc, char *argv[]) {
         cap4.read(*frame4);
 
 
-        in.emplace_back(*frame1);
-        in.emplace_back(*frame2);
-        in.emplace_back(*frame3);
-        in.emplace_back(*frame4);
-
-
-        //in.push_back(cv::imread("/inference_framework/release/video_stitch_demo/result.jpg"));
-        
-        for (int i = 0; i < 4; ++i) {
-            rt.x = rt.y = 0;
-            rt.width  = 1920;
-            rt.height = 1080;
-            srt.push_back(rt);
-
-            // rt.x = (i % 2) * (stitch_image.cols / 2);
-            // rt.width = stitch_image.cols/2;
-            // rt.y = (i / 2) * (stitch_image.rows / 2);
-            // rt.height = stitch_image.rows / 2;
-            rt.x = (i % 4) * (stitch_image.cols / 4);
-            rt.width = stitch_image.cols / 4;
-            rt.y = 0;
-            rt.height = 1080;
-            drt.push_back(rt);
-        }
-
-        if (BM_SUCCESS != cv::bmcv::stitch(in, srt, drt, stitch_image, true, BMCV_INTER_LINEAR)) {
-            std::cerr << "Stitch error" << std::endl;
-            continue;
-        }
-
-        cv::imwrite("stitch-result.jpg", stitch_image);
+//        in.emplace_back(*frame1);
+//        in.emplace_back(*frame2);
+//        in.emplace_back(*frame3);
+//        in.emplace_back(*frame4);
+//
+//
+//        //in.push_back(cv::imread("/inference_framework/release/video_stitch_demo/result.jpg"));
+//
+//        for (int i = 0; i < 4; ++i) {
+//            rt.x = rt.y = 0;
+//            rt.width  = 1920;
+//            rt.height = 1080;
+//            srt.push_back(rt);
+//
+//            // rt.x = (i % 2) * (stitch_image.cols / 2);
+//            // rt.width = stitch_image.cols/2;
+//            // rt.y = (i / 2) * (stitch_image.rows / 2);
+//            // rt.height = stitch_image.rows / 2;
+//            rt.x = (i % 4) * (stitch_image.cols / 4);
+//            rt.width = stitch_image.cols / 4;
+//            rt.y = 0;
+//            rt.height = 1080;
+//            drt.push_back(rt);
+//        }
+//
+//        if (BM_SUCCESS != cv::bmcv::stitch(in, srt, drt, stitch_image, true, BMCV_INTER_LINEAR)) {
+//            std::cerr << "Stitch error" << std::endl;
+//            continue;
+//        }
+//
+//        cv::imwrite("stitch-result.jpg", stitch_image);
         delete frame1;
         delete frame2;
         delete frame3;
