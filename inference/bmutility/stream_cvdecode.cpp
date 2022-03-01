@@ -41,16 +41,16 @@ namespace bm {
     int CvStreamDecoder::open_stream(std::string url, bool repeat)
     {
         m_url = url;
-
-        if (!m_cvcap.open(m_url, cv::CAP_ANY, 0)) {
-            std::cerr << "open " << url << " failed!" << std::endl;
-            return -1;
-        }
-        if (m_OnCvCaptureOpenedFunc != nullptr) {
-            m_OnCvCaptureOpenedFunc(m_cvcap);
-        }
         m_keep_running = true;
         m_thread_reading = new std::thread([&] {
+            if (!m_cvcap.open(m_url, cv::CAP_ANY, 0)) {
+                std::cerr << "open " << url << " failed!" << std::endl;
+                m_keep_running = false;
+                return;
+            }
+            if (m_OnCvCaptureOpenedFunc != nullptr) {
+                m_OnCvCaptureOpenedFunc(m_cvcap);
+            }
             while (m_keep_running) {
                 CvMatPtr p_frame = new cv::Mat;
                 bool ret = m_cvcap.read(*p_frame);

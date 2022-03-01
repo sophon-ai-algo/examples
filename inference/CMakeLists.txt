@@ -8,7 +8,7 @@ option(USE_BM_FFMPEG "Use bm ffmpeg" ON)
 option(USE_BM_OPENCV "Use bm opencv" ON)
 option(USE_QTGUI "Whether has GUI support" OFF)
 
-add_compile_options(-std=c++11 -Wno-deprecated-declarations -fPIC)
+add_compile_options(-Wno-deprecated-declarations -fPIC)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")

@@ -2,16 +2,22 @@
 #include "stitch.h"
 
 VideoStitchImpl::VideoStitchImpl(int chann_start, int chann_count)
- : m_stitch_running {false}, 
-   m_chan_start{chann_start},
-   m_chan_count{chann_count},
-   m_last_frame_ts{0},
-   m_last_sleep_time{0} {
-     for (int i = m_chan_start; i < m_chan_start + m_chan_count; i++) {
-         CvFrameBaseInfo* f = new CvFrameBaseInfo;
-         f->chan_id = i;
-         m_channels.insert(std::make_pair(i, f));
-     }
+  : m_stitch_running {false},
+    m_chan_start{chann_start},
+    m_chan_count{chann_count},
+    m_last_frame_ts{0},
+    m_last_sleep_time{0},
+    m_chan_mask{0},
+    m_chan_got_frame{0} {
+
+    for (int i = 0; i < m_chan_count; ++i) {
+        m_chan_mask |= 1 << i;
+    }
+    for (int i = m_chan_start; i < m_chan_start + m_chan_count; i++) {
+        CvFrameBaseInfo* f = new CvFrameBaseInfo;
+        f->chan_id = i;
+        m_channels.insert(std::make_pair(i, f));
+    }
 }
 
 VideoStitchImpl::~VideoStitchImpl() {
@@ -44,53 +50,38 @@ bool VideoStitchImpl::stopStitch() {
 }
 
 bool VideoStitchImpl::go(std::vector<CvFrameBaseInfo>& frames) {
+    // Stitch when all channel updated
+    if (m_chan_got_frame != m_chan_mask) {
+        return false;
+    }
+    m_chan_got_frame = 0;
+
     std::vector<cv::Mat>  in;
     std::vector<cv::Rect> srt;
     std::vector<cv::Rect> drt;
     cv::Rect rt;
     cv::Mat* stitch_image = new cv::Mat;
 
-    int i          = m_chan_start;
-
-    uint64_t start_ts = bm::gettime_msec();
     in.clear();
     srt.clear();
     drt.clear();
     stitch_image->cols = 1920;
     stitch_image->rows = 1080;
-    bool got_first = false;
 
-    for (i = m_chan_start; i < m_chan_start + m_chan_count; ++i) {
+    for (int i = m_chan_start; i < m_chan_start + m_chan_count; ++i) {
         auto iter = m_channels.find(i);
-        got_first = false;
-        if (iter != m_channels.end()) {
-            if (iter->second->seq != 0) {
-                in.emplace_back(*iter->second->mat);
-                got_first = true;
-            }
-        }
-        if (!got_first) {
-            std::cerr << "Channel " << i << " not got first frame. waiting..." << std::endl;
-            //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            return false;
-        }
+        in.emplace_back(*iter->second->mat);
         rt.x = rt.y = 0;
-        rt.width  = 1920;
-        rt.height = 1080;
+        rt.width  = iter->second->mat->cols;
+        rt.height = iter->second->mat->rows;
         srt.push_back(rt);
 
         rt.x = (i % 2) * (stitch_image->cols / 2);
         rt.width = stitch_image->cols/2;
         rt.y = (i / 2) * (stitch_image->rows / 2);
         rt.height = stitch_image->rows / 2;
-        // rt.x = (i % 4) * (stitch_image->cols / 4);
-        // rt.width = stitch_image->cols / 4;
-        // rt.y = 0;
-        // rt.height = 1080;
         drt.push_back(rt);
     }
-    // Not all channels got first frame
-    if (!got_first) return false;
 
     bm::BMPerf perf;
     perf.begin("stitch", 20);
@@ -113,6 +104,7 @@ bool VideoStitchImpl::dataInput(CvFrameBaseInfo* frame, int count) {
             std::cerr << "dataInput failed, channel: " << frame->chan_id << " not found" << std::endl;
             continue;
         }
+        m_chan_got_frame |= 1 << (frame->chan_id - m_chan_start);
         chan->second->sync(frame++);
     }
 }

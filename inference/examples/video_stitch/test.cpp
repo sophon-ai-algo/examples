@@ -5,15 +5,47 @@
 #include <thread>
 #include <chrono>
 #include "opencv2/opencv.hpp"
+#include "bmutility_timer.h"
 
 int main(int argc, char *argv[]) {
     cv::VideoCapture cap1, cap2, cap3, cap4;
-    cap1.open("rtsp://admin:hk123456@11.73.12.20", cv::CAP_ANY, 0);
-    cap2.open("rtsp://admin:hk123456@11.73.12.22", cv::CAP_ANY, 0);
-    cap3.open("rtsp://admin:hk123456@11.73.12.23", cv::CAP_ANY, 0);
-    cap4.open("rtsp://admin:hk123456@11.73.12.20", cv::CAP_ANY, 0);
+    auto a = std::thread([&]{
+        std::cout << "1in[" << bm::timeToString(time(0)) << "]" << std::endl;
+        cap1.open("rtsp://admin:hk123456@11.73.12.20", cv::CAP_ANY, 0);
+        std::cout << "1out[" << bm::timeToString(time(0)) << "]" << std::endl;
+    });
+    auto b = std::thread([&]{
+        std::cout << "2in[" << bm::timeToString(time(0)) << "]" << std::endl;
+        cap2.open("rtsp://admin:hk123456@11.73.12.22", cv::CAP_ANY, 0);
+        std::cout << "2out[" << bm::timeToString(time(0)) << "]" << std::endl;
+    });
+    auto c = std::thread([&]{
+        std::cout << "3in[" << bm::timeToString(time(0)) << "]" << std::endl;
+        cap3.open("rtsp://admin:hk123456@11.73.12.23", cv::CAP_ANY, 0);
+        std::cout << "3out[" << bm::timeToString(time(0)) << "]" << std::endl;
+    });
+    auto d = std::thread([&]{
+        std::cout << "4in[" << bm::timeToString(time(0)) << "]" << std::endl;
+        cap4.open("rtsp://admin:hk123456@11.73.12.20", cv::CAP_ANY, 0);
+        std::cout << "4out[" << bm::timeToString(time(0)) << "]" << std::endl;
+    });
+    a.join();
+    b.join();
+    c.join();
+    d.join();
 
     assert(cap1.isOpened() && cap2.isOpened() && cap3.isOpened() &&cap4.isOpened());
+
+    cv::Mat *frame1 = new cv::Mat,
+            *frame2 = new cv::Mat,
+            *frame3 = new cv::Mat,
+            *frame4 = new cv::Mat;
+    cap1.read(*frame1);
+    int64_t timestamp = (int64_t)cap1.get(cv::CAP_PROP_TIMESTAMP);
+    cap1.read(*frame2);
+    int64_t timestamp1 = (int64_t)cap1.get(cv::CAP_PROP_TIMESTAMP);
+    cap1.read(*frame3);
+    int64_t timestamp2 = (int64_t)cap1.get(cv::CAP_PROP_TIMESTAMP);
 
     cv::Mat stitch_image;
     stitch_image.cols = 7680;

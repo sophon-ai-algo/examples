@@ -63,6 +63,8 @@ private:
     std::map<int, CvFrameBaseInfo*> m_channels;
     std::mutex                      m_stitch_lock;
     std::shared_ptr<std::thread>    m_stitch_thread;
+    uint64_t                        m_chan_mask;
+    uint64_t                        m_chan_got_frame;
 private:
     void fpsControl_(uint64_t msec_interval);
 };

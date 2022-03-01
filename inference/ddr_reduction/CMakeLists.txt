@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 project(ddr_reduction_demo)
-add_compile_options(-std=c++11 -Wno-deprecated-declarations)
+add_compile_options(-Wno-deprecated-declarations)
 
 option(USE_BM_OPENCV "use bm_opencv" OFF)
 
