@@ -32,15 +32,15 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
         std::string url = urls[i % urls.size()];
         pchan->mat = new cv::Mat;
 
-
-        pchan->decoder->set_cvcapture_opened_callback([this, url](cv::VideoCapture& cap) {
+        pchan->decoder->set_cvcapture_opened_callback([this, url, pchan](cv::VideoCapture& cap) {
             if (cap.isOpened()) {
                 cap.set(cv::CAP_PROP_OUTPUT_YUV, PROP_TRUE);
 
                 int fps    = cap.get(cv::CAP_PROP_FPS);
                 int height = (int)cap.get(cv::CAP_PROP_FRAME_HEIGHT);
                 int width  = (int)cap.get(cv::CAP_PROP_FRAME_WIDTH);
-                std::cout << url             << " opened!"
+                std::cout << "[" << bm::timeToString(time(0)) << "]"
+                          << url             << " opened!"
                           << "\tfps: "       << fps
                           << "\theight: "    << height
                           << "\twidth: "     << width << std::endl;

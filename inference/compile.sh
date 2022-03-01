@@ -7,7 +7,7 @@ supported_arch="x86 arm64 mips64 soc"
 function build_app() 
 {
     if [ $# != 1 ]; then
-        echo "usage: bulid_app [x86|arm64|mips64|soc"
+        echo "usage: bulid_app [x86|arm64|mips64|soc]"
         return 1
     fi
 
