@@ -11,6 +11,22 @@
       ]
     }
   ],
-  "concurrency"
+  "pipeline": {
+    "preprocess": {
+      "thread_num": 4,
+      "queue_size": 16,
+      "blocking": false
+    },
+    "inference": {
+      "thread_num": 1,
+      "queue_size": 16,
+      "blocking": false
+    },
+    "postprocess": {
+      "thread_num": 4,
+      "queue_size": 17,
+      "blocking": false
+    }
+  }
 }
 

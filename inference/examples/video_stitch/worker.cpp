@@ -5,7 +5,7 @@
 #include <string>
 #include "worker.h"
 
-void OneCardInferApp::start(const std::vector<std::string>& urls)
+void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config)
 {
     bm::DetectorParam param;
     int cpu_num = std::thread::hardware_concurrency();
@@ -20,6 +20,7 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
     param.stitch_queue_size = 20;
     param.encode_thread_num = 1;
     param.encode_queue_size = 20;
+    loadConfig(param, config);
 
     m_inferPipe.init(param, m_detectorDelegate);
 

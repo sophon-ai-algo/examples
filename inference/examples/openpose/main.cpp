@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
         start_chan_index += channel_num;
         // set detector delegator
         appPtr->setDetectorDelegate(detector);
-        appPtr->start(cfg.cardUrls(card_idx));
+        appPtr->start(cfg.cardUrls(card_idx), cfg);
         apps.push_back(appPtr);
     }
 

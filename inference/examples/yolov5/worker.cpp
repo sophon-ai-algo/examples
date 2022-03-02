@@ -5,7 +5,7 @@
 #include "worker.h"
 #include "stream_sei.h"
 
-void OneCardInferApp::start(const std::vector<std::string>& urls)
+void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config)
 {
     bool enable_outputer = false;
     if (bm::start_with(m_output_url, "rtsp://") || bm::start_with(m_output_url, "udp://") ||
@@ -85,6 +85,8 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
     param.inference_blocking_push = true;
     param.postprocess_blocking_push = true;
     param.batch_num = m_max_batch;
+    loadConfig(param, config);
+
     m_inferPipe.init(param, m_detectorDelegate);
 
     for(int i = 0; i < m_channel_num; ++i) {
