@@ -7,6 +7,7 @@
 
 #include "bmutility.h"
 #include "thread_queue.h"
+
 namespace bm {
     template<typename T1, typename T2>
     class DetectorDelegate {
@@ -54,6 +55,7 @@ namespace bm {
         int postprocess_queue_size;
         int postprocess_thread_num;
         int batch_num;
+
     };
 
     template<typename T1, typename T2>

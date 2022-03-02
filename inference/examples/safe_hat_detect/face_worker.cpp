@@ -5,7 +5,7 @@
 #include "face_worker.h"
 #include "stream_sei.h"
 
-void OneCardInferApp::start(const std::vector<std::string>& urls)
+void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config)
 {
     // connect all detector's pipe
     int model_num = m_inferPipes.size();
@@ -95,6 +95,8 @@ void OneCardInferApp::start(const std::vector<std::string>& urls)
         param.inference_queue_size = 8;
         param.postprocess_thread_num = 1;
         param.postprocess_queue_size = 5;
+        loadConfig(param, config);
+
 #endif
 
         m_inferPipes[i].init(param, m_detectorDelegates[i]);
