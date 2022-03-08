@@ -5,68 +5,41 @@
 #include <mutex>
 #include "opencv2/opencv.hpp"
 #include "bmutility.h"
+#include "encoder.h"
+#include "inference3.h"
 
-template<typename T1>
-class IVideoStitch {
+class VideoStitchImpl : public bm::MediaDelegate<bm::FrameBaseInfo, bm::FrameInfo> {
+    struct SFrameAndBbox{
+        AVFrame* avframe;
+        bm::NetOutputObjects objs;
+        uint64_t seq;
+        SFrameAndBbox()
+          : avframe{nullptr},
+            seq{0} {}
+    };
 public:
-    virtual bool startStitch()  = 0;
-    virtual bool stopStitch()   = 0;
-    virtual bool dataInput(T1*, int) = 0;
-    virtual ~IVideoStitch()     = default;
-};
+    VideoStitchImpl(int chann_start, int chann_count, std::shared_ptr<CVEncoder> &encoder);
 
-struct CvFrameBaseInfo {
-    int chan_id;
-    uint64_t seq;
-    cv::Mat* mat;
-    bool skip;
-    int height, width;
-    CvFrameBaseInfo() {
-        chan_id = 0;
-        seq = 0;
-        mat = 0;
-        skip = false;
-        width = height = 0;
-    }
-    void sync(const CvFrameBaseInfo* chan) {
-        if (chan->chan_id != this->chan_id) return;
-        this->seq    = chan->seq;
-        if (this->mat != nullptr) delete this->mat;
-        this->mat    = chan->mat;
-        this->width  = chan->width;
-        this->height = chan->height;
-    }
-};
-
-struct CvFrameInfo {
-    std::vector<CvFrameBaseInfo> frames;
-    std::vector<bm_tensor_t> input_tensors;
-    std::vector<bm_tensor_t> output_tensors;
-    std::vector<bm::NetOutputDatum> out_datums;
-};
-
-class VideoStitchImpl : public IVideoStitch<CvFrameBaseInfo> {
-public:
-    VideoStitchImpl(int chann_start, int chann_count);
     ~VideoStitchImpl();
-    bool startStitch()                override;
-    bool stopStitch()                 override;
-    bool dataInput(CvFrameBaseInfo* frame, int count) override;
-    bool go(std::vector<CvFrameBaseInfo>& frames);
 
+    int stitch(std::vector<bm::FrameInfo>& frames, std::vector<bm::FrameBaseInfo>& output) override;
+
+    int encode(std::vector<bm::FrameBaseInfo> &frames) override;
+
+    inline bool setHandle(bm_handle_t handle) { m_handle = handle; }
 private:
-    bool                            m_stitch_running;
-    int                             m_chan_start;
-    int                             m_chan_count;
-    uint64_t                        m_last_frame_ts;
-    uint64_t                        m_last_sleep_time;
-    std::map<int, CvFrameBaseInfo*> m_channels;
-    std::mutex                      m_stitch_lock;
-    std::shared_ptr<std::thread>    m_stitch_thread;
-    uint64_t                        m_chan_mask;
-    uint64_t                        m_chan_got_frame;
+    int m_chan_start;
+    int m_chan_count;
+    uint64_t m_last_frame_ts;
+    uint64_t m_last_sleep_time;
+    std::map<int, SFrameAndBbox *> m_channels;
+    uint64_t m_chan_mask;
+    uint64_t m_chan_got_frame;
+    std::shared_ptr<CVEncoder> m_encoder;
+    bm_handle_t m_handle;
 private:
     void fpsControl_(uint64_t msec_interval);
-};
 
+    void dataInput_(std::vector<bm::FrameInfo>& frames);
+};
 #endif // _VIDEO_STITCH_STITCH_H_

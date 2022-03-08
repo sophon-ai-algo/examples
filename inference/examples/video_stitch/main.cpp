@@ -7,6 +7,8 @@
 #include "configuration.h"
 #include "bmutility_timer.h"
 #include "rtsp/Live555RtspServer.h"
+#include "encoder.h"
+#include "stitch.h"
 
 
 const char* APP_ARG_STRING= //"{bmodel | /data/models/yolov5s_4batch_int8.bmodel | input bmodel path}"
@@ -60,7 +62,17 @@ int main(int argc, char *argv[])
     AppStatis appStatis(1);
 
     std::shared_ptr<CVEncoder>       encoder = std::make_shared<CVEncoder>(25 / skip, 1920, 1080, 0, pRtspServer, &appStatis);
-    std::shared_ptr<VideoStitchImpl> stitch  = std::make_shared<VideoStitchImpl>(0, total_num);
+    std::shared_ptr<VideoStitchImpl> stitch  = std::make_shared<VideoStitchImpl>(0, total_num, encoder);
+    bm::BMMediaPipeline<bm::FrameBaseInfo, bm::FrameInfo> m_media_pipeline;
+    bm::MediaParam param;
+    param.stitch_thread_num = 1;
+    param.stitch_queue_size = 20;
+    param.encode_thread_num = 1;
+    param.encode_queue_size = 20;
+    param.stitch_blocking_push = false;
+    param.encode_blocking_push = false;
+
+    m_media_pipeline.init(param, stitch);
 
     for(int card_idx = 0; card_idx < card_num; ++card_idx) {
         int dev_id = cfg.cardDevId(card_idx);
@@ -76,13 +88,17 @@ int main(int argc, char *argv[])
         bm::BMNNContextPtr contextPtr = std::make_shared<bm::BMNNContext>(handle, bmodel_file);
         bmlib_log_set_level(BMLIB_LOG_VERBOSE);
 
+        if (card_idx == card_num - 1) {
+            stitch->setHandle(contextPtr->handle());
+        }
+
         int max_batch = parser.get<int>("max_batch");
         std::shared_ptr<YoloV5> detector = std::make_shared<YoloV5>(contextPtr, max_batch);
-        detector->setStitchImpl(stitch);
-        detector->setEncoder(encoder);
+        detector->set_next_inference_pipe(&m_media_pipeline);
+
 
         OneCardInferAppPtr appPtr = std::make_shared<OneCardInferApp>(
-                tqp, contextPtr, start_chan_index, channel_num, skip);
+                tqp, contextPtr, start_chan_index, channel_num, skip, max_batch);
         start_chan_index += channel_num;
         // set detector delegator
         appPtr->setDetectorDelegate(detector);

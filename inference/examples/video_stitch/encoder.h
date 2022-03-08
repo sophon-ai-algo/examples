@@ -14,7 +14,7 @@ class CVEncoder {
 public:
     CVEncoder(int fps, int w, int h, int card, BTRTSPServer* p_rtsp, AppStatis* appStatis);
     virtual ~CVEncoder();
-    bool encode(cv::Mat* mat);
+    bool encode(cv::Mat& mat);
 
 private:
     int m_fps;

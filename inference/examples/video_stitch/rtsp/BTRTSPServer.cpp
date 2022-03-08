@@ -82,9 +82,6 @@ H264QueMediaSubsession* BTRTSPServer::GetH264SubSession() {
         ServerMediaSubsessionIterator sessionIter = ServerMediaSubsessionIterator(*sms);
         ServerMediaSubsession*        subSession  = sessionIter.next();
         if (subSession != nullptr) {
-            if (sessionIter.next() != nullptr) {
-                std::cerr << "22222222" << std::endl;
-            }
             return reinterpret_cast<H264QueMediaSubsession*>(subSession);
         }
     }

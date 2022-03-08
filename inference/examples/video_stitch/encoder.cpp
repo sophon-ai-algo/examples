@@ -36,7 +36,7 @@ CVEncoder::~CVEncoder() {
     m_writer.reset();
 }
 
-bool CVEncoder::encode(cv::Mat* mat) {
+bool CVEncoder::encode(cv::Mat& mat) {
     if (!m_writer->isOpened()) {
         std::cerr << "encoder not open" << std::endl;
         return false;
@@ -46,8 +46,8 @@ bool CVEncoder::encode(cv::Mat* mat) {
     pPktData->len = m_width * m_height * 4;
     pPktData->buf = new char[pPktData->len];
 
-    m_writer->write(*mat, (char*)pPktData->buf ,&pPktData->len);
-    delete mat;
+    m_writer->write(mat, (char*)pPktData->buf ,&pPktData->len);
+    mat.release();
     m_appstatis->m_total_statis++;
 
     if (pPktData->len <= 0) {
