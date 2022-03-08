@@ -7,46 +7,42 @@
 #include "opencv2/opencv.hpp"
 #include "bmutility_timer.h"
 
+
+void test_bmimage() {
+    bm_handle_t handle;
+    bm_dev_request(&handle, 0);
+    bm_image stitch_image;
+
+    bm_image_create(handle, 1080, 1920, FORMAT_YUV420P, DATA_TYPE_EXT_1N_BYTE, &stitch_image);
+    bm_image_alloc_dev_mem(stitch_image, BMCV_HEAP0_ID);
+    cv::Mat output_mat;
+    cv::bmcv::toMAT(&stitch_image, output_mat, false);
+    bm_image_destroy(stitch_image);
+}
 int main(int argc, char *argv[]) {
-    cv::VideoCapture cap1, cap2, cap3, cap4;
-    auto a = std::thread([&]{
-        std::cout << "1in[" << bm::timeToString(time(0)) << "]" << std::endl;
-        cap1.open("rtsp://admin:hk123456@11.73.12.20", cv::CAP_ANY, 0);
-        std::cout << "1out[" << bm::timeToString(time(0)) << "]" << std::endl;
-    });
-    auto b = std::thread([&]{
-        std::cout << "2in[" << bm::timeToString(time(0)) << "]" << std::endl;
-        cap2.open("rtsp://admin:hk123456@11.73.12.22", cv::CAP_ANY, 0);
-        std::cout << "2out[" << bm::timeToString(time(0)) << "]" << std::endl;
-    });
-    auto c = std::thread([&]{
-        std::cout << "3in[" << bm::timeToString(time(0)) << "]" << std::endl;
-        cap3.open("rtsp://admin:hk123456@11.73.12.23", cv::CAP_ANY, 0);
-        std::cout << "3out[" << bm::timeToString(time(0)) << "]" << std::endl;
-    });
-    auto d = std::thread([&]{
-        std::cout << "4in[" << bm::timeToString(time(0)) << "]" << std::endl;
-        cap4.open("rtsp://admin:hk123456@11.73.12.20", cv::CAP_ANY, 0);
-        std::cout << "4out[" << bm::timeToString(time(0)) << "]" << std::endl;
-    });
-    a.join();
-    b.join();
-    c.join();
-    d.join();
+#if 1
+    int i = 0;
+    while (i++ < 1000) {
+        bm::BMPerf perf;
+        perf.begin("test", 0);
+        test_bmimage();
+        perf.end();
+    }
+#else
+    cv::VideoCapture cap1;
+    //cap1 = new cv::VideoCapture;
 
-    assert(cap1.isOpened() && cap2.isOpened() && cap3.isOpened() &&cap4.isOpened());
 
-    cv::Mat *frame1 = new cv::Mat,
-            *frame2 = new cv::Mat,
-            *frame3 = new cv::Mat,
-            *frame4 = new cv::Mat;
-    cap1.read(*frame1);
-    int64_t timestamp = (int64_t)cap1.get(cv::CAP_PROP_TIMESTAMP);
-    cap1.read(*frame2);
-    int64_t timestamp1 = (int64_t)cap1.get(cv::CAP_PROP_TIMESTAMP);
-    cap1.read(*frame3);
-    int64_t timestamp2 = (int64_t)cap1.get(cv::CAP_PROP_TIMESTAMP);
 
+    cap1.open("rtsp://admin:hk123456@11.73.12.22", cv::CAP_ANY, 0);
+
+
+    assert(cap1.isOpened());
+    cap1.set(cv::CAP_PROP_OUTPUT_YUV, PROP_TRUE);
+
+    int fps    = cap1.get(cv::CAP_PROP_FPS);
+    int height = (int)cap1.get(cv::CAP_PROP_FRAME_HEIGHT);
+    int width  = (int)cap1.get(cv::CAP_PROP_FRAME_WIDTH);
     cv::Mat stitch_image;
     stitch_image.cols = 7680;
     stitch_image.rows = 1080;
@@ -61,14 +57,10 @@ int main(int argc, char *argv[]) {
         srt.clear();
         drt.clear();
         
-        cv::Mat *frame1 = new cv::Mat,
-                *frame2 = new cv::Mat,
-                *frame3 = new cv::Mat,
-                *frame4 = new cv::Mat;
+        cv::Mat *frame1 = new cv::Mat;
+
         cap1.read(*frame1);
-        cap2.read(*frame2);
-        cap3.read(*frame3);
-        cap4.read(*frame4);
+
 
 
 //        in.emplace_back(*frame1);
@@ -103,13 +95,11 @@ int main(int argc, char *argv[]) {
 //
 //        cv::imwrite("stitch-result.jpg", stitch_image);
         delete frame1;
-        delete frame2;
-        delete frame3;
-        delete frame4;
+
 
         std::cout << "frame " << frame_count++ << std::endl;
         std::this_thread::sleep_for(std::chrono::microseconds(30));
     }
-
+#endif
     return 0;
 }

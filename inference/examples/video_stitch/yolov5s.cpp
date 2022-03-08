@@ -23,11 +23,8 @@ YoloV5::~YoloV5()
 
 }
 
-int YoloV5::preprocess(std::vector<CvFrameBaseInfo>& frames, std::vector<CvFrameInfo>& frame_info)
+int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::FrameInfo>& frame_infos)
 {
-    // CvFrameInfo fi;
-    // fi.frames.assign(frames.begin(), frames.end());
-    // frame_info.push_back(fi);
     int ret = 0;
     bm_handle_t handle = m_bmctx->handle();
 
@@ -43,7 +40,7 @@ int YoloV5::preprocess(std::vector<CvFrameBaseInfo>& frames, std::vector<CvFrame
             num = left;
         }
 
-        CvFrameInfo finfo;
+        bm::FrameInfo finfo;
         //1. Resize
         bm_image resized_imgs[MAX_BATCH];
         ret = bm::BMImage::create_batch(handle, m_net_h, m_net_w, FORMAT_RGB_PLANAR, DATA_TYPE_EXT_1N_BYTE, resized_imgs, num, 64);
@@ -51,19 +48,22 @@ int YoloV5::preprocess(std::vector<CvFrameBaseInfo>& frames, std::vector<CvFrame
 
         for(int i = 0;i < num; ++i) {
             bm_image image1;
-            cv::bmcv::toBMI(*frames[start_idx + i].mat, &image1);
-            //bm::BMImage::from_avframe(handle, frames[start_idx + i].avframe, image1, true);
+            bm::BMImage::from_avframe(handle, frames[start_idx + i].avframe, image1, false);
             ret = bmcv_image_vpp_convert(handle, 1, image1, &resized_imgs[i]);
             assert(BM_SUCCESS == ret);
 
             // convert data to jpeg
             uint8_t *jpeg_data=NULL;
             size_t out_size = 0;
+#if USE_QTGUI
+            bmcv_image_jpeg_enc(handle, 1, &image1, (void**)&jpeg_data, &out_size);
+#endif
+            frames[start_idx + i].jpeg_data = std::make_shared<bm::Data>(jpeg_data, out_size);
+            frames[start_idx + i].height= frames[start_idx + i].avframe->height;
+            frames[start_idx + i].width = frames[start_idx + i].avframe->width;
+//            av_frame_unref(frames[start_idx + i].avframe);
+//            av_frame_free(&frames[start_idx + i].avframe);
 
-            //frames[start_idx + i].jpeg_data = std::make_shared<bm::Data>(jpeg_data, out_size);
-            frames[start_idx + i].height= image1.height;
-            frames[start_idx + i].width = image1.width;
-            
             finfo.frames.push_back(frames[start_idx+i]);
             bm_image_destroy(image1);
         }
@@ -112,12 +112,13 @@ int YoloV5::preprocess(std::vector<CvFrameBaseInfo>& frames, std::vector<CvFrame
         bm::BMImage::destroy_batch(resized_imgs, num);
         bm::BMImage::destroy_batch(convertto_imgs, num);
 
-        frame_info.push_back(finfo);
+        frame_infos.push_back(finfo);
     }
-    return ret;
+
+
 }
 
-int YoloV5::forward(std::vector<CvFrameInfo> &frame_infos)
+int YoloV5::forward(std::vector<bm::FrameInfo>& frame_infos)
 {
     int ret = 0;
     for(int b = 0; b < frame_infos.size(); ++b) {
@@ -131,20 +132,15 @@ int YoloV5::forward(std::vector<CvFrameInfo> &frame_infos)
                 frame_infos[b].frames.size(), m_net_h, m_net_w, false, false);
 #endif
         ret = m_bmnet->forward(frame_infos[b].input_tensors.data(), frame_infos[b].input_tensors.size(),
-                              frame_infos[b].output_tensors.data(), frame_infos[b].output_tensors.size());
+                               frame_infos[b].output_tensors.data(), frame_infos[b].output_tensors.size());
         assert(BM_SUCCESS == ret);
     }
 
-    return ret;
+    return 0;
 }
 
-int YoloV5::postprocess(std::vector<CvFrameInfo> &frame_infos, std::vector<CvFrameBaseInfo>& frames)
+int YoloV5::postprocess(std::vector<bm::FrameInfo> &frame_infos)
 {
-    // for(int i=0;i < frame_infos.size(); ++i) {
-    //     if (m_pfnDetectFinish != nullptr) {
-    //         m_pfnDetectFinish(frame_infos[i]);
-    //     }
-    // }
     for(int i=0;i < frame_infos.size(); ++i) {
 
         // Free AVFrames
@@ -152,24 +148,22 @@ int YoloV5::postprocess(std::vector<CvFrameInfo> &frame_infos, std::vector<CvFra
 
         // extract face detection
         extract_yolobox_cpu(frame_info);
-        
-        for_each(frame_info.frames.begin(), 
-                 frame_info.frames.end(), [&frames](const CvFrameBaseInfo& f){
-            frames.push_back(f);
-        });
-        
 
-        // for(int j = 0; j < frame_info.frames.size(); ++j) {
+        if (m_pfnDetectFinish != nullptr) {
+            m_pfnDetectFinish(frame_info);
+        }
 
-        //     auto reff = frame_info.frames[j];
-        //     assert(reff.avpkt != nullptr);
-        //     av_packet_unref(reff.avpkt);
-        //     av_packet_free(&reff.avpkt);
+        for(int j = 0; j < frame_info.frames.size(); ++j) {
 
-        //     assert(reff.avframe == nullptr);
-        //     av_frame_unref(reff.avframe);
-        //     av_frame_free(&reff.avframe);
-        // }
+            auto reff = frame_info.frames[j];
+            assert(reff.avpkt != nullptr);
+            av_packet_unref(reff.avpkt);
+            av_packet_free(&reff.avpkt);
+
+            //assert(reff.avframe == nullptr);
+//            av_frame_unref(reff.avframe);
+//            av_frame_free(&reff.avframe);
+        }
 
         // Free Tensors
         for(auto& tensor : frame_info.input_tensors) {
@@ -180,25 +174,12 @@ int YoloV5::postprocess(std::vector<CvFrameInfo> &frame_infos, std::vector<CvFra
             bm_free_device(m_bmctx->handle(), tensor.device_mem);
         }
 
+        if (m_nextMediaPipe) {
+            m_nextMediaPipe->push_frame(frame_info);
+        }
+
     }
-    return 0;
 }
-
-int YoloV5::stitch(std::vector<CvFrameBaseInfo> &frame_infos, std::vector<CvFrameBaseInfo>& frames) {
-    int ret = 0;
-    m_stitch->dataInput(&frame_infos[0], frame_infos.size());
-    m_stitch->go(frames);
-    return 0;
-}
-
-
-int YoloV5::encode(std::vector<CvFrameBaseInfo>& frames) {
-    for_each(frames.begin(), frames.end(), [this](const CvFrameBaseInfo& frame){
-        this->m_encoder->encode(frame.mat);
-    });
-    return 0;
-}
-
 
 float YoloV5::sigmoid(float x)
 {
@@ -276,12 +257,13 @@ void YoloV5::NMS(bm::NetOutputObjects &dets, float nmsConfidence)
     }
 }
 
-void YoloV5::extract_yolobox_cpu(CvFrameInfo& frameInfo)
+void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
 {
     std::vector<bm::NetOutputObject> yolobox_vec;
     auto& images = frameInfo.frames;
     for(int batch_idx = 0; batch_idx < (int)images.size(); ++ batch_idx)
     {
+        yolobox_vec.clear();
         auto& frame = images[batch_idx];
         int frame_width = frame.width;
         int frame_height = frame.height;
@@ -299,7 +281,6 @@ void YoloV5::extract_yolobox_cpu(CvFrameInfo& frameInfo)
 
         int output_num = m_bmnet->outputTensorNum();
         int nout = m_class_num + 5;
-        yolobox_vec.clear();
 
         for(int tidx = 0; tidx < output_num; ++tidx) {
             bm::BMNNTensor output_tensor(m_bmctx->handle(), "", 1.0, &frameInfo.output_tensors[tidx]);
@@ -336,23 +317,8 @@ void YoloV5::extract_yolobox_cpu(CvFrameInfo& frameInfo)
                 }
             }
         } // end of tidx
-        
+
         NMS(yolobox_vec, m_nmsThreshold);
-        // // draw box        
-
-        if (yolobox_vec.size() > 0) {
-            bm_image bimage;
-            cv::bmcv::toBMI(*frame.mat, &bimage);
-            bmcv_rect_t rects[yolobox_vec.size()];
-            for (int i = 0; i < yolobox_vec.size(); ++i) {
-                rects[i].start_x = yolobox_vec[i].x1;
-                rects[i].start_y = yolobox_vec[i].y1;
-                rects[i].crop_w  = yolobox_vec[i].x2 -  yolobox_vec[i].x1;
-                rects[i].crop_h  = yolobox_vec[i].y2 -  yolobox_vec[i].y1;
-            }
-            bmcv_image_draw_rectangle(m_bmctx->handle(), bimage, yolobox_vec.size(), rects, 3, 255, 0, 0);
-        }
-
         bm::NetOutputDatum datum(yolobox_vec);
         frameInfo.out_datums.push_back(datum);
     }

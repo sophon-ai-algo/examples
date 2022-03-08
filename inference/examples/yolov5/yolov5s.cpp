@@ -260,6 +260,7 @@ void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
     auto& images = frameInfo.frames;
     for(int batch_idx = 0; batch_idx < (int)images.size(); ++ batch_idx)
     {
+        yolobox_vec.clear();
         auto& frame = images[batch_idx];
         int frame_width = frame.width;
         int frame_height = frame.height;
