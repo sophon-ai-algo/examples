@@ -5,8 +5,10 @@
 #include "openpose.h"
 #include "pose_postprocess.h"
 
-OpenPose::OpenPose(bm::BMNNContextPtr bmctx, int maxBatch):m_bmctx(bmctx),MAX_BATCH(maxBatch)
+OpenPose::OpenPose(bm::BMNNContextPtr bmctx, int maxBatch, std::string strModelType):m_bmctx(bmctx),MAX_BATCH(maxBatch)
 {
+    m_model_type = strModelType.compare("coco_18") == 0 ? bm::PoseKeyPoints::EModelType::COCO_18 : bm::PoseKeyPoints::EModelType::BODY_25;
+
     // the bmodel has only one yolo network.
     auto net_name = m_bmctx->network_name(0);
     m_bmnet = std::make_shared<bm::BMNNNetwork>(m_bmctx->bmrt(), net_name);
@@ -228,7 +230,7 @@ void OpenPose::decode_from_output_tensor(bm::FrameInfo &frame_info) {
 
     std::vector<bm::PoseKeyPoints> vct_keypoints;
     cv::Size originSize (frame_info.frames[0].width, frame_info.frames[0].height);
-    OpenPosePostProcess::getKeyPoints(tensorPtr, netInputSize, originSize, vct_keypoints);
+    OpenPosePostProcess::getKeyPoints(tensorPtr, netInputSize, originSize, vct_keypoints, m_model_type);
     for(int i = 0;i < vct_keypoints.size(); ++i) {
         frame_info.out_datums.push_back(bm::NetOutputDatum(vct_keypoints[i]));
     }

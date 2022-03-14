@@ -20,10 +20,10 @@ class OpenPose : public bm::DetectorDelegate<bm::FrameBaseInfo, bm::FrameInfo> {
     bool m_use_custom_scale {false};
     float m_input_scale;
     float m_output_scale;
-
+    bm::PoseKeyPoints::EModelType m_model_type;
 
 public:
-    OpenPose(bm::BMNNContextPtr bmctx, int maxBatch=4);
+    OpenPose(bm::BMNNContextPtr bmctx, int maxBatch=4, std::string strModelType = "coco");
     void setParams(bool useCustomScale, float customInputScale, float customOutputScale);
 
     ~OpenPose();

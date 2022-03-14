@@ -214,6 +214,32 @@ void video_pixmap_widget::drawBox(QImage &dst)
 }
 
 void video_pixmap_widget::drawPose(QImage &dst) {
+#define POSE_BODY_25_COLORS_RENDER_GPU \
+        255.f,     0.f,    85.f, \
+        255.f,     0.f,     0.f, \
+        255.f,    85.f,     0.f, \
+        255.f,   170.f,     0.f, \
+        255.f,   255.f,     0.f, \
+        170.f,   255.f,     0.f, \
+         85.f,   255.f,     0.f, \
+          0.f,   255.f,     0.f, \
+        255.f,     0.f,     0.f, \
+          0.f,   255.f,    85.f, \
+          0.f,   255.f,   170.f, \
+          0.f,   255.f,   255.f, \
+          0.f,   170.f,   255.f, \
+          0.f,    85.f,   255.f, \
+          0.f,     0.f,   255.f, \
+        255.f,     0.f,   170.f, \
+        170.f,     0.f,   255.f, \
+        255.f,     0.f,   255.f, \
+         85.f,     0.f,   255.f, \
+          0.f,     0.f,   255.f, \
+          0.f,     0.f,   255.f, \
+          0.f,     0.f,   255.f, \
+          0.f,   255.f,   255.f, \
+          0.f,   255.f,   255.f, \
+          0.f,   255.f,   255.f
 #define POSE_COCO_COLORS_RENDER_GPU \
 	255.f, 0.f, 85.f, \
 	255.f, 0.f, 0.f, \
@@ -235,8 +261,26 @@ void video_pixmap_widget::drawPose(QImage &dst) {
 	85.f, 0.f, 255.f
     Q_ASSERT(m_netOutputDatum.type == bm::NetOutputDatum::Pose);
     if (m_netOutputDatum.pose_keypoints.keypoints.size() == 0) return;
-    const std::vector<float> POSE_COCO_COLORS_RENDER{ POSE_COCO_COLORS_RENDER_GPU };
-    const std::vector<unsigned int> POSE_COCO_PAIRS_RENDER{1, 2, 1, 5, 2, 3, 3, 4, 5, 6, 6, 7, 1, 8, 8, 9, 9, 10, 1, 11, 11, 12, 12, 13, 1, 0, 0, 14, 14, 16, 0, 15, 15, 17};
+
+    std::vector<float> POSE_COCO_COLORS_RENDER;
+    if (m_netOutputDatum.pose_keypoints.modeltype == bm::PoseKeyPoints::EModelType::BODY_25) {
+        std::vector<float> tmp = {POSE_BODY_25_COLORS_RENDER_GPU};
+        POSE_COCO_COLORS_RENDER.swap(tmp);
+    } else {
+        std::vector<float> tmp = {POSE_COCO_COLORS_RENDER_GPU};
+        POSE_COCO_COLORS_RENDER.swap(tmp);
+    }
+
+    std::vector<unsigned int> POSE_COCO_PAIRS_RENDER;
+    if (m_netOutputDatum.pose_keypoints.modeltype == bm::PoseKeyPoints::EModelType::BODY_25) {
+        std::vector<unsigned int> tmp = {1, 8, 1, 2, 1, 5, 2, 3, 3, 4, 5, 6, 6, 7, 8, 9, 9, 10, 10, 11, 8, 12, 12, 13, 13, 14, 1, 0, 0, 15, 15,
+                                         17, 0, 16, 16, 18, 14, 19, 19, 20, 14, 21, 11, 22, 22, 23, 11, 24};
+        POSE_COCO_PAIRS_RENDER.swap(tmp);
+    } else {
+        std::vector<unsigned int> tmp = {1, 2, 1, 5, 2, 3, 3, 4, 5, 6, 6, 7, 1, 8, 8, 9, 9, 10, 1, 11, 11, 12, 12, 13, 1, 0, 0, 14, 14, 16, 0, 15, 15, 17};
+        POSE_COCO_PAIRS_RENDER.swap(tmp);
+    }
+
     // Parameters
     const auto thicknessCircleRatio = 1.f / 75.f;
     const auto thicknessLineRatioWRTCircle = 0.75f;

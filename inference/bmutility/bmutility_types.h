@@ -444,9 +444,14 @@ namespace bm {
     using ObjectFeature = std::vector<float>;
 
     struct PoseKeyPoints{
+        enum EModelType {
+            BODY_25 = 0,
+            COCO_18 = 1
+        };
         std::vector<float> keypoints;
         std::vector<int> shape;
         int width, height;
+        EModelType modeltype;
     };
 
     struct SafetyhatObject {
