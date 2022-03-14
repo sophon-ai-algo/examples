@@ -99,7 +99,9 @@ namespace bm {
         int threshold_{50};
     public:
         BMPerf() {}
-
+        BMPerf(const std::string &name, int threshold = 0) {
+            begin(name, threshold);
+        }
         ~BMPerf() {}
 
         void begin(const std::string &name, int threshold = 0) {

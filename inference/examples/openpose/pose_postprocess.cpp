@@ -189,17 +189,68 @@ int OpenPosePostProcess::Nms(PoseBlobPtr bottom_blob, PoseBlobPtr top_blob, floa
     }
 }
 
+std::vector<unsigned int> OpenPosePostProcess::getPosePairs(bm::PoseKeyPoints::EModelType model_type) {
+    switch (model_type) {
+        case bm::PoseKeyPoints::EModelType::BODY_25:
+            return {
+                1, 8, 1, 2, 1, 5, 2, 3, 3, 4, 5, 6, 6, 7, 8, 9, 9, 10, 10, 11, 8, 12, 12, 13, 13, 14, 1, 0, 0, 15, 15,
+                17, 0, 16, 16, 18, 2, 17, 5, 18, 14, 19, 19, 20, 14, 21, 11, 22, 22, 23, 11, 24
+            };
+        case bm::PoseKeyPoints::EModelType::COCO_18:
+            return {
+                1, 2, 1, 5, 2, 3, 3, 4, 5, 6, 6, 7, 1, 8, 8, 9, 9, 10, 1, 11, 11, 12, 12, 13, 1, 0, 0, 14, 14, 16, 0,
+                15, 15, 17, 2, 16, 5, 17
+            };
+        default:
+            // COCO_18
+            return {
+                1, 2, 1, 5, 2, 3, 3, 4, 5, 6, 6, 7, 1, 8, 8, 9, 9, 10, 1, 11, 11, 12, 12, 13, 1, 0, 0, 14, 14, 16, 0,
+                15, 15, 17, 2, 16, 5, 17
+            };
+    }
+}
+
+std::vector<unsigned int> OpenPosePostProcess::getPoseMapIdx(bm::PoseKeyPoints::EModelType model_type) {
+    switch (model_type) {
+        case bm::PoseKeyPoints::EModelType::BODY_25:
+            return {
+                26,27, 40,41, 48,49, 42,43, 44,45, 50,51, 52,53, 32,33, 28,29, 30,31, 34,35, 36,37, 38,39, 56,57, 58,59, 62,63, 60,61, 64,65, 46,47, 54,55, 66,67, 68,69, 70,71, 72,73, 74,75, 76,77
+            };
+        case bm::PoseKeyPoints::EModelType::COCO_18:
+            return {
+                31, 32, 39, 40, 33, 34, 35, 36, 41, 42, 43, 44, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 47, 48, 49, 50, 53, 54, 51, 52, 55, 56, 37, 38, 45, 46
+            };
+        default:
+            // COCO_18
+            return {
+                    31, 32, 39, 40, 33, 34, 35, 36, 41, 42, 43, 44, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 47, 48, 49, 50, 53, 54, 51, 52, 55, 56, 37, 38, 45, 46
+            };
+    }
+}
+
+int OpenPosePostProcess::getNumberBodyParts(bm::PoseKeyPoints::EModelType model_type) {
+    switch (model_type) {
+        case bm::PoseKeyPoints::EModelType::BODY_25:
+            return 25;
+        case bm::PoseKeyPoints::EModelType::COCO_18:
+            return 18;
+        default:
+            // COCO_18
+            return 18;
+    }
+}
+
 void OpenPosePostProcess::connectBodyPartsCpu(std::vector<float>& poseKeypoints, const float* const heatMapPtr,
         const float* const peaksPtr, const cv::Size& heatMapSize, const int maxPeaks,
         const int interMinAboveThreshold, const float interThreshold, const int minSubsetCnt,
-        const float minSubsetScore, const float scaleFactor, std::vector<int>& keypointShape)
+        const float minSubsetScore, const float scaleFactor, std::vector<int>& keypointShape, bm::PoseKeyPoints::EModelType modelType)
 {
     keypointShape.resize(3);
-    const std::vector<unsigned int> POSE_COCO_PAIRS{ 1, 2, 1, 5, 2, 3, 3, 4, 5, 6, 6, 7, 1, 8, 8, 9, 9, 10, 1, 11, 11, 12, 12, 13, 1, 0, 0, 14, 14, 16, 0, 15, 15, 17, 2, 16, 5, 17 };
-    const std::vector<unsigned int> POSE_COCO_MAP_IDX{ 31, 32, 39, 40, 33, 34, 35, 36, 41, 42, 43, 44, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 47, 48, 49, 50, 53, 54, 51, 52, 55, 56, 37, 38, 45, 46 };
-    const auto& bodyPartPairs = POSE_COCO_PAIRS;
-    const auto& mapIdx = POSE_COCO_MAP_IDX;
-    const auto numberBodyParts = 18; //COCO 18 points
+//    const std::vector<unsigned int> POSE_COCO_PAIRS{ 1, 2, 1, 5, 2, 3, 3, 4, 5, 6, 6, 7, 1, 8, 8, 9, 9, 10, 1, 11, 11, 12, 12, 13, 1, 0, 0, 14, 14, 16, 0, 15, 15, 17, 2, 16, 5, 17 };
+//    const std::vector<unsigned int> POSE_COCO_MAP_IDX{ 31, 32, 39, 40, 33, 34, 35, 36, 41, 42, 43, 44, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 47, 48, 49, 50, 53, 54, 51, 52, 55, 56, 37, 38, 45, 46 };
+    const auto bodyPartPairs = getPosePairs(modelType);
+    const auto mapIdx = getPoseMapIdx(modelType);
+    const auto numberBodyParts = getNumberBodyParts(modelType); //COCO 18 points
 
     const auto numberBodyPartPairs = bodyPartPairs.size() / 2;
 
@@ -367,7 +418,12 @@ void OpenPosePostProcess::connectBodyPartsCpu(std::vector<float>& poseKeypoints,
                 }
             }
                 // Add ears connections (in case person is looking to opposite direction to camera)
-            else if (pairIndex == 17 || pairIndex == 18)
+            else if (
+                    (numberBodyParts == 18 && (pairIndex==17 || pairIndex==18))
+                    || ((numberBodyParts == 19 || (numberBodyParts == 25)
+                         || numberBodyParts == 59 || numberBodyParts == 65)
+                        && (pairIndex==18 || pairIndex==19))
+                    )
             {
                 for (const auto& connectionKI : connectionK)
                 {
@@ -554,7 +610,7 @@ void OpenPosePostProcess::renderPoseKeypointsCpu(cv::Mat& frame, const std::vect
 }
 
 int OpenPosePostProcess::getKeyPoints(bm::BMNNTensorPtr outputTensorPtr, cv::Size& netInputSize, cv::Size& originSize,
-        std::vector<bm::PoseKeyPoints> &body_keypoints) {
+        std::vector<bm::PoseKeyPoints> &body_keypoints, bm::PoseKeyPoints::EModelType model_type) {
     OpenPosePostProcess postProcess;
     int n = outputTensorPtr->get_num();
     int chan_num = outputTensorPtr->get_shape()->dims[1];
@@ -571,19 +627,25 @@ int OpenPosePostProcess::getKeyPoints(bm::BMNNTensorPtr outputTensorPtr, cv::Siz
                     resizedBlob->data() + netInputSize.height*netInputSize.width * ch);
             cv::resize(src, dst, netInputSize, 0, 0, cv::INTER_CUBIC);
         }
+        PoseBlobPtr nms_blob;
+        if (model_type == bm::PoseKeyPoints::EModelType::COCO_18) {
+            nms_blob = std::make_shared<PoseBlob>(1, 56, POSE_MAX_PEOPLE + 1, 3);
+        } else {
+            nms_blob = std::make_shared<PoseBlob>(1, 77, POSE_MAX_PEOPLE + 1, 3);
+        }
 
-        PoseBlobPtr nms_blob = std::make_shared<PoseBlob>(1, 56, POSE_MAX_PEOPLE + 1, 3);
         postProcess.Nms(resizedBlob, nms_blob, 0.05);
 
         bm::PoseKeyPoints poseKeyPoints;
         poseKeyPoints.width = netInputSize.width;
         poseKeyPoints.height = netInputSize.height;
         connectBodyPartsCpu(poseKeyPoints.keypoints, resizedBlob->data(), nms_blob->data(), netInputSize,
-                            POSE_MAX_PEOPLE, 9, 0.05, 3, 0.4, 1, poseKeyPoints.shape);
+                            POSE_MAX_PEOPLE, 9, 0.05, 3, 0.4, 1, poseKeyPoints.shape,
+                            model_type);
 
         //cv::Mat img = cv::Mat::zeros(netInputSize, CV_8UC3);
         //renderPoseKeypointsCpu(img, keypoints, shape, 0.05, 1.0);
-
+        poseKeyPoints.modeltype = model_type;
         body_keypoints.push_back(poseKeyPoints);
     }
 }

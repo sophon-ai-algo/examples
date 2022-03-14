@@ -13,7 +13,8 @@ const char *APP_ARG_STRING =
         "{custom_scale | true | Use custom scale}"
         "{input_scale | 256 | INT8 input scale}"
         "{output_scale | 0.0104515 | INT8 output scale}"
-        "{max_batch | 4 | Max batch size}";
+        "{max_batch | 4 | Max batch size}"
+        "{model_pose | body_18 | body_25 for 25 body parts, coco for 18 body parts }";
 
 int main(int argc, char *argv[])
 {
@@ -33,6 +34,7 @@ int main(int argc, char *argv[])
 
     std::string bmodel_file = parser.get<std::string>("bmodel");
     std::string output_url = parser.get<std::string>("output");
+    std::string model_pose = parser.get<std::string>("model_pose");
     int total_num = parser.get<int>("num");
     Config cfg;
     if (!cfg.valid_check(total_num)) {
@@ -71,7 +73,7 @@ int main(int argc, char *argv[])
         bmlib_log_set_level(BMLIB_LOG_VERBOSE);
 
         int max_batch = parser.get<int>("max_batch");
-        std::shared_ptr<OpenPose> detector = std::make_shared<OpenPose>(contextPtr, max_batch);
+        std::shared_ptr<OpenPose> detector = std::make_shared<OpenPose>(contextPtr, max_batch, model_pose);
         if (parser.get<bool>("custom_scale")) {
             float input_scale = parser.get<float>("input_scale");
             float output_scale = parser.get<float>("output_scale");
