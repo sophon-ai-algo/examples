@@ -8,5 +8,5 @@ cpp目录，cpp的示例程序
 cpp代码对应模型：face_detection_fp32_b1/b4.bmodel，对应9个输出tensor
 python代码对应模型：retinaface_***_384x640_fp32_b1/b4.bmodel，对应3个输出tensor
 
-从百度网盘下载所需模型：
-链接: https://pan.baidu.com/s/1SdDNK90Z4YSAGHz4ycNT7w 提取码: 38q1 
+> 已经转换好的bmodel文件可从以下百度网盘下载：
+> 链接: https://pan.baidu.com/s/1d3f8CjzC3BF2-2I2OF0q1g 提取码: lt59 
