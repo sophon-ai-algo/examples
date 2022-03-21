@@ -281,6 +281,7 @@ int YoloV5::post_process(const std::vector<cv::Mat> &images, std::vector<YoloV5B
 
   for(int batch_idx = 0; batch_idx < input_batch; ++ batch_idx)
   {
+    yolobox_vec.clear();
     auto& frame = images[batch_idx];
     int frame_width = frame.cols;
     int frame_height = frame.rows;
