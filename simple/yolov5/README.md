@@ -2,7 +2,7 @@
 
 ## 目录
 
-* [模型名称](#模型名称)
+* [YOLOv5](#YOLOv5)
   * [目录](#目录)
   * [1. 简介](#1-简介)
   * [2. 数据集](#2-数据集)
@@ -10,11 +10,13 @@
     * [3.1 准备环境](#31-准备环境)
     * [3.2 准备模型](#32-准备模型)
     * [3.3 准备量化集](#33-准备量化集)
-    * [3.4 准备测试文件](#34-准备测试文件)
   * [4. 模型转换](#4-模型转换)
     * [4.1 生成FP32 BModel](#41-生成fp32-bmodel)
     * [4.2 生成INT8 BModel](#42-生成int8-bmodel)
-  * [5. 模型部署](#5-模型部署)
+  * [5. 部署测试](#5-部署测试)
+    * [5.1 环境配置](#51-环境配置)
+    * [5.2 C++例程部署测试](#52-C++例程部署测试)
+    * [5.3 Python例程部署测试](#53-Python例程部署测试)
 
 ## 1. 简介
 
@@ -452,8 +454,8 @@ Python代码无需编译，无论是x86 SC平台还是arm SE5平台配置好环�
 | 2    | yolov5_bmcv_3output.py   | 使用SAIL解码、BMCV前处理、SAIL推理、OpenCV后处理，适用模型为3个输出 |
 | 3    | yolov5_opencv_1output.py | 使用OpenCV解码、OpenCV前处理、SAIL推理、OpenCV后处理，适用模型为1个输出 |
 | 4    | yolov5_opencv_3output.py | 使用OpenCV解码、OpenCV前处理、SAIL推理、OpenCV后处理，适用模型为3个输出 |
-| 5    | yolov5_pytorch.py        | 使用OpenCV读取图片和前处理、pytorch推理、OpenCV后处理，适用模型为yolov5s.torchscript.640.1.pt |
-| 6    | yolov5_sail.py           | 使用OpenCV读取图片和前处理、SAIL推理、OpenCV后处理，适用模型为yolov5s.torchscript.640.1.pt |
+| 5    | yolov5_pytorch.py        | 使用OpenCV读取图片和前处理、pytorch推理、OpenCV后处理，适用模型为old/yolov5s.torchscript.640.1.pt |
+| 6    | yolov5_sail.py           | 使用OpenCV读取图片和前处理、SAIL推理、OpenCV后处理，适用模型为old/yolov5s_fp32_640_1.bmodel和yolov5s_fix8b_640_1.bmodel |
 
 
 
