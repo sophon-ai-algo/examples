@@ -118,13 +118,10 @@ int main(int argc, char *argv[])
     int cpu_num = std::thread::hardware_concurrency();
     int tpu_num = 1;
     param.preprocess_thread_num = 1;
-    param.preprocess_blocking_push = true;
     param.preprocess_queue_size = 5;
     param.inference_thread_num = tpu_num;
-    param.inference_blocking_push = true;
     param.inference_queue_size = 8;
     param.postprocess_thread_num = 1;
-    param.postprocess_blocking_push = true;
     param.postprocess_queue_size = 5;
     pipeline.init(param, retinaface);
 

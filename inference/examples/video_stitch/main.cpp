@@ -13,7 +13,8 @@
 
 const char* APP_ARG_STRING= //"{bmodel | /data/models/yolov5s_4batch_int8.bmodel | input bmodel path}"
                        "{bmodel | /data/models/yolov5s_1batch_fp32.bmodel | input bmodel path}"
-                       "{max_batch | 4 | Max batch size}";
+                       "{max_batch | 4 | Max batch size}"
+                       "{config | ./cameras.json | path to cameras.json}";
 
 
 int main(int argc, char *argv[])
@@ -32,12 +33,14 @@ int main(int argc, char *argv[])
     }
 
     std::string bmodel_file = parser.get<std::string>("bmodel");
+    std::string config_file = parser.get<std::string>("config");
+
     int total_num = parser.get<int>("num");
     if (total_num != 4) {
         std::cerr << "Only support 2x2 layout, make the num be equal to 4!!";
         return -1;
     }
-    Config cfg;
+    Config cfg(config_file.c_str());
     if (!cfg.valid_check(total_num)) {
         std::cout << "ERROR:cameras.json config error, please check!" << std::endl;
         return -1;
@@ -68,11 +71,13 @@ int main(int argc, char *argv[])
     param.stitch_thread_num = 1;
     param.stitch_queue_size = 20;
     param.encode_thread_num = 1;
-    param.encode_queue_size = 20;
-    param.stitch_blocking_push = false;
-    param.encode_blocking_push = false;
+    param.encode_queue_size = 10;
 
-    m_media_pipeline.init(param, stitch);
+    m_media_pipeline.init(
+        param, stitch,
+        bm::FrameInfo::FrameInfoDestroyFn,
+        bm::FrameBaseInfo::FrameBaseInfoDestroyFn
+    );
 
     for(int card_idx = 0; card_idx < card_num; ++card_idx) {
         int dev_id = cfg.cardDevId(card_idx);

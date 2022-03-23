@@ -539,7 +539,19 @@ namespace bm {
                 for(int i = 0;i < pose_keypoints.keypoints.size(); ++i) {
                     buf->push_back(pose_keypoints.keypoints[i]);
                 }
-            }else{
+            } else if(SaftyhatRecogniton == type) {
+                buf->push_back((uint32_t)safetyhat_objects.size());
+                for(auto o: safetyhat_objects) {
+                    buf->push_back(o.x1);
+                    buf->push_back(o.y1);
+                    buf->push_back(o.x2);
+                    buf->push_back(o.y2);
+                    buf->push_back(o.score);
+                    buf->push_back(o.class_id);
+                    buf->push_back(o.index);
+                    buf->push_back(o.confidence);
+                }
+            } else {
                 printf("Unsupport type=%d\n", type);
                 assert(0);
             }
@@ -607,6 +619,26 @@ namespace bm {
             memset(&resized, 0, sizeof(bm_image));
             memset(&original, 0, sizeof(bm_image));
         }
+
+        void destroy () {
+            if (avpkt != nullptr) {
+                av_packet_unref(avpkt);
+                av_packet_free(&avpkt);
+                avpkt = nullptr;
+            }
+            if (avframe != nullptr) {
+                av_frame_unref(avframe);
+                av_frame_free(&avframe);
+                avframe = nullptr;
+            }
+            bm_image_destroy(original);
+            bm_image_destroy(resized);
+            cvimg.release();
+            jpeg_data.reset();
+        }
+        static void FrameBaseInfoDestroyFn(bm::FrameBaseInfo& obj) {
+            obj.destroy();
+        }
     };
 
     struct FrameInfo {
@@ -615,6 +647,27 @@ namespace bm {
         std::vector<bm_tensor_t> input_tensors;
         std::vector<bm_tensor_t> output_tensors;
         std::vector<bm::NetOutputDatum> out_datums;
+        bm_handle_t handle;
+
+        void destroy() {
+            for (auto& f : frames) {
+                f.destroy();
+            }
+            for (auto& f : frames) {
+                f.destroy();
+            }
+            // Free Tensors
+            for(auto& tensor : input_tensors) {
+                bm_free_device(handle, tensor.device_mem);
+            }
+
+            for(auto& tensor: output_tensors) {
+                bm_free_device(handle, tensor.device_mem);
+            }
+        }
+        static void FrameInfoDestroyFn(bm::FrameInfo& obj) {
+            obj.destroy();
+        }
     };
 
 #endif

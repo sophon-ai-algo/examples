@@ -26,10 +26,22 @@ private:
     }
 
     void wait_and_push_one(T &&data) {
-        while (m_limit > 0 && this->size_impl() >= m_limit && !m_stop)
-        {
-            pthread_cond_wait(&m_pop_cond, &m_qmtx);
+        if (m_limit > 0 && this->size_impl() >= m_limit && !m_stop) {
+            std::cout << "WARNING: " << m_name << " queue_size(" << this->size_impl() << ") > "
+                      << m_limit << std::endl;
+            // flow control by dropping
+            if (m_drop_fn != nullptr) {
+                this->drop_half_();
+                std::cout << m_name << " queue_size after dropping, size: " << this->size_impl() << std::endl;;
+            } else {
+            // blocking
+                do 
+                {
+                    pthread_cond_wait(&m_pop_cond, &m_qmtx);
+                } while (m_limit > 0 && this->size_impl() >= m_limit && !m_stop);
+            }
         }
+
         if (m_type == 0)
         {
             m_queue.push(std::move(data));
@@ -40,7 +52,7 @@ private:
 
 public:
     BlockingQueue(const std::string& name="" ,int type=0, int limit = 0)
-        : m_stop(false), m_limit(limit) {
+        : m_stop(false), m_limit(limit), m_drop_fn(nullptr) {
         m_name = name;
         m_type = type;
         pthread_mutex_init(&m_qmtx, NULL);
@@ -175,10 +187,47 @@ err:
         return queue_size;
     }
 
+    int set_drop_fn(std::function<void(T& obj)> fn) {
+        m_drop_fn = fn;
+        return m_limit;
+    }
+
+    void drop_half_() {
+        if (m_type == 0) {
+            std::queue<T> temp;
+            size_t num = m_queue.size();
+            for(size_t i = 0; i < num; i++) {
+                auto elem = m_queue.front();
+                if (i % 2 == 0) {
+                    temp.push(elem); 
+                }
+                else{
+                    m_drop_fn(elem);
+                }
+                m_queue.pop();
+            }
+            m_queue.swap(temp);
+        }
+        else {
+            std::vector<T> temp;
+            size_t num = m_vec.size();
+            for (size_t i = 0; i < num; i++) {
+                auto elem = m_vec[i];
+                if (i % 2 == 0) {
+                    temp.push_back(elem); 
+                }
+                else{
+                    m_drop_fn(elem);
+                }
+            }
+            m_vec.swap(temp);
+        }
+    }
+
     void drop(int num=0){
         int queue_size;
         pthread_mutex_lock(&m_qmtx);
-	if (num == 0) {
+        if (num == 0) {
             num = this->size_impl();
         }
         if (this->size_impl() < num)
@@ -211,6 +260,7 @@ private:
     pthread_mutex_t m_qmtx;
     pthread_cond_t m_condv, m_pop_cond;
     int m_type, m_limit; //0:queue,1:vector
+    std::function<void(T& obj)> m_drop_fn;
 };
 
 template <typename T>

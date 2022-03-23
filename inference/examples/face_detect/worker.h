@@ -72,17 +72,14 @@ public:
         if (config.get_phrase_config("preprocess", cfg)){
             param.preprocess_thread_num    = cfg.thread_num;
             param.preprocess_queue_size    = cfg.queue_size;
-            param.preprocess_blocking_push = cfg.blocking;
         }
         if (config.get_phrase_config("inference", cfg)){
             param.inference_thread_num    = cfg.thread_num;
             param.inference_queue_size    = cfg.queue_size;
-            param.inference_blocking_push = cfg.blocking;
         }
         if (config.get_phrase_config("postprocess", cfg)){
             param.postprocess_thread_num    = cfg.thread_num;
             param.postprocess_queue_size    = cfg.queue_size;
-            param.postprocess_blocking_push = cfg.blocking;
         }
     }
 };

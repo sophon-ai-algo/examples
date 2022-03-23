@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 option(HAVE_TRACKER "Enable tracker" ON)
 option(USE_BM_FFMPEG "Use bm ffmpeg" ON)
 option(USE_BM_OPENCV "Use bm opencv" ON)
-option(USE_QTGUI "Whether has GUI support" ON)
+option(USE_QTGUI "Whether has GUI support" OFF)
 
 add_compile_options(-Wno-deprecated-declarations -fPIC)
 

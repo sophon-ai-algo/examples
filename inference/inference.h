@@ -43,15 +43,12 @@ namespace bm {
             batch_num=4;
         }
 
-        bool preprocess_blocking_push = false;
         int preprocess_queue_size;
         int preprocess_thread_num;
 
-        bool inference_blocking_push = false;
         int inference_queue_size;
         int inference_thread_num;
 
-        bool postprocess_blocking_push = false;
         int postprocess_queue_size;
         int postprocess_thread_num;
         int batch_num;
@@ -88,22 +85,16 @@ namespace bm {
             const int underlying_type_std_queue = 0;
             m_preprocessQue = std::make_shared<BlockingQueue<T1>>(
                 "preprocess", underlying_type_std_queue,
-                param.preprocess_blocking_push ? param.preprocess_queue_size : 0);
+                param.preprocess_queue_size);
             m_postprocessQue = std::make_shared<BlockingQueue<T2>>(
                 "postprocess", underlying_type_std_queue,
-                param.postprocess_blocking_push ? param.postprocess_queue_size : 0);
+                param.postprocess_queue_size);
             m_forwardQue = std::make_shared<BlockingQueue<T2>>(
                 "inference", underlying_type_std_queue,
-                param.inference_blocking_push ? param.inference_queue_size : 0);
+                param.inference_queue_size);
 
             m_preprocessWorkerPool.init(m_preprocessQue.get(), param.preprocess_thread_num, param.batch_num, param.batch_num);
             m_preprocessWorkerPool.startWork([this, &param](std::vector<T1> &items) {
-                if (!param.preprocess_blocking_push &&
-                    m_preprocessQue->size() > m_param.preprocess_queue_size) {
-                    std::cout << "WARNING:preprocess queue_size(" << m_preprocessQue->size() << ") > "
-                              << m_param.preprocess_queue_size << std::endl;
-                }
-
                 std::vector<T2> frames;
                 m_detect_delegate->preprocess(items, frames);
                 this->m_forwardQue->push(frames);
@@ -111,24 +102,12 @@ namespace bm {
 
             m_forwardWorkerPool.init(m_forwardQue.get(), param.inference_thread_num, 1, 8);
             m_forwardWorkerPool.startWork([this, &param](std::vector<T2> &items) {
-                if (!param.inference_blocking_push &&
-                    m_forwardQue->size() > m_param.inference_queue_size) {
-                    std::cout << "WARNING:forward queue_size(" << m_forwardQue->size() << ") > "
-                              << m_param.inference_queue_size << std::endl;
-                }
-
                 m_detect_delegate->forward(items);
                 this->m_postprocessQue->push(items);
             });
 
             m_postprocessWorkerPool.init(m_postprocessQue.get(), param.postprocess_thread_num, 1, 8);
             m_postprocessWorkerPool.startWork([this, &param](std::vector<T2> &items) {
-                if (!param.postprocess_blocking_push &&
-                    m_postprocessQue->size() > m_param.postprocess_queue_size) {
-                    std::cout << "WARNING:postprocess queue_size(" << m_postprocessQue->size() << ") > "
-                              << m_param.postprocess_queue_size << std::endl;
-                }
-
                 m_detect_delegate->postprocess(items);
             });
             return 0;

@@ -82,10 +82,7 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
     param.inference_queue_size = m_channel_num;
     param.postprocess_thread_num = cpu_num;
     param.postprocess_queue_size = m_channel_num;
-    param.preprocess_blocking_push = true;
-    param.inference_blocking_push = true;
-    param.postprocess_blocking_push = true;
-    //loadConfig(param, config);
+    loadConfig(param, config);
     m_inferPipe.init(param, m_detectorDelegate);
 
     for(int i = 0; i < m_channel_num; ++i) {

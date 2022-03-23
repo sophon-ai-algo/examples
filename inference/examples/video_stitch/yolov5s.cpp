@@ -41,6 +41,7 @@ int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::F
         }
 
         bm::FrameInfo finfo;
+        finfo.handle = handle;
         //1. Resize
         bm_image resized_imgs[MAX_BATCH];
         ret = bm::BMImage::create_batch(handle, m_net_h, m_net_w, FORMAT_RGB_PLANAR, DATA_TYPE_EXT_1N_BYTE, resized_imgs, num, 64);
