@@ -27,8 +27,9 @@ function build_app()
 
     local target_arch=$1
 
-    rm -fr $builddir;
-    mkdir $builddir; cd $builddir
+    rm -fr $builddir
+    mkdir $builddir
+    cd $builddir
     
     cmake_params="-DTARGET_ARCH=$target_arch -DUSE_QTGUI=OFF"
     
@@ -58,18 +59,26 @@ function release_example_apps() {
 
     for app in ${all_app_list[@]}
     do
-        for target_arch in ${target_arch_list[@]}
-        do
-           # copy bin files
-           if [ "$app" != "client" ]; then
-               mkdir -p release/$app/$arch
-               cp $builddir/bin/$app release/$app/$arch/
-               cp ./examples/cameras.json release/$app/
-           fi
-        done
-    
+         # copy bin files
+         if [ "$app" != "client" ]; then
+             mkdir -p release/$app/$arch
+             cp $builddir/bin/$app release/$app/$arch/
+             cp ./examples/cameras.json release/$app/
+         fi
     done
 }
+
+function release_others() {
+  local arch=$1
+  local all_app_list="cvs10 dr_demo"
+  for app in ${all_app_list[@]}
+  do
+     mkdir -p release/$app/$arch
+     cp $builddir/bin/$app release/$app/$arch/
+     cp ./examples/cameras.json release/$app/
+  done
+}
+
 
 function build_all() {
     local target_arch_list="x86 soc"
@@ -83,6 +92,7 @@ function build_all() {
             break
         fi
 		release_example_apps $arch
+		release_others $arch
 	done
 }
 

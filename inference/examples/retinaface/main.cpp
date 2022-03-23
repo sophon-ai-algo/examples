@@ -9,7 +9,8 @@
 #include <iomanip>
 
 const char *APP_ARG_STRING= "{bmodel | retinaface.bmodel | input bmodel path}"
-                       "{max_batch | 1 | do nothing}";
+                       "{max_batch | 1 | do nothing}"
+                       "{config | ./cameras.json | path to cameras.json}";
 
 int main(int argc, char *argv[])
 {
@@ -29,8 +30,10 @@ int main(int argc, char *argv[])
 
     std::string bmodel_file = parser.get<std::string>("bmodel");
     std::string output_url = parser.get<std::string>("output");
+    std::string config_file = parser.get<std::string>("config");
+
     int total_num = parser.get<int>("num");
-    Config cfg;
+    Config cfg(config_file.c_str());
     if (!cfg.valid_check(total_num)) {
         std::cout << "ERROR:cameras.json config error, please check!" << std::endl;
         return -1;

@@ -6,6 +6,7 @@
 #define INFERENCE_FRAMEWORK_CONFIGURATION_H
 
 #include <fstream>
+#include <unordered_map>
 #include "json/json.h"
 
 struct CardConfig {
@@ -13,16 +14,36 @@ struct CardConfig {
     std::vector<std::string> urls;
 };
 
+struct SConcurrencyConfig {
+    int  thread_num {4};
+    int  queue_size {4};
+    bool blocking   {false};
+
+    SConcurrencyConfig() = default;
+
+    SConcurrencyConfig(Json::Value& value) {
+        load(value);
+    }
+
+    void load(Json::Value& value) {
+        thread_num = value["thread_num"].asInt();
+        queue_size = value["queue_size"].asInt();
+        blocking   = value["blocking"].asBool();
+    }
+};
+
 class Config {
     std::vector<CardConfig> m_cards;
-    void load_cameras(std::vector<CardConfig> &vctCardConfig) {
+    std::unordered_map<std::string, SConcurrencyConfig> m_concurrency;
+
+    void load_cameras(std::vector<CardConfig> &vctCardConfig, const char* config_file = "cameras.json") {
 #if 1
         Json::Reader reader;
         Json::Value json_root;
 
-        std::ifstream in("cameras.json");
+        std::ifstream in(config_file);
         if (!in.is_open()) {
-            printf("Can't open file: cameras.json\n");
+            printf("Can't open file: %s\n", config_file);
             return;
         }
 
@@ -54,7 +75,13 @@ class Config {
 
             vctCardConfig.push_back(card_config);
         }
-
+        // load thread_num, queue_size for concurrency
+        if (json_root.isMember("pipeline")) {
+            Json::Value pipeline_config = json_root["pipeline"];
+            maybe_load_concurrency_cfg(pipeline_config, "preprocess");
+            maybe_load_concurrency_cfg(pipeline_config, "inference");
+            maybe_load_concurrency_cfg(pipeline_config, "postprocess");
+        }
         in.close();
 #else
         for(int i=0; i < 2; i ++) {
@@ -71,8 +98,8 @@ class Config {
     }
 
 public:
-    Config() {
-        load_cameras(m_cards);
+    Config(const char* config_file = "cameras.json") {
+        load_cameras(m_cards, config_file);
     }
 
     int cardNums() {
@@ -97,6 +124,20 @@ public:
         return true;
     }
 
+    bool maybe_load_concurrency_cfg(Json::Value& json_node, const char* phrase) {
+        if (json_node.isMember(phrase)) {
+            SConcurrencyConfig cfg(json_node[phrase]);
+            m_concurrency.insert(std::make_pair(phrase, cfg));
+        }
+    }
+
+    bool get_phrase_config(const char* phrase, SConcurrencyConfig& cfg) {
+        if (m_concurrency.find(phrase) != m_concurrency.end()) {
+            cfg = m_concurrency[phrase];
+            return true;
+        }
+        return false;
+    }
 };
 
 

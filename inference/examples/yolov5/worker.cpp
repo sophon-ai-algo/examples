@@ -81,9 +81,6 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
     param.inference_queue_size = m_channel_num;
     param.postprocess_thread_num = cpu_num;
     param.postprocess_queue_size = m_channel_num;
-    param.preprocess_blocking_push = true;
-    param.inference_blocking_push = true;
-    param.postprocess_blocking_push = true;
     param.batch_num = m_max_batch;
     loadConfig(param, config);
 

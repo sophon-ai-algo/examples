@@ -25,7 +25,8 @@ int main(int argc, char *argv[])
                           "{feat_delay | 1000 | feature delay in msec}"
                           "{feat_num | 8 | feature num per channel}"
                           "{skip | 1 | skip N frames to detect}"
-                          "{num | 1 | Channels to run}";
+                          "{num | 1 | Channels to run}"
+                          "{config | ./cameras.json | path to cameras.json}";
 
     std::string keys;
     keys = base_keys;
@@ -36,6 +37,8 @@ int main(int argc, char *argv[])
     }
 
     std::string bmodel_file = parser.get<std::string>("bmodel");
+    std::string config_file = parser.get<std::string>("config");
+
     int skip = parser.get<int>("skip");
     int model_type = parser.get<int>("model_type");
     int total_num = parser.get<int>("num");
@@ -44,7 +47,7 @@ int main(int argc, char *argv[])
 
     int enable_l2_ddrr = parser.get<int>("enable_l2_ddr_reduction");
 
-    Config cfg;
+    Config cfg(config_file.c_str());
     if (!cfg.valid_check(total_num)) {
         std::cout << "ERROR:cameras.json config error, please check!" << std::endl;
         return -1;
@@ -97,7 +100,7 @@ int main(int argc, char *argv[])
         std::shared_ptr<bm::DetectorDelegate<bm::FeatureFrame, bm::FeatureFrameInfo>> feature_delegate;
         feature_delegate = std::make_shared<FaceExtract>(contextPtr, max_batch);
         appPtr->setFeatureDelegate(feature_delegate);
-        appPtr->start(cfg.cardUrls(card_idx));
+        appPtr->start(cfg.cardUrls(card_idx), cfg);
         apps.push_back(appPtr);
     }
 

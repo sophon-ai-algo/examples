@@ -85,14 +85,17 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
     param.batch_num = m_max_batch;
     loadConfig(param, config);
 
-    m_inferPipe.init(param, m_detectorDelegate);
+    m_inferPipe.init(param, m_detectorDelegate,
+                     bm::FrameBaseInfo::FrameBaseInfoDestroyFn,
+                     bm::FrameInfo::FrameInfoDestroyFn,
+                     bm::FrameInfo::FrameInfoDestroyFn);
 
     for(int i = 0; i < m_channel_num; ++i) {
         int ch = m_channel_start + i;
         std::cout << "push id=" << ch << std::endl;
         TChannelPtr pchan = std::make_shared<TChannel>();
         pchan->decoder = new bm::StreamDecoder(ch);
-        if (enable_outputer) pchan->outputer = new bm::FfmpegOutputer();
+        //if (enable_outputer) pchan->outputer = new bm::FfmpegOutputer();
         pchan->channel_id = ch;
 
         std::string media_file;
@@ -116,7 +119,6 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
         });
 
         pchan->decoder->open_stream(urls[i % urls.size()], true, opts);
-        //pchan->decoder->open_stream("rtsp://admin:hk123456@11.73.11.99/test", false, opts);
         av_dict_free(&opts);
         pchan->decoder->set_decoded_frame_callback([this, pchan, ch](const AVPacket* pkt, const AVFrame *frame){
             int frame_seq = pchan->seq++;

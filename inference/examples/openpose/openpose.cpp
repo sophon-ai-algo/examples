@@ -93,8 +93,8 @@ int OpenPose::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm:
 
         if (tensor->get_dtype() == BM_INT8) {
             img_type = DATA_TYPE_EXT_1N_BYTE_SIGNED;
-            alpha            = 1.0/256.f * scale;
-            beta             = -128;
+            alpha            = 1.0 / 256.f * scale;
+            beta             = -0.5 * scale;
             img_type = (DATA_TYPE_EXT_1N_BYTE_SIGNED);
         }else{
             alpha            = 1.0/256.f;
@@ -219,7 +219,7 @@ void OpenPose::decode_from_output_tensor(bm::FrameInfo &frame_info) {
     if (m_use_custom_scale) {
         scale = m_output_scale;
     }else {
-        float scale = tensor->get_scale();
+        scale = tensor->get_scale();
     }
 
     //float scale = 0.0104515;

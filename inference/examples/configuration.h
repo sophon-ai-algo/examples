@@ -36,14 +36,14 @@ class Config {
     std::vector<CardConfig> m_cards;
     std::unordered_map<std::string, SConcurrencyConfig> m_concurrency;
 
-    void load_config(std::vector<CardConfig> &vctCardConfig) {
+    void load_config(std::vector<CardConfig> &vctCardConfig, const char* config_file = "cameras.json") {
 #if 1
         Json::Reader reader;
         Json::Value json_root;
 
-        std::ifstream in("cameras.json");
+        std::ifstream in(config_file);
         if (!in.is_open()) {
-            printf("Can't open file: cameras.json\n");
+            printf("Can't open file: %s\n", config_file);
             return;
         }
 
@@ -101,8 +101,8 @@ class Config {
     }
 
 public:
-    Config() {
-        load_config(m_cards);
+    Config(const char* config_file = "cameras.json") {
+        load_config(m_cards, config_file);
     }
 
     int cardNums() {

@@ -10,11 +10,13 @@
 
 const char *APP_ARG_STRING =
         "{bmodel | /home/yuan/openpose_sc5/bmodels/openpose_200_200.bmodel | input bmodel path}"
-        "{custom_scale | true | Use custom scale}"
-        "{input_scale | 256 | INT8 input scale}"
-        "{output_scale | 0.0104515 | INT8 output scale}"
+        "{custom_scale | false | Use custom scale}"
+        "{input_scale | 253.042 | INT8 input scale}"
+        "{output_scale | 0.00788647 | INT8 output scale}"
         "{max_batch | 4 | Max batch size}"
-        "{model_pose | body_18 | body_25 for 25 body parts, coco for 18 body parts }";
+        "{model_pose | coco_18 | body_25 for 25 body parts, coco_18 for 18 body parts }"
+        "{config | ./cameras.json | path to cameras.json}";
+
 
 int main(int argc, char *argv[])
 {
@@ -22,7 +24,6 @@ int main(int argc, char *argv[])
                      "{output | None | Output stream URL}"
                      "{skip | 1 | skip N frames to detect}"
                      "{num | 1 | Channels to run}";
-
     std::string keys;
     keys = base_keys;
     keys += APP_ARG_STRING;
@@ -35,8 +36,10 @@ int main(int argc, char *argv[])
     std::string bmodel_file = parser.get<std::string>("bmodel");
     std::string output_url = parser.get<std::string>("output");
     std::string model_pose = parser.get<std::string>("model_pose");
+    std::string config_file = parser.get<std::string>("config");
+
     int total_num = parser.get<int>("num");
-    Config cfg;
+    Config cfg(config_file.c_str());
     if (!cfg.valid_check(total_num)) {
         std::cout << "ERROR:cameras.json config error, please check!" << std::endl;
         return -1;

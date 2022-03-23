@@ -5,8 +5,8 @@
       "devid": 0,
       "cameras": [
         {
-          "address": "/home/yuan/100new.264",
-          "chan_num": 100
+          "address": "/data/workspace/media/station-1080p-25fps-2000kbps.h264",
+          "chan_num": 2
         }
       ]
     }
@@ -14,18 +14,15 @@
   "pipeline": {
     "preprocess": {
       "thread_num": 4,
-      "queue_size": 16,
-      "blocking": false
+      "queue_size": 16
     },
     "inference": {
       "thread_num": 1,
-      "queue_size": 16,
-      "blocking": false
+      "queue_size": 16
     },
     "postprocess": {
       "thread_num": 4,
-      "queue_size": 16,
-      "blocking": false
+      "queue_size": 16
     }
   }
 }
