@@ -6,8 +6,11 @@ This is a demo to run CenterNet(backbone dlav0) object detection with BMNNSDK.
 
 Put this demo dir into BMNNSDK docker container and init the environment of sdk firstly.
 
+> Download the prepared bmodels from BaiDu Netdisk:
+> access url: https://pan.baidu.com/s/1d3f8CjzC3BF2-2I2OF0q1g access code: lt59 
+
 ## 2.1 Generate bmodels
-Change directory to `data/scirpts`.
+Change directory to `data/scripts`.
 There is a `torchscript` file in this directory. It is made by weights file `ctdet_coco_dlav0_1x.pth` which is downloaded from [CenterNet model zoo](https://drive.google.com/drive/folders/1px-Xg7jXSC79QqgsD1AAGJQkuf5m0zh_)
 To be attention, we use dlav0 as the backbone of CenterNet and we concatenate the heatmap, wh, offset output to be one. This means the output shape of the pt is `1x84x128x128`
 
@@ -27,7 +30,7 @@ After a few minutes, we can get `ctdet_coco_dlav0_1x_fp32.bmodel` in `./models` 
 # usage: ./gen_int8_bmodel.sh <batch_size> <img_size> <validation_image_dir>
 ./gen_int_bmodel.sh 1 512 ../val2017
 ```
-We choose about 200 picutures form val2017 to quantization and calibrate int8 bmodel.
+We choose about 200 picutures from val2017 to quantization and calibrate int8 bmodel.
 You can use any picture you like.
 
 After a few minutes, we get `ctdet_coco_dlav0_1x_int8_b1.bmodel` or `ctdet_coco_dlav0_1x_int8_b4.bmodel` depends on the `batch_size` you use.
