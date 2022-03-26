@@ -97,6 +97,7 @@ class Detector(object):
         confidences = []
         boxes = []
         for out in outs:
+            out = out[out[:, 4] > self.objThreshold, :]
             for detection in out:
                 scores = detection[5:]
                 classId = np.argmax(scores)
@@ -121,13 +122,13 @@ class Detector(object):
         # Perform nms to eliminate redundant overlapping boxes with lower confidences.
         indices = cv2.dnn.NMSBoxes(boxes, confidences, self.confThreshold, self.nmsThreshold)
         for i in indices:
-            i = i[0]
-            box = boxes[i]
+            idx = i[0] if isinstance(i, np.ndarray) else i
+            box = boxes[idx]
             left = box[0]
             top = box[1]
             width = box[2]
             height = box[3]
-            frame = self.drawPred(frame, classIds[i], confidences[i], left, top, left + width, top + height)
+            frame = self.drawPred(frame, classIds[idx], confidences[idx], left, top, left + width, top + height)
 
         return frame
 
