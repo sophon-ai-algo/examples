@@ -1,0 +1,68 @@
+#ifndef LPRNET_HPP
+#define LPRNET_HPP
+
+#include <string>
+#include <iostream>
+// Define USE_OPENCV for enabling OPENCV related funtions in bm_wrapper.hpp
+#define USE_OPENCV 1
+#include "bm_wrapper.hpp"
+#include "utils.hpp"
+
+#define MAX_BATCH 4
+#define INPUT_WIDTH 94
+#define INPUT_HEIGHT 24
+#define BUFFER_SIZE (1024 * 500)
+
+//char * get_res(int pred_num[], int len_char, int clas_char);
+
+static char *arr_chars[] = {"京", "沪", "津", "渝", "冀", "晋", "蒙", "辽", "吉", "黑", "苏",\
+      "浙", "皖", "闽", "赣", "鲁", "豫", "鄂", "湘", "粤", "桂", "琼", "川", "贵", "云", "藏", \
+      "陕", "甘", "青", "宁", "新", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B",\
+      "C", "D", "E", "F", "G", "H", "J", "K", "L","M", "N", "P", "Q", "R", "S", "T", "U", "V",\
+      "W", "X", "Y", "Z", "I", "O", "-"};
+
+class LPRNET {
+public:
+  LPRNET(bm_handle_t bm_handle, const std::string bmodel);
+  ~LPRNET();
+  void preForward(std::vector<bm_image> &input);
+  void forward();
+  void postForward(std::vector<bm_image> &input, std::vector<std::string> &detections);
+  void enableProfile(TimeStamp *ts);
+
+private:
+  void preprocess_bmcv (std::vector<bm_image> &input);
+
+  // handle of runtime contxt
+  void *p_bmrt_;
+
+  // handle of low level device 
+  bm_handle_t bm_handle_;
+
+  // model info 
+  const bm_net_info_t *net_info_;
+
+  // indicate current bmodel type INT8 or FP32
+  bool is_int8_;
+
+  // buffer of inference results
+  float *output_;
+
+  // input image shape used for inference call
+  bm_shape_t input_shape_;
+
+  // bm image objects for storing intermediate results
+  bm_image resize_bmcv_[MAX_BATCH];
+  bm_image linear_trans_bmcv_[MAX_BATCH];
+
+  // crop arguments of BMCV
+  bmcv_rect_t crop_rect_;
+
+  // linear transformation arguments of BMCV
+  bmcv_convert_to_attr linear_trans_param_;
+
+  // for profiling
+  TimeStamp *ts_ = NULL;
+};
+
+#endif /* LPRNET_HPP */
