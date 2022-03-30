@@ -31,7 +31,7 @@ LPRNet(License Plate Recognition via Deep Neural Networks)，是一种轻量级�
 
 [CCPD](https://github.com/detectRecog/CCPD)，是由中科大团队构建的一个用于车牌识别的大型国内停车场车牌数据集。该数据集在合肥市的停车场采集得来，采集时间早上7:30到晚上10:00。停车场采集人员手持Android POS机对停车场的车辆拍照并手工标注车牌位置。拍摄的车牌照片涉及多种复杂环境，包括模糊、倾斜、阴雨天、雪天等等。CCPD数据集一共包含将近30万张图片，每种图片大小720x1160x3。
 
-> [LNRNet_Pytorch]中提供了一个节选至[CCPD]的车牌测试集，数量为1000张，图片名为车牌标签，且图片大小统一resize为24x94。
+LNRNet_Pytorch中提供了一个节选至CCPD的车牌测试集，数量为1000张，图片名为车牌标签，且图片大小统一resize为24x94。
 
 ## 3. 准备环境与数据
 
@@ -51,73 +51,73 @@ LPRNet(License Plate Recognition via Deep Neural Networks)，是一种轻量级�
 
 - 安装docker：参考《[官方教程](https://docs.docker.com/engine/install/)》，若已经安装请跳过
 
-  ```bash
-  # 安装docker
-  sudo apt-get install docker.io
-  # docker命令免root权限执行
-  # 创建docker用户组，若已有docker组会报错，没关系可忽略
-  sudo groupadd docker
-  # 将当前用户加入docker组
-  sudo gpasswd -a ${USER} docker
-  # 重启docker服务
-  sudo service docker restart
-  # 切换当前会话到新group或重新登录重启X会话
-  newgrp docker
-  ```
+```bash  
+# 安装docker  
+sudo apt-get install docker.io  
+# docker命令免root权限执行   
+# 创建docker用户组，若已有docker组会报错，没关系可忽略  
+sudo groupadd docker  
+# 将当前用户加入docker组  
+sudo gpasswd -a ${USER} docker  
+# 重启docker服务  
+sudo service docker restart  
+# 切换当前会话到新group或重新登录重启X会话  
+newgrp docker
+```
 
 #### 3.1.2 SDK软件包下载：
 
 - 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://sophon.cn/drive/44.html)，Ubuntu 16.04 with Python 3.7
 
-  ```bash
-  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
-  ```
+```bash  
+wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
+```
 
 - SDK软件包：[点击前往官网下载SDK软件包](https://sophon.cn/drive/48.html)，bmnnsdk2_bm1684 2022.03.27
 
-  ```bash
-  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/27/23/bmnnsdk2_dailybuild_20220327.zip
-  ```
+```bash
+wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/27/23/bmnnsdk2_dailybuild_20220327.zip
+```
 
-**注意：**LPRNet模型量化需在20220317之后版本的SDK中进行！
+> **注意：** LPRNet模型量化需在20220317之后版本的SDK中进行！
 
 #### 3.1.3 创建docker开发环境：
 
 - 加载docker镜像:
 
-  ```bash
-  docker load -i bmnnsdk2-bm1684-ubuntu.docker
-  ```
+```bash
+docker load -i bmnnsdk2-bm1684-ubuntu.docker
+```
 
 - 解压缩SDK：
 
-  ```bash
-  tar zxvf bmnnsdk2-bm1684_v2.6.0.tar.gz
-  ```
+```bash
+tar zxvf bmnnsdk2-bm1684_v2.6.0.tar.gz
+```
 
 - 创建docker容器，SDK将被挂载映射到容器内部供使用：
 
-  ```bash
-  cd bmnnsdk2-bm1684_v2.7.0
-  # 若您没有执行前述关于docker命令免root执行的配置操作，需在命令前添加sudo
-  ./docker_run_bmnnsdk.sh
-  ```
+```bash
+cd bmnnsdk2-bm1684_v2.7.0
+# 若您没有执行前述关于docker命令免root执行的配置操作，需在命令前添加sudo
+./docker_run_bmnnsdk.sh
+```
 
 - 进入docker容器中安装库：
 
-  ```bash
-  # 进入容器中执行
-  cd  /workspace/scripts/
-  ./install_lib.sh nntc
-  ```
+```bash
+# 进入容器中执行
+cd  /workspace/scripts/
+./install_lib.sh nntc
+```
 
 - 设置环境变量：
 
-  ```bash
-  # 配置环境变量，这一步会安装一些依赖库，并导出环境变量到当前终端
-  # 导出的环境变量只对当前终端有效，每次进入容器都需要重新执行一遍，或者可以将这些环境变量写入~/.bashrc，这样每次登录将会自动设置环境变量
-  source envsetup_pcie.sh
-  ```
+```bash
+# 配置环境变量，这一步会安装一些依赖库，并导出环境变量到当前终端
+# 导出的环境变量只对当前终端有效，每次进入容器都需要重新执行一遍，或者可以将这些环境变量写入~/.bashrc，这样每次登录将会自动设置环境变量
+source envsetup_pcie.sh
+```
 
 ### 3.2 准备模型
 
@@ -136,21 +136,21 @@ BMNNSDK2中的PyTorch模型编译工具BMNETP只接受PyTorch的JIT模型（Torc
 JIT（Just-In-Time）是一组编译工具，用于弥合PyTorch研究与生产之间的差距。它允许创建可以在不依赖Python解释器的情况下运行的模型，并且可以更积极地进行优化。在已有PyTorch的Python模型（基类为torch.nn.Module）的情况下，通过torch.jit.trace就可以得到JIT模型，如`torch.jit.trace(python_model, torch.rand(input_shape)).save('jit_model')`。BMNETP暂时不支持带有控制流操作（如if语句或循环）的JIT模型，因此不能使用torch.jit.script，而要使用torch.jit.trace，它仅跟踪和记录张量上的操作，不会记录任何控制流操作。可在源码导入CPU模型后通过添加以下代码导出符合要求的JIT模型：
 
 ```python
-  ....
-  # 导入CPU模型
-  lprnet.load_state_dict(torch.load("{PATH_TO_PT_MODEL}/Final_LPRNet_model.pth", map_location=torch.device('cpu')))
-  # jit.trace
-  model = torch.jit.trace(lprnet, torch.rand(1, 3, 24, 94))
-  # 保存JIT模型
-  torch.jit.save(model, "{PATH_TO_JIT_MODEL}/LPRNet_model.torchscript")
-  ....
+....
+# 导入CPU模型
+lprnet.load_state_dict(torch.load("{PATH_TO_PT_MODEL}/Final_LPRNet_model.pth", map_location=torch.device('cpu')))
+# jit.trace
+model = torch.jit.trace(lprnet, torch.rand(1, 3, 24, 94))
+# 保存JIT模型
+torch.jit.save(model, "{PATH_TO_JIT_MODEL}/LPRNet_model.torchscript")
+....
 ```
 
 ### 3.3 准备量化集
 
 不量化模型可跳过本节。
 
-量化集通过`download.sh`下载并解压至`data/models/test_md5`
+量化集通过`download.sh`下载并解压至`data/images/test_md5`
 
 
 ## 4. 模型转换
@@ -188,7 +188,7 @@ host mem size: 0 (coeff: 0, runtime: 0)
 
 不量化模型可跳过本节。
 
-INT8 BModel的生成需要经历中间格式UModel，即：原始模型→FP32 UModel→INT8 UModel→INT8 BModel。执行以下命令，将依次调用以下步骤中的脚本，生成INT8 BModel：
+INT8 BModel的生成需要经历中间格式UModel，即：原始模型→FP32 UModel→INT8 UModel→INT8 BModel。执行以下命令，将生成INT8 BModel：
 
 ```shell
 ./gen_int8bmodel.sh
@@ -229,7 +229,9 @@ export PATH=$PATH:/system/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/lib/:/system/usr/lib/aarch64-linux-gnu
 export PYTHONPATH=$PYTHONPATH:/system/lib
 ```
+
 您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
+
 ```bash
 # 请指定numpy版本为1.17.2
 sudo pip3 install numpy==1.17.2
@@ -240,7 +242,7 @@ sudo pip3 install numpy==1.17.2
 #### 5.2.1 x86平台SC5
 工程目录下的cpp目录提供了一系列C++例程以供参考使用，具体情况如下：
 | #    | 样例文件夹            | 说明                                 |
-| ---- | -------------------- | -------------------------- --------- |
+| ---- | -------------------- | -----------------------------------  |
 | 1    | lprnet_cv_cv_bmrt    | 使用OpenCV解码、OpenCV前处理、BMRT推理 |
 | 2    | lprnet_cv_bmcv_bmrt  | 使用OpenCV解码、BMCV前处理、BMRT推理   |
 
@@ -249,12 +251,14 @@ sudo pip3 install numpy==1.17.2
 - 编译
 
 ```bash
-$ cd cpp/lprnet_cv_cv_bmrt
-$ make -f Makefile.pcie # 生成lprnet_cv_cv_bmrt.pcie
+cd cpp/lprnet_cv_cv_bmrt
+make -f Makefile.pcie # 生成lprnet_cv_cv_bmrt.pcie
 ```
 
 - 测试
+
 编译完成后，会生成lprnet_cv_cv_bmrt.pcie,具体参数说明如下：
+
 ```bash
 usage:./lprnet_cv_cv_bmrt.pcie <mode> <image path> <bmodel path> <device id>
 mode:运行模型，可选择test或val，选择test时可将图片的推理结果打印出来，选择val时可将图片的推理结果打印出来并与标签进行对比，计算准确率，val只用于整个文件夹的推理且图片名以车牌标签命令；
@@ -264,10 +268,14 @@ device id:用于推理的tpu设备id。
 ```
 
 测试实例如下：
+
 ```bash
- $ ./lprnet_cv_cv_bmrt.pcie test ../../data/images/test.jpg ../../data/models/lprnet_fp32_1b.bmodel 0  # 测试单张图片
- $ ./lprnet_cv_cv_bmrt.pcie test ../../data/images/test/ ../../data/models/lprnet_fp32_1b.bmodel 0  # 测试整个文件夹
- $ ./lprnet_cv_cv_bmrt.pcie val ../../data/images/test/ ../../data/models/lprnet_fp32_1b.bmodel 0  # 测试整个文件夹，并计算准确率
+# 测试单张图片
+./lprnet_cv_cv_bmrt.pcie test ../../data/images/test.jpg ../../data/models/lprnet_fp32_1b.bmodel 0
+# 测试整个文件夹  
+./lprnet_cv_cv_bmrt.pcie test ../../data/images/test/ ../../data/models/lprnet_fp32_1b.bmodel 0
+# 测试整个文件夹，并计算准确率  
+./lprnet_cv_cv_bmrt.pcie val ../../data/images/test/ ../../data/models/lprnet_fp32_1b.bmodel 0  
 ```
 
 #### 5.2.2 arm平台SE5
@@ -276,18 +284,19 @@ device id:用于推理的tpu设备id。
 - 在docker开发容器中交叉编译
 
 ```bash
-$ cd cpp/lprnet_cv_cv_bmrt
-$ make -f Makefile.arm  # 生成lprnet_cv_cv_bmrt.arm
+cd cpp/lprnet_cv_cv_bmrt
+make -f Makefile.arm  # 生成lprnet_cv_cv_bmrt.arm
 ```
 - 将生成的可执行文件及所需的模型和测试图片拷贝到盒子中测试，测试方法与SC5相同。
 
 ### 5.3 Python例程部署测试
 
 由于Python例程用到sail库，需安装Sophon Inference：
+
 ```bash
 # 确认平台及python版本，然后进入相应目录，比如x86平台，python3.7
-$ cd /workspace/lib/sail/python3/pcie/py37
-$ pip3 install sophon-x.x.x-py3-none-any.whl
+cd /workspace/lib/sail/python3/pcie/py37
+pip3 install sophon-x.x.x-py3-none-any.whl
 ```
 
 Python代码无需编译，无论是x86 SC平台还是arm SE5平台配置好环境之后就可直接运行。
@@ -300,11 +309,11 @@ Python代码无需编译，无论是x86 SC平台还是arm SE5平台配置好环�
 | 2    | lprnet_sail_bmcv_sail.py | 使用SAIL解码、BMCV前处理、SAIL推理     |
 
 
-> **使用SAIL模块的注意事项：**对于INT8 BModel来说，当输入输出为int8时，含有scale，需要在处理时将输入输出乘以相应的scale。使用SAIL接口推理时，当sail.Engine.process()接口输入为numpy时，SAIL内部会自动乘以scale，用户无需操作；而输入为Tensor时，需要手动在数据送入推理接口前乘以scale。
->
+> **使用SAIL模块的注意事项：** 对于INT8 BModel来说，当输入输出为int8时，含有scale，需要在处理时将输入输出乘以相应的scale。使用SAIL接口推理时，当sail.Engine.process()接口输入为numpy时，SAIL内部会自动乘以scale，用户无需操作；而输入为Tensor时，需要手动在数据送入推理接口前乘以scale。
 > 这是因为Tensor作为输入的话，一般图像来源就是bm_image，这样就可以直接调用vpp进行scale等操作，所以推理之前由用户乘以scale更高效；而在python接口中，当numpy作为输入的话，推理之前没办法调用vpp，sail内部使用SSE指令进行了加速。
 
-> **出现中文无法正常显示的解决办法：**Python例程在打印车牌时若出现中文无法正常显示，可参考以下操作进行解决：
+> **出现中文无法正常显示的解决办法**：Python例程在打印车牌时若出现中文无法正常显示，可参考以下操作进行解决：
+
 ```bash
 # 1.安装中文支持包language-pack-zh-hans
 apt install language-pack-zh-hans
@@ -319,9 +328,18 @@ zh_CN GB2312
 # 4.最后，执行命令：
 locale-gen
 ```
+
+> **使用bm_opencv解码的注意事项：** lprnet_cv_cv_sail.py默认使用原生opencv解码和预处理，使用bm_opencv解码结果与原生opencv解码结果的差异可能会导致推理结果的差异，若要使用bm_opencv硬解码可在运行lprnet_cv_cv_sail.py时修改环境变量如下：
+
+```bash
+export PYTHONPATH=$PYTHONPATH:/workspace/lib/opencv/x86/opencv-python/
+```
+
+
 - 测试
 
 以lprnet_cv_cv_sail.py的测试为例,具体参数说明如下：
+
 ```bash
 usage:lprnet_cv_cv_sail.py [--mode MODE] [--img_path IMG_PATH] [--bmodel BMODEL] [--tpu_id TPU]
 --mode:运行模型，可选择test或val，选择test时可将图片的推理结果打印出来，选择val时可将图片的推理结果打印出来并与标签进行对比，计算准确率，val只用于整个文件夹的推理且图片名以车牌标签命令；
@@ -332,7 +350,25 @@ usage:lprnet_cv_cv_sail.py [--mode MODE] [--img_path IMG_PATH] [--bmodel BMODEL]
 
 测试实例如下：
 ```bash
- $ python3 lprnet_cv_cv_sail.py --mode test --img_path ../data/images/test.jpg --bmodel ../scripts/fp32bmodel/lprnet_fp32_1b.bmodel --tpu_id 0  # 测试单张图片
- $ python3 lprnet_cv_cv_sail.py --mode test --img_path ../data/images/test --bmodel ../scripts/fp32bmodel/lprnet_fp32_1b.bmodel --tpu_id 0  # 测试整个文件夹
- $ python3 lprnet_cv_cv_sail.py --mode val --img_path ../data/images/test --bmodel ../scripts/fp32bmodel/lprnet_fp32_1b.bmodel --tpu_id 0  # 测试整个文件夹，并计算准确率
+# 测试单张图片
+python3 lprnet_cv_cv_sail.py --mode test --img_path ../data/images/test.jpg --bmodel ../scripts/fp32bmodel/lprnet_fp32_1b.bmodel --tpu_id 0  
+# 测试整个文件夹
+python3 lprnet_cv_cv_sail.py --mode test --img_path ../data/images/test --bmodel ../scripts/fp32bmodel/lprnet_fp32_1b.bmodel --tpu_id 0 
+# 测试整个文件夹，并计算准确率 
+python3 lprnet_cv_cv_sail.py --mode val --img_path ../data/images/test --bmodel ../scripts/fp32bmodel/lprnet_fp32_1b.bmodel --tpu_id 0  
 ```
+
+使用原生opencv解码的测试结果与LNRNet_Pytorch测试精度一致：
+
+| #      |  LNRNet_Pytorch    | lprnet_cv_cv_sail  |
+| ------ | ----------------   | -----------------  |
+| ACC    |       89.4%        |        89.4%       |
+
+使用bm_opencv硬解码的测试精度如下：
+
+| ACC                      |lprnet_fp32.bmodel| lprnet_int8.bmodel|
+| ----------------------   | -------------    | --------------    |
+| lprnet_cv_cv_sail.py     |      88%         |   87.4%           |
+| lprnet_sail_bmcv_sail.py |      88.2%       |   87.7%           |
+| cpp/lprnet_cv_cv_bmrt    |      88%         |   87.7%           |
+| cpp/lprnet_cv_bmcv_bmrt  |      88%         |   87.7%           |
