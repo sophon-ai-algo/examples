@@ -1,4 +1,5 @@
 #!/bin/bash
+
 model_dir=$(dirname $(readlink -f "$0"))
 echo $model_dir
 
@@ -28,10 +29,9 @@ function gen_int8umodel()
     calibration_use_pb quantize \
         -model=compilation/LPRNet_model.torchscript_bmnetp_test_fp32.prototxt \
         -weights=compilation/LPRNet_model.torchscript_bmnetp.fp32umodel \
-        -iterations=200 \
+        -iterations=450 \
         -save_test_proto=true \
-        -th_method=JSD \
-        -fpfwd_blocks="< 4 0 >19,< 8 0 >27"
+        -fpfwd_blocks="x.1,237"
 }
 function gen_int8bmodel()
 {
@@ -42,6 +42,8 @@ function gen_int8bmodel()
 }
 
 pushd $model_dir
+#在制作lmdb过程中使用bm_opencv
+export PYTHONPATH=$PYTHONPATH:../../../lib/opencv/x86/opencv-python/
 create_lmdb
 gen_fp32umodel
 gen_int8umodel
