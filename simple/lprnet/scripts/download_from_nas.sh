@@ -22,14 +22,14 @@ if [ $# -eq 0 ];then
   exit -1
 fi
  
-web_prefix="https://disk.sophgo.vip/fsdownload/"
+web_prefix="http://219.142.246.77:65000/fsdownload/"
 file_url=$1
 
 # id=echo $file_url | ggrep -Po '(?<=sharing/).*(?=/)'
 id=`echo $file_url | cut -d "/" -f 5`
 sid=`curl -i $file_url | $command  -Po '(?<=sid=).*(?=;path)'`
 v=`curl -i $file_url | $command -Po '(?<=none&quot;&v=).*(?=">)'`
-file_name=`curl -b "sharing_sid=${sid}" -i "https://disk.sophgo.vip/sharing/webapi/entry.cgi?api=SYNO.Core.Sharing.Session&version=1&method=get&sharing_id=%22${id}%22&sharing_status=%22none%22&v=${v}" | $command -Po '(?<="filename" : ").*(?=")'`
+file_name=`curl -b "sharing_sid=${sid}" -i "http://219.142.246.77:65000/sharing/webapi/entry.cgi?api=SYNO.Core.Sharing.Session&version=1&method=get&sharing_id=%22${id}%22&sharing_status=%22none%22&v=${v}" | $command -Po '(?<="filename" : ").*(?=")'`
 
 if [ $# -eq 2 ];then
   save_path=$2
