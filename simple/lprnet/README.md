@@ -199,16 +199,16 @@ INT8 BModel的生成需要经历中间格式UModel，即：原始模型→FP32 U
 ```bash
 bmodel version: B.2.2
 chip: BM1684
-create time: Mon Mar 28 20:21:20 2022
+create time: Tue Mar 29 23:58:40 2022
 
 ==========================================
 net 0: [LPRNet_model.torchscript_bmnetp]  static
 ------------
 stage 0:
-input: x.1, [1, 3, 24, 94], int8, scale: 128.407
-output: 237, [1, 68, 18], int8, scale: 1.22012
+input: x.1, [1, 3, 24, 94], float32, scale: 1
+output: 237, [1, 68, 18], float32, scale: 1
 
-device mem size: 2872000 (coeff: 627712, instruct: 75008, runtime: 2169280)
+device mem size: 3232832 (coeff: 594944, instruct: 59008, runtime: 2578880)
 host mem size: 0 (coeff: 0, runtime: 0)
 ```
 
@@ -368,7 +368,7 @@ python3 lprnet_cv_cv_sail.py --mode val --img_path ../data/images/test --bmodel 
 
 | ACC                      |lprnet_fp32.bmodel| lprnet_int8.bmodel|
 | ----------------------   | -------------    | --------------    |
-| lprnet_cv_cv_sail.py     |      88%         |   87.4%           |
-| lprnet_sail_bmcv_sail.py |      88.2%       |   87.7%           |
+| lprnet_cv_cv_sail.py     |      88%         |   87.7%           |
+| lprnet_sail_bmcv_sail.py |      88.2%       |   87.4%           |
 | cpp/lprnet_cv_cv_bmrt    |      88%         |   87.7%           |
 | cpp/lprnet_cv_bmcv_bmrt  |      88%         |   87.7%           |
