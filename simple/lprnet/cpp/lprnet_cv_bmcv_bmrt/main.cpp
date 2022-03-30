@@ -139,10 +139,11 @@ int main(int argc, char** argv) {
           fs::path image_file(img_file);
           string label = image_file.stem().string();
           if (!strcmp(label.c_str(), results[0].c_str())) tp++;
-          else cout << "label:" << label << " pred:" << results[0] << endl;
+          //else cout << "label:" << label << " pred:" << results[0] << endl;
         }
       }
     }
+    cout << "==========================" << endl;
     if (val_flag) cout << "Acc = " << tp << "/" << cn << "=" \
     << float(tp)/cn << endl;
   }else {

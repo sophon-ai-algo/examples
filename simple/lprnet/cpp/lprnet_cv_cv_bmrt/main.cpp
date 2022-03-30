@@ -4,6 +4,7 @@
 #include <sstream>
 #include "lprnet.hpp"
 #include <string>
+#include "opencv2/opencv.hpp"
 
 namespace fs = boost::filesystem;
 using namespace std;
@@ -96,7 +97,10 @@ int main(int argc, char** argv) {
     ts->save("lprnet overall");
     ts->save("read image");
     // decode jpg file to Mat object
-    cv::Mat img = cv::imread(input_url, cv::IMREAD_COLOR, dev_id);
+    cv::Mat img = cv::imread(input_url);
+    //cout << img << endl;
+    //cout << cv::getBuildInformation() << endl;
+    
     ts->save("read image");
     // do detect
     vector<string> results = detect(net, img, ts);
@@ -120,10 +124,11 @@ int main(int argc, char** argv) {
           fs::path image_file(img_file);
           string label = image_file.stem().string();
           if (!strcmp(label.c_str(), results[0].c_str())) tp++;
-          else cout << "label:" << label << " pred:" << results[0] << endl;
+          //else cout << "label:" << label << " pred:" << results[0] << endl;
         }
       }
     }
+    cout << "===========================" << endl;
     if (val_flag) cout << "Acc = " << tp << "/" << cn << "=" \
     << float(tp)/cn << endl;
   }else {

@@ -222,7 +222,7 @@ void LPRNET::preprocess_bmcv (vector<bm_image> &input) {
 }
 
 string get_res(int pred_num[], int len_char, int clas_char){
-  int no_repeat_blank[10];
+  int no_repeat_blank[20];
   //int num_chars = sizeof(CHARS) / sizeof(CHARS[0]);
   int cn_no_repeat_blank = 0;
   int pre_c = pred_num[0];

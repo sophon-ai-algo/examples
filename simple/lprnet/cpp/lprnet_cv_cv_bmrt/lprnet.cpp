@@ -58,7 +58,7 @@ LPRNET::LPRNET(const string bmodel, int dev_id){
   if (BM_FLOAT32 == net_info->input_dtypes[0])
     flag_int8 = false;
   else
-    flag_int8 = true;
+    flag_int8 = true;  //true
 
   // allocate output buffer
   output_ = new float[BUFFER_SIZE];
@@ -195,6 +195,8 @@ void LPRNET::postForward (const cv::Mat &image, vector<string> &detections) {
   int clas_char = net_info->stages[0].output_shapes[0].dims[1];
   //cout << "len_char = " << len_char << endl;
   //cout << "clas_char = " << clas_char << endl;
+  //cout << "output_scales=" << net_info->output_scales[0] << endl;
+
 
   float *image_output = output_;
   
@@ -292,12 +294,14 @@ void LPRNET::preprocess (const cv::Mat& img, std::vector<cv::Mat>* input_channel
   
   cv::Mat sample_normalized(cv::SophonDevice(this->dev_id_));
   cv::subtract(sample_float, mean_, sample_normalized);
+
+  //cout << sample_normalized << endl;
   
   /*note: int8 in convert need mul input_scale*/
   if (flag_int8) {
-    //cout << "** int8" << endl;
+    cout << "** int8 ** input_scale=" << input_scale << endl;
     cv::Mat sample_int8(cv::SophonDevice(this->dev_id_));
-    sample_normalized.convertTo(sample_int8, CV_8SC1, input_scale);
+    sample_normalized.convertTo(sample_int8, CV_8SC1, input_scale); 
     cv::split(sample_int8, *input_channels);
   } else {
     //cout << "** f32" << "input_scale:" << input_scale  << endl;
@@ -308,7 +312,7 @@ void LPRNET::preprocess (const cv::Mat& img, std::vector<cv::Mat>* input_channel
 }
 
 string get_res(int pred_num[], int len_char, int clas_char){
-  int no_repeat_blank[10];
+  int no_repeat_blank[20];
   //int num_chars = sizeof(CHARS) / sizeof(CHARS[0]);
   int cn_no_repeat_blank = 0;
   int pre_c = pred_num[0];
