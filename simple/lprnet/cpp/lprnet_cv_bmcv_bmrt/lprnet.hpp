@@ -41,15 +41,21 @@ private:
 
   // model info 
   const bm_net_info_t *net_info_;
+  const char **net_names_;
 
   // indicate current bmodel type INT8 or FP32
-  bool is_int8_;
+  bool input_is_int8_;
+  bool output_is_int8_;
 
   // buffer of inference results
-  float *output_;
+  float *output_fp32;
+  int8_t *output_int8;
 
   // input image shape used for inference call
   bm_shape_t input_shape_;
+
+  float input_scale;
+  float output_scale;
 
   // bm image objects for storing intermediate results
   bm_image resize_bmcv_[MAX_BATCH];

@@ -3,7 +3,6 @@
 
 using namespace std;
 
-string net_name_;
 //const char *model_name = "lprnet";
 string get_res(int pred_num[], int len_char, int clas_char);
 
@@ -28,13 +27,10 @@ LPRNET::LPRNET(bm_handle_t bm_handle, const string bmodel):p_bmrt_(nullptr) {
     exit(1);
   }
 
-  const char **net_names;
-  bmrt_get_network_names(p_bmrt_, &net_names);
-  net_name_ = net_names[0];
-  free(net_names);
+  bmrt_get_network_names(p_bmrt_, &net_names_);
 
   // get model info by model name
-  net_info_ = bmrt_get_network_info(p_bmrt_, net_name_.c_str());
+  net_info_ = bmrt_get_network_info(p_bmrt_, net_names_[0]);
   if (NULL == net_info_) {
     cout << "ERROR: get net-info failed!" << endl;
     exit(1);
@@ -47,13 +43,22 @@ LPRNET::LPRNET(bm_handle_t bm_handle, const string bmodel):p_bmrt_(nullptr) {
   }
 
   if (BM_FLOAT32 == net_info_->input_dtypes[0])
-    is_int8_ = false;
+    input_is_int8_ = false;
   else
-    is_int8_ = true;
+    input_is_int8_ = true;
+
+  if (BM_FLOAT32 == net_info_->output_dtypes[0])
+    output_is_int8_ = false;
+  else
+    output_is_int8_ = true;
 
   // allocate output buffer
-  output_ = new float[BUFFER_SIZE];
-
+  if (output_is_int8_) {
+    output_int8 = new int8_t[BUFFER_SIZE];
+  }else{
+    output_fp32 = new float[BUFFER_SIZE];
+  }
+  
   // init bm images for storing results of combined operation of resize & crop & split
   bm_status_t bm_ret = bm_image_create_batch(bm_handle_,
                               INPUT_HEIGHT,
@@ -69,7 +74,7 @@ LPRNET::LPRNET(bm_handle_t bm_handle, const string bmodel):p_bmrt_(nullptr) {
 
   // bm images for storing inference inputs
   bm_image_data_format_ext data_type;
-  if (is_int8_) { // INT8
+  if (input_is_int8_) { // INT8
     data_type = DATA_TYPE_EXT_1N_BYTE_SIGNED;
   } else { // FP32
     data_type = DATA_TYPE_EXT_FLOAT32;
@@ -90,7 +95,8 @@ LPRNET::LPRNET(bm_handle_t bm_handle, const string bmodel):p_bmrt_(nullptr) {
   // initialize linear transform parameter
   // - mean value
   // - scale value (mainly for INT8 calibration)
-  float input_scale = net_info_->input_scales[0] * 0.0078125;
+  output_scale = net_info_->output_scales[0];
+  input_scale = net_info_->input_scales[0] * 0.0078125;
   //cout << "scale: "<< input_scale << endl;
   linear_trans_param_.alpha_0 = input_scale;
   linear_trans_param_.beta_0 = -127.5 * input_scale;
@@ -106,10 +112,15 @@ LPRNET::~LPRNET() {
   bm_image_destroy_batch (linear_trans_bmcv_, MAX_BATCH);
 
   // free output buffer
-  delete []output_;
+  if (output_is_int8_) {
+    delete []output_int8;
+  } else {
+    delete []output_fp32;
+  }
 
   // deinit contxt handle
   bmrt_destroy(p_bmrt_);
+  free(net_names_);
 }
 
 void LPRNET::enableProfile(TimeStamp *ts) {
@@ -125,7 +136,13 @@ void LPRNET::preForward(vector<bm_image> &input) {
 void LPRNET::forward() {
   //memset(output_, 0, sizeof(float) * BUFFER_SIZE);
   LOG_TS(ts_, "lprnet inference")
-  bool res = bm_inference (p_bmrt_, linear_trans_bmcv_, (void*)output_, input_shape_, net_name_.c_str());
+  bool res;
+  if (output_is_int8_) {
+    res = bm_inference (p_bmrt_, linear_trans_bmcv_, (int8_t*)output_int8, input_shape_, net_names_[0]);
+  }else{
+    res = bm_inference (p_bmrt_, linear_trans_bmcv_, (float*)output_fp32, input_shape_, net_names_[0]);
+  }
+
   LOG_TS(ts_, "lprnet inference")
   if (!res) {
     cout << "ERROR : inference failed!!"<< endl;
@@ -165,8 +182,6 @@ void LPRNET::postForward (vector<bm_image> &input, vector<string> &detections) {
   int clas_char = net_info_->stages[0].output_shapes[0].dims[1];
   //cout << "len_char = " << len_char << endl;
   //cout << "clas_char = " << clas_char << endl;
-
-  float *image_output = output_;
   
   vector<std::pair<float , int>> pairs;
   //vector<string> res;
@@ -176,7 +191,12 @@ void LPRNET::postForward (vector<bm_image> &input, vector<string> &detections) {
     for (int j = 0; j < len_char; j++){
       pairs.clear();
       for (int k = 0; k < clas_char; k++){
-        pairs.push_back(make_pair(image_output[i * count_per_img + k * len_char + j], k));
+        if (output_is_int8_){
+          pairs.push_back(make_pair(output_int8[i * count_per_img + k * len_char + j] * output_scale, k));
+        }else{
+          pairs.push_back(make_pair(output_fp32[i * count_per_img + k * len_char + j], k));
+        }
+        
       }
       partial_sort(pairs.begin(), pairs.begin() + N, pairs.end(), comp);
       //cout << pairs[0].second << " : " << pairs[0].first << endl;

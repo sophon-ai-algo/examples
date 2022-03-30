@@ -45,7 +45,8 @@ private:
   // network input shape
   int batch_size_;
   int num_channels_;
-  cv::Size input_geometry_;
+  int net_h_;
+  int net_w_;
 
   // network related parameters
   cv::Mat mean_;
@@ -57,8 +58,10 @@ private:
   float output_scale;
   float *input_f32;
   int8_t *input_int8;
-  float *output_;
-  bool flag_int8;
+  float *output_f32;
+  int8_t *output_int8;
+  bool int8_flag_;
+  bool int8_output_flag;
   // for profiling
   TimeStamp *ts_;
 };
