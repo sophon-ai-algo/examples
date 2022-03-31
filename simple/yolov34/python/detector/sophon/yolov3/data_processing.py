@@ -261,8 +261,8 @@ class PostprocessYOLO(object):
         # print("sigmoid+exponential cost: %f seconds" % (time.time() - s1))
         box_confidence = np.expand_dims(box_confidence, axis=-1)
 
-        col = np.tile(np.arange(0, grid_w), grid_w).reshape(-1, grid_w)
-        row = np.tile(np.arange(0, grid_h).reshape(-1, 1), grid_h)
+        col = np.tile(np.arange(0, grid_w), grid_h).reshape(-1, grid_w)
+        row = np.tile(np.arange(0, grid_h).reshape(-1, 1), grid_w)
 
         col = col.reshape(grid_h, grid_w, 1, 1).repeat(3, axis=-2)
         row = row.reshape(grid_h, grid_w, 1, 1).repeat(3, axis=-2)
