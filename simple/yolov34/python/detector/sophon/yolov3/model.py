@@ -29,8 +29,21 @@ class YOLOV3(BaseDetector):
         self.detector_classes = self._load_label_categories(config.LABEL_FILE)
         self.preprocessor = PreprocessYOLO(self.input_resolution_HW)
 
-        yolo_masks = np.array(config.YOLO_MASKS).reshape(3, 3)
-        yolo_anchors = np.array(config.YOLO_ANCHORS).reshape(9,2)
+        if len(config.YOLO_MASKS) == 9:
+            yolo_masks_shape = (3, 3)
+        elif len(config.YOLO_MASKS) == 6:
+            yolo_masks_shape = (2, 3)
+        else:
+            raise NotImplementedError
+        yolo_masks = np.array(config.YOLO_MASKS).reshape(*yolo_masks_shape)
+
+        if len(config.YOLO_ANCHORS) == 18:
+            yolo_anchors_shape = (9, 2)
+        elif len(config.YOLO_ANCHORS) == 12:
+            yolo_anchors_shape = (6, 2)
+        else:
+            raise NotImplementedError
+        yolo_anchors = np.array(config.YOLO_ANCHORS).reshape(*yolo_anchors_shape)
 
         postprocessor_args = { 
             "yolo_masks": yolo_masks,
@@ -73,19 +86,18 @@ class YOLOV3(BaseDetector):
         logger.info("yolov3 cost: %f seconds" % (time.time() - s))
 
         # 根据shape取出相应的tensor，根据shape调整tensor顺序
-        for i in range(3):
+        out_index = list()
+        for i in range(len(outputs)):
             if outputs[i].shape[-1] == self.output_tensor_channels[0]:
-                YOLO2 = outputs[i]
+                out_index += [0]
             elif outputs[i].shape[-1] == self.output_tensor_channels[1]:
-                YOLO1 = outputs[i]
+                out_index += [1]
             else:
-                YOLO0 = outputs[i]
-        
-        outputs = [YOLO2, YOLO1, YOLO0]
+                out_index += [2]
 
-        logger.debug(outputs[0].shape)
-        logger.debug(outputs[1].shape)
-        logger.debug(outputs[2].shape)
+        outputs = [outputs[ind] for ind in out_index]
+
+        [logger.debug(output.shape) for output in outputs]
 
         # Run the post-processing algorithms on the outputs and get the bounding box details of detected objects
         boxes, classes, scores =  self.postprocessor.process(outputs, (org_h, org_w))
