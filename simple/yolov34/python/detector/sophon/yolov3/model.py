@@ -55,7 +55,7 @@ class YOLOV3(BaseDetector):
 
             "obj_threshold": self.min_confidence,  # Threshold for object coverage, float value between 0 and 1
             "nms_threshold": self.nms_max_overlap,
-            "yolo_input_resolution": self.input_resolution_HW}
+            "yolo_input_resolution": self.input_resolution_HW[::-1]}
 
         self.postprocessor = PostprocessYOLO(**postprocessor_args)
 
