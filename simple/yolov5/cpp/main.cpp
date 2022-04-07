@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
         }
         frame_count ++;
       }
-			if(frame_num>0 && frame_count>frame_num) break;
+			if(frame_num>0 && frame_count>=frame_num) break;
     }
 
   }
