@@ -136,6 +136,24 @@ class Detector(object):
         cv2.putText(frame, label, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), thickness=2)
         return frame
 
+    def decode_for_3outputs(self, outputs):
+        z = []  # inference output
+
+        for i, feat in enumerate(outputs):
+            # np.save("np_"+str(i), feat)
+            # x(bs,255,20,20) to x(bs,3,20,20,85)
+            bs, _, ny, nx, nc = feat.shape
+            if self.grid[i].shape[2:4] != feat.shape[2:4]:
+                self.grid[i] = self._make_grid(nx, ny)
+
+            y = 1 / (1 + np.exp(-feat))  # sigmoid
+            y[..., 0:2] = (y[..., 0:2] * 2. - 0.5 +
+                           self.grid[i]) * int(self.stride[i])
+            y[..., 2:4] = (y[..., 2:4] * 2) ** 2 * self.anchor_grid[i]  # wh
+            z.append(y.reshape(bs, -1, nc))
+        z = np.concatenate(z, axis=1)
+        return z
+
 
 def main(opt):
     img_name = opt.img_name
@@ -149,6 +167,8 @@ def main(opt):
     print("img.shape: {}".format(img.shape))
 
     dets = YOLOv5.predict(img)
+    if isinstance(dets, list) and len(dets) == 3:
+        dets = YOLOv5.decode_for_3outputs(dets)
     print(dets.shape)
 
     plot_img = YOLOv5.postprocess(padded_img, dets)
