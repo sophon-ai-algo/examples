@@ -1,1 +1,0 @@
-./yolox_bmcv_sail.pcie video /data/video/zhuheqiao.mp4 ../data/models/yolox_s_4_int8.bmodel ../data/coco.names 16 0.25 0.45 0
