@@ -24,6 +24,7 @@
 YOLOx由旷世研究提出，是基于YOLO系列的改进
 
 **论文地址** (https://arxiv.org/abs/2107.08430)
+
 **官方源码地址** (https://github.com/Megvii-BaseDetection/YOLOX)
 
 
@@ -46,7 +47,7 @@ YOLOx由旷世研究提出，是基于YOLO系列的改进
 
 但是，无论使用的产品是SoC模式还是PCIe模式，都需要一台x86主机作为开发环境，模型的转换工作必须在开发环境中完成。
 
-#### 3.1.1 开发主机准备：
+#### **3.1.1 开发主机准备：**
 
 - 开发主机：一台安装了Ubuntu16.04/18.04/20.04的x86主机，运行内存建议12GB以上
 
@@ -66,14 +67,14 @@ YOLOx由旷世研究提出，是基于YOLO系列的改进
   newgrp docker
   ```
 
-#### 3.1.2 SDK软件包下载：
+#### **3.1.2 SDK软件包下载：**
 
 - 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://sophon.cn/drive/index.html),内含了2个镜像,ubuntu 16.04 with Python 3.7和ubuntu 16.04 with Python 3.5
 
 
 - SDK软件包：[点击前往官网下载SDK软件包](https://sophon.cn/drive/45.html)，BMNNSDK 2.7.0
 
-#### 3.1.3 创建docker开发环境：
+#### **3.1.3 创建docker开发环境：**
 
 - 加载docker镜像:
 
@@ -133,19 +134,21 @@ YOLOx由旷世研究提出，是基于YOLO系列的改进
 
 
 ### 3.2 准备模型  
-**- 因为上述docker已经安装了pytorch，但是版本较yolox版本要求的版本低一些，所以此步骤不建议的docker内进行，最好在物理机上直接进行。**
+
+- 因为上述docker已经安装了pytorch，但是版本较yolox版本要求的版本低一些，所以此步骤不建议的docker内进行，最好在物理机上直接进行。
  
-- YOLOx模型的模型参数
-|Model |size |mAP<sup>val<br>0.5:0.95 |mAP<sup>test<br>0.5:0.95 | Speed V100<br>(ms) | Params<br>(M) |FLOPs<br>(G)| weights |
-| ------        |:---: | :---:    | :---:       |:---:     |:---:  | :---: | :----: |
-|[YOLOX-s](./exps/default/yolox_s.py)    |640  |40.5 |40.5      |9.8      |9.0 | 26.8 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.pth) |
-|[YOLOX-m](./exps/default/yolox_m.py)    |640  |46.9 |47.2      |12.3     |25.3 |73.8| [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_m.pth) |
-|[YOLOX-l](./exps/default/yolox_l.py)    |640  |49.7 |50.1      |14.5     |54.2| 155.6 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_l.pth) |
-|[YOLOX-x](./exps/default/yolox_x.py)   |640   |51.1 |**51.5**  | 17.3    |99.1 |281.9 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_x.pth) |
-|[YOLOX-Darknet53](./exps/default/yolov3.py)   |640  | 47.7 | 48.0 | 11.1 |63.7 | 185.3 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_darknet.pth) |
+- YOLOx模型的模型参数  
+  
+| Model                                       | size  | mAP<sup>val<br>0.5:0.95 | mAP<sup>test<br>0.5:0.95 | Speed V100<br>(ms) | Params<br>(M) | FLOPs<br>(G) |                                               weights                                                |
+| ------------------------------------------- | :---: | :---------------------: | :----------------------: | :----------------: | :-----------: | :----------: | :--------------------------------------------------------------------------------------------------: |
+| [YOLOX-s](./exps/default/yolox_s.py)        |  640  |          40.5           |           40.5           |        9.8         |      9.0      |     26.8     |    [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.pth)    |
+| [YOLOX-m](./exps/default/yolox_m.py)        |  640  |          46.9           |           47.2           |        12.3        |     25.3      |     73.8     |    [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_m.pth)    |
+| [YOLOX-l](./exps/default/yolox_l.py)        |  640  |          49.7           |           50.1           |        14.5        |     54.2      |    155.6     |    [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_l.pth)    |
+| [YOLOX-x](./exps/default/yolox_x.py)        |  640  |          51.1           |         **51.5**         |        17.3        |     99.1      |    281.9     |    [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_x.pth)    |
+| [YOLOX-Darknet53](./exps/default/yolov3.py) |  640  |          47.7           |           48.0           |        11.1        |     63.7      |    185.3     | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_darknet.pth) |
 
 
-#### 3.2.1 下载yolovx源码 
+#### **3.2.1 下载yolovx源码**
 
  ```bash
  # 下载yolox源码
@@ -156,11 +159,11 @@ YOLOx由旷世研究提出，是基于YOLO系列的改进
  pip3 install -r requirements.txt
  ```
 
-#### 3.2.2 导出JIT模型
+#### **3.2.2 导出JIT模型**
 
  BMNNSDK2中的PyTorch模型编译工具BMNETP只接受PyTorch的JIT模型（TorchScript模型）。
 
- JIT（Just-In-Time）是一组编译工具，用于弥合PyTorch研究与生产之间的差距。它允许创建可以在不依赖Python解释器的情况下运行的模型，并且可以更积极地进行优化。在已有PyTorch的Python模型（基类为torch.nn.Module）的情况下，通过torch.jit.trace就可以得到JIT模型，如`torch.jit.trace(python_model, torch.rand(input_shape)).save('jit_model')`。BMNETP暂时不支持带有控制流操作（如if语句或循环）的JIT模型，因此不能使用torch.jit.script，而要使用torch.jit.trace，它仅跟踪和记录张量上的操作，不会记录任何控制流操作。这部分操作yolov5已经为我们写好，只需运行如下命令即可导出符合要求的JIT模型：
+ JIT（Just-In-Time）是一组编译工具，用于弥合PyTorch研究与生产之间的差距。它允许创建可以在不依赖Python解释器的情况下运行的模型，并且可以更积极地进行优化。在已有PyTorch的Python模型（基类为torch.nn.Module）的情况下，通过torch.jit.trace就可以得到JIT模型，如`torch.jit.trace(python_model, torch.rand(input_shape)).save('jit_model')`。BMNETP暂时不支持带有控制流操作（如if语句或循环）的JIT模型，因此不能使用`torch.jit.script`，而要使用`torch.jit.trace`，它仅跟踪和记录张量上的操作，不会记录任何控制流操作。这部分操作yolov5已经为我们写好，只需运行如下命令即可导出符合要求的JIT模型：
 
 - YOLOX-s
   ```bash
@@ -183,34 +186,34 @@ YOLOx由旷世研究提出，是基于YOLO系列的改进
     python3 tools/export_torchscript.py -n yolov3 -c ${PATH_TO_YOLOX_MODEL}/yolox_darknet.pth --output-name ${PATH_TO_YOLOX_MODEL}/yolox_darknet.trace.pt
   ```
 
-上述脚本会在 ${PATH_TO_YOLOX_MODEL} 下生成相应的JIT模型
+上述脚本会在 `${PATH_TO_YOLOX_MODEL}` 下生成相应的JIT模型
 
 
 ### 3.3 准备量化集
 
 此步骤需要在开发主机的docker内进行，不量化模型可以跳过本节。
 
-### 3.3.1 准备量化图片
+#### **3.3.1 准备量化图片**
 
 示例从coco数据集中随机选取了部分图片，保存在docker内的路径为: ${OST_DATA_PATH}
 
-### 3.3.2 使用不同的resize(opencv/tpu/vpp)方法对图片进行扩展
+#### **3.3.2 使用不同的resize(opencv/tpu/vpp)方法对图片进行扩展**
 
-### 3.3.2.1 使用opencv做resize and padding
-
-  ```bash
-    python3 image_resize.py --ost_path=${OST_DATA_PATH} --dst_path=${RESIZE_DATA_PATH} --dst_width=640 --dst_height=640
-  ```
-结果图片将保存在${RESIZE_DATA_PATH}中
-
-### 3.3.2.2 使用tpu和vpp做resize and padding
-
-因为此操作用到了sc5硬件,所以如果没有sc5硬件可跳过此步骤,除设置环境变量外,此操作还需要安装好sail包.
+- 使用opencv做resize and padding
 
   ```bash
-    python3 image_resize_sophgo.py --ost_path=${OST_DATA_PATH} --dst_path=${RESIZE_DATA_PATH} --dst_width=640--dst_height=640
+  python3 image_resize.py --ost_path=${OST_DATA_PATH} --dst_path=${RESIZE_DATA_PATH} --dst_width=640 --dst_height=640
   ```
-结果图片将保存在${RESIZE_DATA_PATH}中
+  结果图片将保存在`${RESIZE_DATA_PATH}`中
+
+- 使用tpu和vpp做resize and padding
+
+  因为此操作用到了sc5硬件,所以如果没有sc5硬件可跳过此步骤,除设置环境变量外,此操作还需要安装好sail包.
+
+  ```bash
+  python3 image_resize_sophgo.py --ost_path=${OST_DATA_PATH} --dst_path=${RESIZE_DATA_PATH} --dst_width=640--dst_height=640
+  ```
+  结果图片将保存在`${RESIZE_DATA_PATH}`中
  
 ### 3.3.3 生成lmdb数据
 
@@ -224,7 +227,7 @@ YOLOx由旷世研究提出，是基于YOLO系列的改进
         --bgr2rgb=False \
         --gray=False
  ```
-结果lmdb将保存的${LMDB_PATH}中
+  结果lmdb将保存的`${LMDB_PATH}`中
 
 
 ## 4.模型转换
@@ -233,63 +236,68 @@ YOLOx由旷世研究提出，是基于YOLO系列的改进
 
 ### 4.1 生成FP32 BModel
 
-#### 4.1.1 生成FP32 BModel
+#### **4.1.1 生成FP32 BModel**
 
   ```bash
-    python3 -m bmnetp --net_name=yolox_s --target=BM1684 --opt=1 --cmp=true --shapes="[1,3,640,640]" --model=${OST_MODEL_NAME} --outdir=${OUTPUT_MODEL_PATH} --dyn=false
+  python3 -m bmnetp --net_name=yolox_s --target=BM1684 --opt=1 --cmp=true --shapes="[1,3,640,640]" --model=${OST_MODEL_NAME} --outdir=${OUTPUT_MODEL_PATH} --dyn=false
   ```
-其中${OST_MODEL_NAME}表示原始模型的路径及名称,结果会在${OUTPUT_MODEL_PATH}文件夹下面生成，文件夹内的compilation.bmodel即为fp32 bmodel
+  其中 `${OST_MODEL_NAME}` 表示原始模型的路径及名称,结果会在`${OUTPUT_MODEL_PATH}`文件夹下面生成，文件夹内的compilation.bmodel即为fp32 bmodel
 
 
-#### 4.1.2 查看FP32 BModel
+#### **4.1.2 查看FP32 BModel**
 
-此步骤可以在开发的docker内进行,也可以在SE5盒子上进行
+  此步骤可以在开发的docker内进行,也可以在SE5盒子上进行
 
   ```bash
-    bm_model.bin --info ${BModel_NAME}
+  bm_model.bin --info ${BModel_NAME}
   ```
-使用`bm_model.bin --info`查看的模型具体信息如下：
-
-```bash
-bmodel version: B.2.2
-chip: BM1684
-create time: Tue Mar 29 12:04:18 2022
-
-==========================================
-net 0: [yolox_s]  static
-------------
-stage 0:
-input: x.1, [1, 3, 640, 640], float32, scale: 1
-output: 15, [1, 8400, 85], float32, scale: 1
-```
-
-#### 4.1.3 转换精度验证
-
-##### 4.1.3.1 在yolox的源码下面生成原始模型的推理结果
-
-此步骤是使用经过trace的pytorch模型，在pytorch框架下面随机产生一批数据进行推理，然后保存推理的feature map
-* [docker内部已经安装了pytorch,但是由于版本的问题,yolox的源码在docker内执行会报错]
-
-将scirpts/pytorch.py文件拷贝至yolox源码目录下，执行下面命令
+  使用`bm_model.bin --info`查看的模型具体信息如下：
 
   ```bash
-    python3 pytorch.py --model_path=${OST_MODEL_NAME} --feature_savepath=${FEATURE_SAVE_PATH}
+  bmodel version: B.2.2
+  chip: BM1684
+  create time: Tue Mar 29 12:04:18 2022
+
+  ==========================================
+  net 0: [yolox_s]  static
+  ------------
+  stage 0:
+  input: x.1, [1, 3, 640, 640], float32, scale: 1
+  output: 15, [1, 8400, 85], float32, scale: 1
   ```
- ${OST_MODEL_NAME}表示torch模型名称,生成的feature map将保存在${FEATURE_SAVE_PATH}文件夹
 
-##### 4.1.3.2 在挂载有SC5的x86-pcie-docker开发环境或者SE5上fp32 bmodel推理结果验证
+#### **4.1.3 转换精度验证**
 
-将上一步模型的推理结果拷贝至docker或者SE5中,拷贝之后的路径为${TORCH_FEATURE_PATH}
+- 在yolox的源码下面生成原始模型的推理结果
+
+  此步骤是使用经过trace的pytorch模型，在pytorch框架下面随机产生一批数据进行推理，然后保存推理的feature map
+
+  ```docker内部已经安装了pytorch,但是由于版本的问题,yolox的源码在docker内执行会报错```
+
+  将scirpts/pytorch.py文件拷贝至yolox源码目录下，执行下面命令
 
   ```bash
-    python3 python/sail.py –bmodel_path=${FP32_BMODEL_NAME} –feature_savepath=${TORCH_FEATURE_PATH} –max_error=0.00001
+  python3 pytorch.py --model_path=${OST_MODEL_NAME} --feature_savepath=${FEATURE_SAVE_PATH}
+  ```
+  `${OST_MODEL_NAME}`表示torch模型名称,生成的feature map将保存在`${FEATURE_SAVE_PATH}`文件夹
+
+- 在挂载有SC5的x86-pcie-docker开发环境或者SE5上fp32 bmodel推理结果验证
+
+  将上一步模型的推理结果拷贝至docker或者SE5中,拷贝之后的路径为`${TORCH_FEATURE_PATH}`
+
+  ```bash
+  python3 python/sail.py –bmodel_path=${FP32_BMODEL_NAME} –feature_savepath=${TORCH_FEATURE_PATH} –max_error=0.00001
   ```
 
-如果打印Verification successed!则表示转换成功，否则转换失败
-参数说明：
-  bmodel_path：fp32 bmodel路径
-  feature_savepath：torch模型推理结果路径
-  max_error：最大误差，如果不指定，默认0.00001
+  如果打印`Verification successed!`则表示转换成功，否则转换失败
+
+  参数说明：
+
+    bmodel_path：fp32 bmodel路径
+
+    feature_savepath：torch模型推理结果路径
+
+    max_error：最大误差，如果不指定，默认0.00001
 
 
 ### 4.2 生成INT8 BModel
@@ -298,24 +306,24 @@ output: 15, [1, 8400, 85], float32, scale: 1
 
 INT8 BModel的生成需要经历中间格式UModel，即：原始模型→FP32 UModel→INT8 UModel→INT8 BModel。
 
-#### 4.2.1 生成FP32 UModel
+#### **4.2.1 生成FP32 UModel**
 
-执行以下命令，将依次调用以下步骤中的脚本，生成INT8 BModel：
+  执行以下命令，将依次调用以下步骤中的脚本，生成INT8 BModel：
 
-```bash
+  ```bash
   python3 gen_fp32_umodel.py \
     --trace_model=${OST_MODEL_NAME} \
     --data_path=${LMDB_PATH}/data.mdb \
     --dst_width=640 \
     --dst_height=640
-```
-结果将在${OST_MODEL_NAME}的文件夹下面创建一个以${OST_MODEL_NAME}模型名称命名的文件夹${UMODEL_PATH},文件夹内存放的是fp32 umodel
+ ```
+  结果将在`${OST_MODEL_NAME}`的文件夹下面创建一个以`${OST_MODEL_NAME}`模型名称命名的文件夹`${UMODEL_PATH}`,文件夹内存放的是fp32 umodel
 
-#### 4.2.2 修改FP32 UModel
+#### **4.2.2 修改FP32 UModel**
 
-如果输出成量化成int8会导致最终结果无法检出，所以最后一层不量化。在生成fp32umodel之后，会生成一个*bmnetp_test_fp32.prototxt，修改此文件，使网络最后的输出类型为float，具体操作为在最后一层总添加“forward_with_float:true”。
+  如果输出成量化成int8会导致最终结果无法检出，所以最后一层不量化。在生成fp32umodel之后，会生成一个*bmnetp_test_fp32.prototxt，修改此文件，使网络最后的输出类型为float，具体操作为在最后一层总添加“forward_with_float:true”。
 
-修改之后最后一层如下：
+  修改之后最后一层如下：
 ```
 layer {
   name: "15"
@@ -337,22 +345,23 @@ layer {
 }
 ```
 
-#### 4.2.3 生成INT8 UModel
+#### **4.2.3 生成INT8 UModel**
 
-```bash
+  ```bash
   calibration_use_pb \
     quantize \
     -model=${UMODEL_PATH}/*_bmnetp_test_fp32.prototxt \
     -weights=${UMODEL_PATH}/*_bmnetp.fp32umodel \
     -iterations=100 \
     -bitwidth=TO_INT8
-```
-注意：不同的模型的bmnetp_test_fp32.prototxt和bmnetp.fp32umodel文件名称不同，实际使用时需要替换命令行中的*
-int8 umodel将保存在${UMODEL_PATH}文件夹下
+  ```
+  ```注意：不同的模型的bmnetp_test_fp32.prototxt和bmnetp.fp32umodel文件名称不同，实际使用时需要替换命令行中的*```
 
-#### 4.2.4 生成INT8 BModel
+  ```int8 umodel将保存在${UMODEL_PATH}文件夹下```
 
-```bash
+#### **4.2.4 生成INT8 BModel**
+
+  ```bash
   bmnetu 
     -model=${UMODEL_PATH}/*_bmnetp_deploy_int8_unique_top.prototxt \
     -weight=${UMODEL_PATH}*_bmnetp.int8umodel \
@@ -362,11 +371,12 @@ int8 umodel将保存在${UMODEL_PATH}文件夹下
     -cmp=1 \
     -target=BM1684 \
     -outdir=${OUTPUT_BMODEL_PATH}
-```
-注意：不同的模型的bmnetp_deploy_int8_unique_top.prototxt和bmnetp.int8umodel文件名称不同，实际使用时需要替换命令行中的*
-命令参数中max_n表示生成模型的batchsize,结果bmodel将保存在${OUTPUT_BMODEL_PATH}下
+  ```
+  ```注意：不同的模型的bmnetp_deploy_int8_unique_top.prototxt和bmnetp.int8umodel文件名称不同，实际使用时需要替换命令行中的*```
 
-#### 4.2.4 查看INT8 BModel
+  ```命令参数中max_n表示生成模型的batchsize,结果bmodel将保存在${OUTPUT_BMODEL_PATH}下```
+
+#### **4.2.4 查看INT8 BModel**
 
 此步骤可以在开发的docker内进行,也可以在SE5盒子上进行
 
@@ -395,17 +405,24 @@ output: 15, [4, 8400, 85], float32, scale: 1
 ```
 
 参数说明：
-  ${SDK_PATH}: docker中SDK的路径
-  ${OST_DATA_PATH}: 原始量化图片的路径
-  ${OST_MODEL_NAME}: JIT模型名称
-  ${NET_WIDTH}: 网络输出宽度
-  ${NET_HEIGHT}: 网络输入的高度
-  ${BATCH_SIZE}: 生成bmodel的batch size
-  ${WITH_VPP_TPU}: 是否使用VPP和TPU对数据进行resize and padding
 
-最终输出Passed: convert to int8 bmodel表示转换成功，否则转换失败
+  `${SDK_PATH}`: docker中SDK的路径
 
-结果将在${OST_MODEL_NAME}所在目录中创建一个和原始模型同名的文件夹,并且内部将生成一个bmodel_int8_bs${BATCH_SIZE},文件夹内的bmodel即为结果模型
+  `${OST_DATA_PATH}`: 原始量化图片的路径
+
+  `${OST_MODEL_NAME}`: JIT模型名称
+
+  `${NET_WIDTH}`: 网络输出宽度
+
+  `${NET_HEIGHT}`: 网络输入的高度
+
+  `${BATCH_SIZE}`: 生成bmodel的batch size
+
+  `${WITH_VPP_TPU}`: 是否使用VPP和TPU对数据进行resize and padding
+
+最终输出`Passed: convert to int8 bmodel`表示转换成功，否则转换失败
+
+结果将在`${OST_MODEL_NAME}`所在目录中创建一个和原始模型同名的文件夹,并且内部将生成一个`bmodel_int8_bs${BATCH_SIZE}`,文件夹内的bmodel即为结果模型
 
 ## 5. 部署测试
 
@@ -413,11 +430,11 @@ output: 15, [4, 8400, 85], float32, scale: 1
 
 ### 5.1 环境配置
 
-#### 5.1.1 x86-pcie-docker-SC5
+#### **5.1.1 x86-pcie-docker-SC5**
 
 对于x86 SC5平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成
 
-#### 5.1.2 SE5
+#### **5.1.2 SE5**
 
 对于SE5平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
 
@@ -457,4 +474,4 @@ apt-get install curl
 ```bash
 ./auto_test.sh ${SDK_PATH}
 ```
-其中${SDK_PATH}指SDK的路径，如果最终输出 Failed:则表示执行失败,否则表示成功.
+其中`${SDK_PATH}`指SDK的路径，如果最终输出 `Failed:`则表示执行失败,否则表示成功.
