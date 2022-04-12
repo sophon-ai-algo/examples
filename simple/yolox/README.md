@@ -68,7 +68,6 @@ YOLOx由旷世研究提出，是基于YOLO系列的改进
 
 #### 3.1.2 SDK软件包下载：
 
-########################### 此章节需要更新一下，python调整为3.7 后面设置环境变量时区分是否包含SC5加速卡
 - 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://sophon.cn/drive/index.html),内含了2个镜像,ubuntu 16.04 with Python 3.7和ubuntu 16.04 with Python 3.5
 
 
@@ -137,21 +136,13 @@ YOLOx由旷世研究提出，是基于YOLO系列的改进
 **- 因为上述docker已经安装了pytorch，但是版本较yolox版本要求的版本低一些，所以此步骤不建议的docker内进行，最好在物理机上直接进行。**
  
 - YOLOx模型的模型参数
-  |Model           | size |  mAP-val | mAP-test | Speed V100 | Params | FLOPs | 
-  |                |      | 0.5:0.95 | 0.5:0.95 |    (ms)    |   (M)  |  (G)  |
-  |---------------------------------------------------------------------------|		
-  |YOLOX-s         |  640 |   40.5   |   40.5   |    9.8     |   9.0  | 26.8  | 	
-  |YOLOX-m         |  640 |   46.9   |   47.2   |    12.3    |   25.3 | 73.8  | 	
-  |YOLOX-l         |  640 |   49.7   |   50.1   |    14.5    |   54.2 | 155.6 | 	
-  |YOLOX-x         |  640 |   51.1   |   51.5   |    17.3    |   99.1 | 281.9 | 	
-  |YOLOX-Darknet53 |  640 |   47.7   |   48.0   |    11.1    |   63.7 | 185.3 | 	
-
-- YOLOx权重官方链接
-  [YOLOX-s](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.pth) 
-  [YOLOX-m](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_m.pth) 
-  [YOLOX-l](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_l.pth) 
-  [YOLOX-x](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_x.pth) 
-  [YOLOX-Darknet53](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_darknet.pth) 
+|Model |size |mAP<sup>val<br>0.5:0.95 |mAP<sup>test<br>0.5:0.95 | Speed V100<br>(ms) | Params<br>(M) |FLOPs<br>(G)| weights |
+| ------        |:---: | :---:    | :---:       |:---:     |:---:  | :---: | :----: |
+|[YOLOX-s](./exps/default/yolox_s.py)    |640  |40.5 |40.5      |9.8      |9.0 | 26.8 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.pth) |
+|[YOLOX-m](./exps/default/yolox_m.py)    |640  |46.9 |47.2      |12.3     |25.3 |73.8| [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_m.pth) |
+|[YOLOX-l](./exps/default/yolox_l.py)    |640  |49.7 |50.1      |14.5     |54.2| 155.6 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_l.pth) |
+|[YOLOX-x](./exps/default/yolox_x.py)   |640   |51.1 |**51.5**  | 17.3    |99.1 |281.9 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_x.pth) |
+|[YOLOX-Darknet53](./exps/default/yolov3.py)   |640  | 47.7 | 48.0 | 11.1 |63.7 | 185.3 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_darknet.pth) |
 
 
 #### 3.2.1 下载yolovx源码 
@@ -356,7 +347,7 @@ layer {
     -iterations=100 \
     -bitwidth=TO_INT8
 ```
-注意：不同的模型的bmnetp_test_fp32.prototxt和bmnetp.fp32umodel文件名称不同，实际使用时需要替换到*
+注意：不同的模型的bmnetp_test_fp32.prototxt和bmnetp.fp32umodel文件名称不同，实际使用时需要替换命令行中的*
 int8 umodel将保存在${UMODEL_PATH}文件夹下
 
 #### 4.2.4 生成INT8 BModel
@@ -372,7 +363,7 @@ int8 umodel将保存在${UMODEL_PATH}文件夹下
     -target=BM1684 \
     -outdir=${OUTPUT_BMODEL_PATH}
 ```
-注意：不同的模型的bmnetp_deploy_int8_unique_top.prototxt和bmnetp.int8umodel文件名称不同，实际使用时需要替换到*
+注意：不同的模型的bmnetp_deploy_int8_unique_top.prototxt和bmnetp.int8umodel文件名称不同，实际使用时需要替换命令行中的*
 命令参数中max_n表示生成模型的batchsize,结果bmodel将保存在${OUTPUT_BMODEL_PATH}下
 
 #### 4.2.4 查看INT8 BModel
