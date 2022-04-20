@@ -1,0 +1,49 @@
+{
+    "max_show_windows": 16,
+    "cards": [
+      {
+        "devid": 0,
+        "cameras": [
+          {
+            "address": "rtsp://admin:hk123456@11.73.12.22",
+            "chan_num": 1,
+            "models": ["coco_int8_4b", "coco_fp32_1b"]
+          }
+        ]
+      }
+    ],
+    "pipeline": {
+      "preprocess": {
+        "thread_num": 4,
+        "queue_size": 16
+      },
+      "inference": {
+        "thread_num": 1,
+        "queue_size": 16
+      },
+      "postprocess": {
+        "thread_num": 4,
+        "queue_size": 16
+      }
+    },
+    "models": [
+      {
+        "class_threshold": 0.5,
+        "obj_threshold": 0.5,
+        "nms_threshold": 0.5,
+        "name": "coco_int8_4b",
+        "skip_frame": 2,
+        "path": "/data/workspace/models/yolov5s_4b_int8_v21.bmodel"
+      },
+      {
+        "class_threshold": 0.5,
+        "obj_threshold": 0.5,
+        "nms_threshold": 0.5,
+        "name": "coco_fp32_1b",
+        "skip_frame": 2,
+        "path": "/data/workspace/models/yolov5s.bmodel"
+      }
+   ]
+  }
+  
+  
