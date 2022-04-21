@@ -22,7 +22,7 @@ inline T    get_##t(T val) { return m_##t##_thres; }
 
 namespace bm {
 
-class BaseModel : std::enable_shared_from_this<BaseModel> {
+class BaseModel : public std::enable_shared_from_this<BaseModel> {
 public:
     DEFINE_BASEMODEL_THRES_SETTER_GETTER(float, cls)
     DEFINE_BASEMODEL_THRES_SETTER_GETTER(float, nms)
