@@ -26,6 +26,7 @@ make -f Makefile.pcie
 - video           :test file is video, otherwise is picture
 - video url       :video name or picture path
 - bmodel path     : bmodel file name
+- test count      : video inference count, does not take effect in picture mode
 - detect threshold: detect threshold(0.25)
 - nms threshold   : nms threshold(0.45)
 - save path       : result save path
@@ -72,6 +73,7 @@ source envsetup_cmodel.sh
 - video           :test file is video, otherwise is picture
 - video url       :video name or picture path
 - bmodel path     : bmodel file name
+- test count      : video inference count, does not take effect in picture mode
 - detect threshold: detect threshold(0.25)
 - nms threshold   : nms threshold(0.45)
 - save path       : result save path
