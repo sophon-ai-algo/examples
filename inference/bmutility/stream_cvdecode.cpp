@@ -43,7 +43,11 @@ namespace bm {
         m_url = url;
         m_keep_running = true;
         m_thread_reading = new std::thread([&] {
+#ifdef BM_USE_OPENCV
             if (!m_cvcap.open(m_url, cv::CAP_ANY, 0)) {
+#else
+            if (!m_cvcap.open(m_url, cv::CAP_ANY)) {
+#endif 
                 std::cerr << "open " << url << " failed!" << std::endl;
                 m_keep_running = false;
                 return;

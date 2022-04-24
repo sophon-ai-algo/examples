@@ -2,6 +2,7 @@
 #define _STREAM_CVDECODE_H_
 
 #include <thread>
+#include <functional>
 #include "opencv2/opencv.hpp"
 
 namespace bm {

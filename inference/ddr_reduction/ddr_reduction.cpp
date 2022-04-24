@@ -117,7 +117,9 @@ public:
             ret = 0;
         }
         else if (ret < 0) {
-            fprintf(stderr, "Error sending a packet for decoding, %s\n", av_err2str(ret));
+            char err[256] = {0};
+            av_strerror(ret, err, sizeof(err));
+            fprintf(stderr, "Error sending a packet for decoding, %s\n", err);
             return -1;
         }
 

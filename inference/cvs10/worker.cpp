@@ -143,7 +143,11 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
                     bm::FeatureFrame featureFrame;
                     featureFrame.chan_id = ch;
                     featureFrame.seq++;
+#if USE_BM_OPENCV
                     featureFrame.img = cv::imread("face.jpeg", cv::IMREAD_COLOR, m_dev_id);
+#else
+                    featureFrame.img = cv::imread("face.jpeg", cv::IMREAD_COLOR);
+#endif
                     if (featureFrame.img.empty()) {
                         printf("ERROR:Can't find face.jpg in workdir!\n");
                         exit(0);
