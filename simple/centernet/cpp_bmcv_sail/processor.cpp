@@ -1,8 +1,7 @@
 #include <limits>
+#include <numeric>
 #include "processor.h"
 #include "glog/logging.h"
-
-#ifdef USE_BMCV
 
 CenterNetPreprocessor::CenterNetPreprocessor(sail::Bmcv& bmcv, int result_width, int result_height, float scale)
   : bmcv_{bmcv},
@@ -11,10 +10,41 @@ CenterNetPreprocessor::CenterNetPreprocessor(sail::Bmcv& bmcv, int result_width,
     ab_{scale * 0.01358f, scale * -1.4131f, scale * 0.0143f, scale * -1.6316f, scale * 0.0141f, scale * -1.69103f} {}
 
 
-void CenterNetPreprocessor::Process(sail::BMImage& input, sail::BMImage& output) {
+void CenterNetPreprocessor::Process(sail::BMImage& input, sail::BMImage& output, bool& align_width, float& ratio) {
     // bgr normalization
     sail::BMImage tmp;
-    bmcv_.vpp_resize(input, tmp, resize_w_, resize_h_);
+    float resize_ratio;
+    int target_w, target_h;
+
+    if (input.width() > input.height()) {
+        resize_ratio = (float)resize_w_ / input.width();
+        target_w     = resize_w_;
+        target_h     = int(input.height() * resize_ratio);
+        align_width  = true;
+        ratio        = (float)target_h / target_w;
+    } else {
+        resize_ratio = (float)resize_h_ / input.height();
+        target_w     = int(input.width() * resize_ratio);
+        target_h     = resize_h_;
+        align_width  = false;
+        ratio        = (float)target_w / target_h;
+    }
+
+    sail::PaddingAtrr pad = sail::PaddingAtrr();
+    int offset_x = target_w >= target_h ? 0 : ((resize_w_  - target_w) / 2);
+    int offset_y = target_w <= target_h ? 0 : ((resize_h_  - target_h) / 2);
+    pad.set_stx(offset_x);
+    pad.set_sty(offset_y);
+    pad.set_w(target_w);
+    pad.set_h(target_h);
+    pad.set_r(0);
+    pad.set_g(0);
+    pad.set_b(0);
+    tmp = bmcv_.crop_and_resize_padding(input, 0, 0, 
+                                        input.width(), input.height(),
+                                        resize_w_, resize_h_,
+                                        pad);
+    //bmcv_.vpp_resize(input, tmp, resize_w_, resize_h_);
     // linear: bgr-planer -> bgr-planar
     bmcv_.convert_to(tmp, output,
                      std::make_tuple(std::make_pair(ab_[0], ab_[1]),
@@ -22,8 +52,6 @@ void CenterNetPreprocessor::Process(sail::BMImage& input, sail::BMImage& output)
                                      std::make_pair(ab_[4], ab_[5])));
     
 }
-
-#endif
 
 void CenterNetPreprocessor::BGRNormalization(float* data) {
     constexpr static float kBGRMeans[] = {0.40789655, 0.44719303, 0.47026116};
@@ -40,10 +68,11 @@ void CenterNetPreprocessor::BGRNormalization(float* data) {
 }
 
 
-CenterNetPostprocessor::CenterNetPostprocessor(std::vector<int>& output_shape, float threshold)
+CenterNetPostprocessor::CenterNetPostprocessor(std::vector<int>& output_shape, float threshold, float scale)
   : output_shape_{output_shape},
     output_size_{0, 0, 0, 0},
-    threshold_{threshold} {
+    threshold_{threshold},
+    scale_{scale} {
     // centernet output dims 1*84*128*128
     assert(output_shape_.size() == 4);
     LOG(INFO) << "Got output shape " << output_shape_[0] << ", "
@@ -66,22 +95,29 @@ CenterNetPostprocessor::~CenterNetPostprocessor() {
     detected_objs_.reset();
 }
 
-void CenterNetPostprocessor::Process(float* output_data) {
+void CenterNetPostprocessor::Process(float* output_data, bool align_width, float ratio) {
+    // Once one batch
+    if (scale_ - 1 >= std::numeric_limits<float>::epsilon()) {
+        int elem_count = std::accumulate(output_shape_.begin() + 1, output_shape_.end(), 1, std::multiplies<int>());
+        for (int i = 0; i < elem_count; ++i) {
+            output_data[i] *= scale_;
+        }
+    }
     for (int i = 0; i < output_shape_[1]; ++i) {
-        for (int j = 0; j < output_shape_[0]; ++j) {
-            int offset = j * output_size_[0] + i * output_size_[1];
-            float* ptr = output_data + offset;
-            if (i < output_shape_[1] - 4) {
-                // heatmap
-                pred_hms_[i] = ptr;
-            } else if (i < output_shape_[1] - 2) {
-                // width&height
-                pred_whs_[i - kHeatMapChannels] = ptr;
-            } else if (i < output_shape_[1]) {
-                // offset
-                pred_off_[i - kHeatMapChannels - kHeightWChannels] = ptr;
-            }
-        } 
+//        for (int j = 0; j < output_shape_[0]; ++j) {
+        int offset = i * output_size_[1];
+        float* ptr = output_data + offset;
+        if (i < output_shape_[1] - 4) {
+            // heatmap
+            pred_hms_[i] = ptr;
+        } else if (i < output_shape_[1] - 2) {
+            // width&height
+            pred_whs_[i - kHeatMapChannels] = ptr;
+        } else if (i < output_shape_[1]) {
+            // offset
+            pred_off_[i - kHeatMapChannels - kHeightWChannels] = ptr;
+        }
+//        }
     }
 
     std::vector<int> validChannels;
@@ -138,22 +174,39 @@ void CenterNetPostprocessor::Process(float* output_data) {
         if (confidence_mask_ptr_[i] >= 0) {
             // assert(kHeightWChannels == 2);
             // offset x y
-            xv.push_back((i % output_shape_[3]) + pred_off_[0][i]);
-            yv.push_back((i / output_shape_[3]) + pred_off_[1][i]);
+            float x = (i % output_shape_[3]) + pred_off_[0][i];
+            float y = (i / output_shape_[3]) + pred_off_[1][i];
+            float w = pred_whs_[0][i] / 2.0;
+            float h = pred_whs_[1][i] / 2.0;
+            
+            xv.push_back(x);
+            yv.push_back(y);
             // half width and height
-            half_w.push_back(pred_whs_[0][i] / 2.0);
-            half_h.push_back(pred_whs_[1][i] / 2.0);
+            half_w.push_back(w);
+            half_h.push_back(h);
         }
     }
     assert(xv.size() == yv.size());
     detected_count_ = xv.size();
     detected_objs_ = std::make_unique<float[]>(detected_count_ * 6); // x1,y1,x2,y2,conf,cls
     for (int i = 0; i < detected_count_; ++i) {
+        float x1 = (xv[i] - half_w[i]) / output_shape_[3];
+        float y1 = (yv[i] - half_h[i]) / output_shape_[2];
+        float x2 = (xv[i] + half_w[i]) / output_shape_[3];
+        float y2 = (yv[i] + half_h[i]) / output_shape_[2];
+        // letterbox
+        if (align_width) {
+            y1 = (y1 - (1 - ratio) / 2) / ratio;
+            y2 = (y2 - (1 - ratio) / 2) / ratio;
+        } else {
+            x1 = (x1 - (1 - ratio) / 2) / ratio;
+            x2 = (x2 - (1 - ratio) / 2) / ratio;
+        }
         // bbox
-        detected_objs_[i * 6 + 0] = (xv[i] - half_w[i]) / output_shape_[3];
-        detected_objs_[i * 6 + 1] = (yv[i] - half_h[i]) / output_shape_[2];
-        detected_objs_[i * 6 + 2] = (xv[i] + half_w[i]) / output_shape_[3];
-        detected_objs_[i * 6 + 3] = (yv[i] + half_h[i]) / output_shape_[2];
+        detected_objs_[i * 6 + 0] = x1;
+        detected_objs_[i * 6 + 1] = y1;
+        detected_objs_[i * 6 + 2] = x2;
+        detected_objs_[i * 6 + 3] = y2;
         // class
         detected_objs_[i * 6 + 4] = class_cls[i];
         // confidence

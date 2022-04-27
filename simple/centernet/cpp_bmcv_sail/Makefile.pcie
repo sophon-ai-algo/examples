@@ -15,8 +15,8 @@ INC_DIR += -I$(top_dir)/NeuralNetwork/include
 INC_DIR += -I$(sdk_dir)/include/third_party/glog/include
 
 DEFS = -DUSE_BMCV -DUSE_FFMPEG
-# CXXFLAGS := -g -Wall -std=c++14 ${DEFS} $(INC_DIR)
-CXXFLAGS := -O2 -Wall -std=c++14 ${DEFS} $(INC_DIR)
+CXXFLAGS := -g -Wall -std=c++14 ${DEFS} $(INC_DIR)
+#CXXFLAGS := -O2 -Wall -std=c++14 ${DEFS} $(INC_DIR)
 LOCAL_MEM_ADDRWIDTH           ?= 19
 CXXFLAGS += -DCONFIG_LOCAL_MEM_ADDRWIDTH=$(LOCAL_MEM_ADDRWIDTH)
 
