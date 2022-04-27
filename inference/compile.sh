@@ -52,9 +52,9 @@ function build_app()
 
 function release_example_apps() {
     local arch=$1
-    local all_app_list="openpose_demo yolov5s_demo facedetect_demo retinaface_demo safe_hat_detect_demo video_stitch_demo"
+    local all_app_list="openpose_demo yolov5s_demo facedetect_demo retinaface_demo safe_hat_detect_demo video_stitch_demo multi_demo"
     if [[ $arch == "soc" ]];then
-        all_app_list="openpose_demo yolov5s_demo facedetect_demo safe_hat_detect_demo video_stitch_demo"
+        all_app_list="openpose_demo yolov5s_demo facedetect_demo safe_hat_detect_demo video_stitch_demo multi_demo"
     fi
 
     for app in ${all_app_list[@]}
@@ -63,7 +63,11 @@ function release_example_apps() {
          if [ "$app" != "client" ]; then
              mkdir -p release/$app/$arch
              cp $builddir/bin/$app release/$app/$arch/
-             cp ./examples/cameras.json release/$app/
+             if [ "$app" != "multi_demo" ]; then
+               cp ./examples/cameras.json release/$app/
+             else
+               cp ./examples/cameras_v1.json release/$app/
+             fi
          fi
     done
 }
@@ -88,9 +92,9 @@ function build_all() {
 	for arch in ${target_arch_list[@]}
 	do
 		build_app $arch
-        if [ "$?" == "1" ];then
-            break
-        fi
+    if [ "$?" == "1" ];then
+        break
+    fi
 		release_example_apps $arch
 		release_others $arch
 	done

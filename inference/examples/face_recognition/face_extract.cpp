@@ -187,7 +187,7 @@ int FaceExtract::postprocess(std::vector <bm::FrameInfo2> &frame_infos)
                 int oc_idx;
                 get_complex_idx(start_idx+n, frame_info.out_datums, &frame_idx, &oc_idx);
                 bm::ObjectFeature feature;
-                const float *data_start = out_data + out_c * image_n;
+                const float *data_start = out_data + out_c * n;
                 feature.insert(feature.end(), data_start, data_start + out_c);
                 frame_info.out_datums[frame_idx].face_features.push_back(feature);
             }

@@ -4,7 +4,7 @@
 
 #include "yolov5s.h"
 
-YoloV5::YoloV5(bm::BMNNContextPtr bmctx, int max_batch):m_bmctx(bmctx),MAX_BATCH(max_batch)
+YoloV5::YoloV5(bm::BMNNContextPtr bmctx):m_bmctx(bmctx)
 {
     // the bmodel has only one yolo network.
     auto net_name = m_bmctx->network_name(0);
@@ -14,13 +14,14 @@ YoloV5::YoloV5(bm::BMNNContextPtr bmctx, int max_batch):m_bmctx(bmctx),MAX_BATCH
     auto tensor = m_bmnet->inputTensor(0);
 
     //YOLOV5 input is NCHW
-    m_net_h = tensor->get_shape()->dims[2];
-    m_net_w = tensor->get_shape()->dims[3];
+    m_max_batch = tensor->get_shape()->dims[0];
+    m_net_h     = tensor->get_shape()->dims[2];
+    m_net_w     = tensor->get_shape()->dims[3];
 }
 
 YoloV5::~YoloV5()
 {
-
+    printf("YOLOv5 destruct\n");
 }
 
 int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::FrameInfo>& frame_infos)
@@ -30,11 +31,11 @@ int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::F
 
     // Check input
     int total = frames.size();
-    int left = (total%MAX_BATCH == 0 ? MAX_BATCH: total%MAX_BATCH);
-    int batch_num = total%MAX_BATCH==0 ? total/MAX_BATCH: (total/MAX_BATCH + 1);
+    int left = (total%m_max_batch == 0 ? m_max_batch: total%m_max_batch);
+    int batch_num = total%m_max_batch==0 ? total/m_max_batch: (total/m_max_batch + 1);
     for(int batch_idx = 0; batch_idx < batch_num; ++ batch_idx) {
-        int num = MAX_BATCH;
-        int start_idx = batch_idx*MAX_BATCH;
+        int num = m_max_batch;
+        int start_idx = batch_idx*m_max_batch;
         if (batch_idx == batch_num-1) {
             // last one
             num = left;
@@ -42,7 +43,7 @@ int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::F
 
         bm::FrameInfo finfo;
         //1. Resize
-        bm_image resized_imgs[MAX_BATCH];
+        bm_image resized_imgs[m_max_batch];
         ret = bm::BMImage::create_batch(handle, m_net_h, m_net_w, FORMAT_RGB_PLANAR, DATA_TYPE_EXT_1N_BYTE, resized_imgs, num, 64);
         assert(BM_SUCCESS == ret);
 
@@ -69,7 +70,7 @@ int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::F
         }
 
         //2. Convert to
-        bm_image convertto_imgs[MAX_BATCH];
+        bm_image convertto_imgs[m_max_batch];
         float alpha, beta;
 
         bm_image_data_format_ext img_type = DATA_TYPE_EXT_FLOAT32;
@@ -286,13 +287,13 @@ void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
             for (int i = 0; i < box_num; i++) {
                 float *ptr = output_data + i * nout;
                 float score = ptr[4];
-                if (score >= m_objThreshold) {
+                if (score >= m_obj_thres) {
                     int class_id = argmax(&ptr[5], m_class_num);
                     float confidence = ptr[class_id + 5];
-                    if (confidence >= m_confThreshold) {
+                    if (confidence >= m_cls_thres) {
                         bm::NetOutputObject box;
                         box.score = confidence * score;
-                        if (box.score >= m_confThreshold) {
+                        if (box.score >= m_cls_thres) {
                             float centerX = (ptr[0]+1)/m_net_w*frame_width-1;
                             float centerY = (ptr[1]+1)/m_net_h*frame_height-1;
                             float width = (ptr[2]+0.5) * frame_width / m_net_w;
@@ -320,7 +321,7 @@ void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
                     float *ptr = output_data + anchor_idx*feature_size;
                     for (int i = 0; i < area; i++) {
                         float score = sigmoid(ptr[4]);
-                        if(score > m_objThreshold)
+                        if(score > m_obj_thres)
                         {
                             float centerX = (sigmoid(ptr[0]) * 2 - 0.5 + i % feat_w) * frame_width / feat_w;
                             float centerY = (sigmoid(ptr[1]) * 2 - 0.5 + i / feat_h) * frame_height / feat_h; //center_y
@@ -335,7 +336,7 @@ void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
                             box.score = sigmoid(ptr[class_id + 5]) * score;
                             box.class_id = class_id;
 
-                            if (box.score >= m_confThreshold) {
+                            if (box.score >= m_cls_thres) {
                                 yolobox_vec.push_back(box);
                             }
                         }
@@ -349,7 +350,7 @@ void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
         }
 
 
-        NMS(yolobox_vec, m_nmsThreshold);
+        NMS(yolobox_vec, m_nms_thres);
         bm::NetOutputDatum datum(yolobox_vec);
         frameInfo.out_datums.push_back(datum);
     }

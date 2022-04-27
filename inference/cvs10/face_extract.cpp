@@ -50,11 +50,27 @@ int FaceExtract::preprocess(std::vector<bm::FeatureFrame> &frames, std::vector<b
 
         for(int i = 0;i < num; ++i) {
             bm_image image1;
+#if USE_BM_OPENCV
+            
             cv::Mat cvm1=frames[start_idx + i].img;
             cv::bmcv::toBMI(cvm1, &image1);
             ret = bmcv_image_vpp_convert(handle, 1, image1, &resized_imgs[i]);
             assert(BM_SUCCESS == ret);
-
+#else
+            int width = frames[start_idx + i].img.cols;
+            int height = frames[start_idx + i].img.rows;
+            int frameSize = width * height;
+            int strides[1]={(int)frames[start_idx + i].img.step};
+            ret = bm_image_create(handle, height, width, FORMAT_BGR_PACKED, DATA_TYPE_EXT_1N_BYTE, &image1, strides);
+            assert(ret == 0);
+            ret = bm_image_alloc_dev_mem(image1, BMCV_IMAGE_FOR_IN);
+            assert(ret == 0);
+            auto frame = frames[start_idx + i].img;
+            void *buffers[4]={0};
+            buffers[0] = frame.data;
+            ret = bm_image_copy_host_to_device(image1, buffers);
+            assert(ret == 0);
+#endif
             finfo.frames.push_back(frames[start_idx + i]);
             bm_image_destroy(image1);
         }

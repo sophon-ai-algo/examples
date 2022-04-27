@@ -118,15 +118,19 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
         //pchan->decoder->open_stream("rtsp://admin:hk123456@11.73.11.99/test", false, opts);
         av_dict_free(&opts);
         pchan->decoder->set_decoded_frame_callback([this, pchan, ch](const AVPacket* pkt, const AVFrame *frame){
+            uint64_t seq = pchan->seq++;
+            if (m_skipN > 0) {
+                if (seq % m_skipN != 0) {
+                    return;
+                }
+            }
             bm::FrameBaseInfo fbi;
             fbi.avframe = av_frame_alloc();
             fbi.avpkt = av_packet_alloc();
             av_frame_ref(fbi.avframe, frame);
             av_packet_ref(fbi.avpkt, pkt);
-            fbi.seq = pchan->seq++;
-            if (m_skipN > 0) {
-                if (fbi.seq % m_skipN != 0) fbi.skip = true;
-            }
+            fbi.seq = seq;
+
             fbi.chan_id = ch;
 #ifdef DEBUG
             if (ch == 0) std::cout << "decoded frame " << std::endl;

@@ -83,6 +83,15 @@ function pack_safe_hat_detect_demo() {
     echo "safe_hat_detect_demo done."
 }
 
+function pack_multi_demo() {
+    local BIN_DIR="./release/multi_demo/run.sh"
+    pack_common multi_demo
+    echo "./\$1/multi_demo --config=./cameras_v1.json" >> $BIN_DIR
+    cp $MODEL_PATH/yolov5s_4b_int8_v21.bmodel ./release/multi_demo
+    cp $MODEL_PATH/yolov5s.bmodel ./release/multi_demo
+    echo "multi_demo done."
+}
+
 pack_cvs10
 pack_facedetect_demo
 pack_openpose_demo
@@ -90,6 +99,7 @@ pack_retinaface_demo
 pack_video_stitch_demo
 pack_yolov5s_demo
 pack_safe_hat_detect_demo
+pack_multi_demo
 
 echo "Done."
 

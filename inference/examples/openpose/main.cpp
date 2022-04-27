@@ -21,7 +21,7 @@ const char *APP_ARG_STRING =
 int main(int argc, char *argv[])
 {
     const char *base_keys="{help | 0 | Print help information.}"
-                     "{output | None | Output stream URL}"
+                     "{output | udp://0.0.0.0:10000 | Output stream URL}"
                      "{skip | 1 | skip N frames to detect}"
                      "{num | 1 | Channels to run}";
     std::string keys;
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
     int total_num = parser.get<int>("num");
     Config cfg(config_file.c_str());
-    if (!cfg.valid_check(total_num)) {
+    if (!cfg.valid_check()) {
         std::cout << "ERROR:cameras.json config error, please check!" << std::endl;
         return -1;
     }
