@@ -293,13 +293,14 @@ if __name__ == "__main__":
             print("Decoder and Inference time use:{:.2f} ms, Batch size : {}".format((end_time-start_time)*1000, batch_size))
             if batch_size == 1:
                 dete_boxs = yolox.get_detectresult(predictions[0],opt.detect_threshold, opt.nms_threshold)
-                dete_boxs[:,0] /= min_ratio
-                dete_boxs[:,1] /= min_ratio
-                dete_boxs[:,2] /= min_ratio
-                dete_boxs[:,3] /= min_ratio
-                for dete_box in dete_boxs:
-                    bmcv.rectangle(ost_image, int(dete_box[0]), int(dete_box[1]), 
-                        int(dete_box[2]-dete_box[0]), int(dete_box[3]-dete_box[1]), (0, 0, 255), 4)
+                if dete_boxs is not None:
+                    dete_boxs[:,0] /= min_ratio
+                    dete_boxs[:,1] /= min_ratio
+                    dete_boxs[:,2] /= min_ratio
+                    dete_boxs[:,3] /= min_ratio
+                    for dete_box in dete_boxs:
+                        bmcv.rectangle(ost_image, int(dete_box[0]), int(dete_box[1]), 
+                            int(dete_box[2]-dete_box[0]), int(dete_box[3]-dete_box[1]), (0, 0, 255), 4)
                 bmcv.imwrite(os.path.join(save_path,"frame_{}_device_{}.jpg".format(i,opt.device_id)),ost_image)
 
                 image_name_temp = "frame_{}".format(i)
@@ -308,15 +309,16 @@ if __name__ == "__main__":
             else:
                 for image_idx in range(len(resize_image)):
                     dete_boxs = yolox.get_detectresult(predictions[image_idx],opt.detect_threshold, opt.nms_threshold)
-                    dete_boxs[:,0] /= min_ratio
-                    dete_boxs[:,1] /= min_ratio
-                    dete_boxs[:,2] /= min_ratio
-                    dete_boxs[:,3] /= min_ratio
+                    if dete_boxs is not None:
+                        dete_boxs[:,0] /= min_ratio
+                        dete_boxs[:,1] /= min_ratio
+                        dete_boxs[:,2] /= min_ratio
+                        dete_boxs[:,3] /= min_ratio
 
-                    for dete_box in dete_boxs:
-                        bmcv.rectangle_(ost_image[image_idx], int(dete_box[0]), int(dete_box[1]), 
-                            int(dete_box[2]-dete_box[0]), int(dete_box[3]-dete_box[1]), (255, 255, 0), 4)
-            
+                        for dete_box in dete_boxs:
+                            bmcv.rectangle_(ost_image[image_idx], int(dete_box[0]), int(dete_box[1]), 
+                                int(dete_box[2]-dete_box[0]), int(dete_box[3]-dete_box[1]), (255, 255, 0), 4)
+                
                     bmcv.imwrite_(os.path.join(save_path,"frame_{}_device_{}.jpg".format(i*batch_size+image_idx,opt.device_id)),ost_image[image_idx])
                     
                     image_name_temp = "frame_{}".format(i*batch_size+image_idx)
@@ -363,7 +365,7 @@ if __name__ == "__main__":
                     for dete_box in dete_boxs:
                         bmcv.rectangle(img_bgr, int(dete_box[0]), int(dete_box[1]), 
                             int(dete_box[2]-dete_box[0]), int(dete_box[3]-dete_box[1]), (0, 0, 255), 2)
-                    bmcv.imwrite(os.path.join(save_path,"{}".format(image_name.split('/')[-1])),img_bgr)
+                bmcv.imwrite(os.path.join(save_path,"{}".format(image_name.split('/')[-1])),img_bgr)
                 
                 image_name_temp = image_name.split('/')[-1]
                 output_result.update({image_name_temp:dete_boxs})
