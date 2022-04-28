@@ -40,6 +40,8 @@ private:
                     pthread_cond_wait(&m_pop_cond, &m_qmtx);
                 } while (m_limit > 0 && this->size_impl() >= m_limit && !m_stop);
             }
+        } else if (this->size_impl() >= m_warning && !m_stop && this->size_impl() % 100 == 0) {
+            //std::cout << "WARNING: " << m_name << " queue_size is " << this->size_impl() << std::endl;
         }
 
         if (m_type == 0)
@@ -51,8 +53,8 @@ private:
     }
 
 public:
-    BlockingQueue(const std::string& name="" ,int type=0, int limit = 0)
-        : m_stop(false), m_limit(limit), m_drop_fn(nullptr) {
+    BlockingQueue(const std::string& name="" ,int type=0, int limit = 0, int warning = 32)
+        : m_stop(false), m_limit(limit), m_drop_fn(nullptr), m_warning(warning) {
         m_name = name;
         m_type = type;
         pthread_mutex_init(&m_qmtx, NULL);
@@ -260,6 +262,7 @@ private:
     pthread_mutex_t m_qmtx;
     pthread_cond_t m_condv, m_pop_cond;
     int m_type, m_limit; //0:queue,1:vector
+    int m_warning;
     std::function<void(T& obj)> m_drop_fn;
 };
 
@@ -285,7 +288,6 @@ public:
         m_max_pop_num = max_pop_num;
         return 0;
     }
-
 
     int startWork(OnWorkItemsCallback fn) {
         m_work_item_func = fn;

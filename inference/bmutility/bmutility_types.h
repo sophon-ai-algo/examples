@@ -433,11 +433,23 @@ namespace bm {
             return y2-y1;
         }
 
-        void to_bmcv_rect(bmcv_rect_t *rect){
-            rect->start_y =y1;
-            rect->start_x = x1;
-            rect->crop_w = width();
-            rect->crop_h = height();
+        void to_bmcv_rect(bmcv_rect_t *rect, int max_x = 0, int max_y = 0) {
+            rect->start_y = std::max(y1, 0.f);
+            rect->start_x = std::max(x1, 0.f);
+            rect->crop_w  = width();
+            rect->crop_h  = height();
+            if (max_x != 0) {
+                if (rect->start_x >= max_x)
+                    rect->start_x = max_x - 1;
+                if ((rect->crop_w + rect->start_x) >= max_x)
+                    rect->crop_w = max_x - rect->start_x - 1;
+            }
+            if (max_y != 0) {
+                if (rect->start_y >= max_y)
+                    rect->start_y = max_y - 1;
+                if ((rect->crop_h + rect->start_y) >= max_y)
+                    rect->crop_h = max_y - rect->start_y - 1;
+            }
         }
     };
     using NetOutputObjects =std::vector<NetOutputObject>;
