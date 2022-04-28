@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
     while(1) {
       cv::Mat img;
       if (!cap.read(img)) {
-        std::cout << "Read frame failed!" << std::endl;
+        std::cout << "Read frame failed or end of file!" << std::endl;
         exit(1);
       }
 
