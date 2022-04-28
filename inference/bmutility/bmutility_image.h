@@ -33,6 +33,63 @@ namespace bm {
 
 // BMCV_IMAGE
 struct BMImage {
+  static inline bm_status_t bm_images_clone(bm_handle_t handle, 
+                                            bm_image *in, 
+                                            int num, 
+                                            bm_image *out,
+                                            int align = 1) {
+    bm_status_t ret = bm::BMImage::create_batch(handle, in->height, in->width,
+                                                FORMAT_BGR_PLANAR, DATA_TYPE_EXT_1N_BYTE,
+                                                out, num,
+                                                align, true, true, 2);
+    assert(ret == BM_SUCCESS);                       
+                                                
+    bmcv_copy_to_atrr_t copy_attr;
+    copy_attr.start_x    = 0;
+    copy_attr.start_y    = 0;
+    copy_attr.if_padding = 0;
+
+    for (int i = 0; i < num; ++i) {
+      bmcv_image_copy_to(handle, copy_attr, in[i], out[i]);
+    }
+
+    return BM_SUCCESS;
+  }
+
+  static inline bm_status_t bm_image_uncompress(bm_handle_t handle,
+                                                bm_image &in,
+                                                bm_image_format_ext img_format,
+                                                bm_image_data_format_ext data_type,
+                                                bm_image &out, int align = 1, int mask = 6) {
+    assert(FORMAT_COMPRESSED == in.image_format);
+    int data_size = 1;
+    if (data_type == DATA_TYPE_EXT_FLOAT32) {
+      data_size = 4;
+    }
+    int stride[3] = {0};
+    int img_w_real = in.width * data_size;
+    if (FORMAT_RGB_PLANAR == img_format ||
+        FORMAT_RGB_PACKED == img_format ||
+        FORMAT_BGR_PLANAR == img_format ||
+        FORMAT_BGR_PACKED == img_format) {
+      stride[0] = FFALIGN(img_w_real, align);
+    } else if (FORMAT_YUV420P == img_format) {
+      stride[0] = FFALIGN(img_w_real, align);
+      stride[1] = stride[2] = FFALIGN(img_w_real >> 1, align);
+    } else if (FORMAT_NV12 == img_format || FORMAT_NV21 == img_format) {
+      stride[0] = FFALIGN(img_w_real, align);
+      stride[1] = FFALIGN(img_w_real >> 1, align);
+    } else {
+      assert(0);
+    }
+    bm_image_create(handle, in.height, in.width, img_format, data_type, &out, stride);
+    bm_status_t ret = bm_image_alloc_dev_mem_heap_mask(out, mask);
+    assert(BM_SUCCESS == ret);
+    ret = bmcv_image_vpp_convert(handle, 1, in, &out);
+    assert(BM_SUCCESS == ret);
+    return BM_SUCCESS;
+  }
+
   static inline bm_status_t create_batch(bm_handle_t handle,
                                          int img_h,
                                          int img_w,

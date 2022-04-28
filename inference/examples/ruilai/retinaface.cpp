@@ -1,7 +1,7 @@
-#include "macros.h"
 #include "retinaface.h"
 #include "inference.h"
 #include "bm_wrapper.hpp"
+#include "common_types.h"
 
 #ifdef USE_EXIV2
 #include <exiv2/exiv2.hpp>
@@ -263,6 +263,8 @@ int Retinaface::preprocess(
             const int vpp_num = 1;
             bmcv_rect_t crop_rect{0, 0, image.width, image.height};
             if (w_) w_->mark("vpp");
+            auto ret1 = bm_image_is_attached(image);
+
             call(
                 bmcv_image_vpp_convert_padding,
                 handle, vpp_num,
@@ -344,6 +346,9 @@ int Retinaface::forward(std::vector<bm::FrameInfo> &frame_infos)
 int Retinaface::postprocess(std::vector<bm::FrameInfo> &frame_infos)
 {
     if (w_) w_->mark("postprocess");
+
+    std::vector<bm::CropFrameInfo> total_crop_images;
+
     for (auto &frame_info : frame_infos)
     {
         // extract face detection
@@ -366,8 +371,8 @@ int Retinaface::postprocess(std::vector<bm::FrameInfo> &frame_infos)
                 av_frame_free(&reff.avframe);
             }
 
-            if (impl_->keep_original)
-                call(bm_image_destroy, reff.original);
+           if (impl_->keep_original)
+               call(bm_image_destroy, reff.original);
         }
 
         // Free Tensors
@@ -380,6 +385,8 @@ int Retinaface::postprocess(std::vector<bm::FrameInfo> &frame_infos)
         }
 
     }
+    
+
     if (w_) w_->mark("postprocess");
 }
 
@@ -569,146 +576,6 @@ void Retinaface::extract_facebox_cpu(
                 land_data + i * land_step,
                 loc_data + i * loc_step,
                 frame_info.frames[i]));
-    }
-}
-
-RetinafaceEval::RetinafaceEval(
-    bm::BMNNContextPtr bmctx,
-    size_t target_size,
-    bool keep_original,
-    float nms_threshold,
-    float conf_threshold,
-    std::string net_name)
-    : Retinaface(bmctx, keep_original, nms_threshold, conf_threshold, net_name)
-{
-    impl_->target_size = target_size;
-}
-
-int RetinafaceEval::preprocess(
-    std::vector<bm::FrameBaseInfo> &frames,
-    std::vector<bm::FrameInfo> &frame_infos)
-{
-    bm_handle_t handle = impl_->ctx->handle();
-    for (int i = 0; i < frames.size(); ++i)
-    {
-        auto &frame = frames[i];
-        bm::FrameInfo frame_info;
-
-        bm_image image;
-        if (frame.filename.empty())
-        {
-            LOG(ERROR) << "frame filename empty";
-            throw std::runtime_error("input error");
-        }
-
-        // Decode image
-        frame.jpeg_data = bm::read_binary(frame.filename);
-        void *data_ptr = frame.jpeg_data->ptr<uint8_t>();
-        size_t num = 1, data_size = frame.jpeg_data->size();
-#ifdef USE_EXIV2
-        uint8_t *bin = frame.jpeg_data->ptr<uint8_t>();
-        Exiv2::Image::AutoPtr exiv = Exiv2::ImageFactory::open(bin, data_size);
-        exiv->readMetadata();
-        size_t w = exiv->pixelWidth();
-        size_t h = exiv->pixelHeight();
-        frame.original_width = w;
-        frame.original_height = h;
-        if (w > vpp_limit || h > vpp_limit)
-        {
-            LOG(INFO) << "use OpenCV to process " << frame.filename;
-            image = impl_->opencv_decode_and_resize(bin, data_size);
-        } else {
-            int strides[3];
-            const bm_image_format_ext format = FORMAT_YUV420P;
-            strides[0] = align_with(w, 32);
-            strides[1] = strides[2] = strides[0] / 2;
-            const bm_image_data_format_ext dtype = DATA_TYPE_EXT_1N_BYTE;
-            call(
-                bm_image_create, handle,
-                align_with(h, 2),
-                align_with(w, 2),
-                format, dtype, &image, strides);
-#endif
-            call(
-                bmcv_image_jpeg_dec,
-                handle,
-                &data_ptr, &data_size,
-                num, &image);
-#ifdef USE_EXIV2
-        }
-#endif
-        frame.jpeg_data.reset();
-
-        // Calculate input size
-        frame.width = image.width;
-        frame.height = image.height;
-        float min_size = std::min<float>(frame.width, frame.height);
-        float max_size = std::max<float>(frame.width, frame.height);
-        auto max_input = std::min(impl_->width, impl_->height);
-        float factor = impl_->target_size / min_size;
-        if (factor * max_size > max_input)
-        {
-            factor = max_input / max_size;
-        }
-        size_t input_width = round(factor * frame.width);
-        size_t input_height = round(factor * frame.height);
-
-        // Alloc resized image & input image
-        bm_image resized_image;
-        const size_t align = 64;
-        const bool alloc_mem = true;
-        call(
-            bm::BMImage::create_batch,
-            handle, input_height, input_width,
-            FORMAT_BGR_PLANAR, DATA_TYPE_EXT_1N_BYTE,
-            &resized_image, num,
-            align, alloc_mem);
-        bm_image input_image;
-        const size_t input_align = 1;
-        const bool contiguous = true;
-        const int heap_mask = 1;
-        call(
-            bm::BMImage::create_batch,
-            handle, input_height, input_width,
-            FORMAT_BGR_PLANAR, impl_->img_type,
-            &input_image, num,
-            input_align, alloc_mem, contiguous, heap_mask);
-
-        // Resize image
-        call(bmcv_image_vpp_basic, handle, num, &image, &resized_image);
-        if (impl_->keep_original)
-        {
-            frame.original = image;
-        } else {
-            call(bm_image_destroy, image);
-        }
-
-        // Make input tensor
-        bm_tensor_t input_tensor = *impl_->net->inputTensor(0)->bm_tensor();
-        call(
-            bm_image_get_contiguous_device_mem, num,
-            &input_image, &input_tensor.device_mem);
-        input_tensor.shape.dims[0] = num;
-        input_tensor.shape.dims[2] = input_height;
-        input_tensor.shape.dims[3] = input_width;
-        frame_info.input_tensors.push_back(input_tensor);
-
-        // Call convert to
-        // Scale input and sub mean
-        call(
-            bmcv_image_convert_to,
-            handle, num, impl_->convert_attr, &resized_image, &input_image);
-
-        // Save frame
-        // Destroy resized image
-        // Destroy input image with release input memory
-        frame_info.frames.push_back(frame);
-        frame_infos.push_back(std::move(frame_info));
-        call(bm_image_dettach_contiguous_mem, num, &input_image);
-        call(
-            bm::BMImage::destroy_batch,
-            &resized_image, num);
-        call(bm_image_destroy, input_image);
     }
 }
 
