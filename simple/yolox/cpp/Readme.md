@@ -68,7 +68,7 @@ source envsetup_cmodel.sh
 ### Run example(in soc)
 
 ``` shell
-    ./yolox_sail.pcie video <video url> <bmodel path> <test count> <detect threshold> <nms threshold> <save path> <device id>
+    ./yolox_sail.arm video <video url> <bmodel path> <test count> <detect threshold> <nms threshold> <save path> <device id>
 ```
 - video           :test file is video, otherwise is picture
 - video url       :video name or picture path
