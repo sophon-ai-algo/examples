@@ -228,7 +228,7 @@ cd scripts
 执行以下命令，使用bmnetp编译生成FP32 BModel，请注意修改`model_info.sh`中的模型名称、生成模型目录和输入大小shapes、使用的量化LMDB文件目录、batch_size、img_size等参数：
 
 ```bash
-./gen_fp32bmodel.sh
+./gen_fp32_bmodel.sh
 ```
 
 上述脚本会在`fp32model/`下生成`*_fp32_1b.bmodel`文件，即转换好的FP32 BModel，使用`bm_model.bin --info`查看的模型具体信息如下：
