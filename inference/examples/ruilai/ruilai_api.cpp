@@ -9,27 +9,35 @@ RuiLaiAPIWrapper::RuiLaiAPIWrapper(int card_num,
                                    std::string cls_bmodel4, float cls4_threshold,
                                    ImgResultCallBackFunc func,
                                    std::string config_file)
-  : m_cards{card_num}, m_imageIndex{0}, m_callbackFunc{func} {
+  : m_cards{card_num}, m_imageIndex{0}, m_callbackFunc{func}, m_appStatis{1} {
 
     Config cfg(config_file.c_str());
     if (!cfg.valid_check()) {
         std::cout << "ERROR:cameras.json config error, please check!" << std::endl;
         throw std::runtime_error("read config fail");
     }  
-    AppStatis appStatis(1);
 
     m_jpegQueue = std::make_shared<BlockingQueue<JPGUint>>("jpeg", 0, 16);
     m_jpegWorkerPool.init(m_jpegQueue.get(), 1, 1, 1);
     m_jpegWorkerPool.startWork([this](std::vector<JPGUint> &items) {
         for (int i = 0; i < items.size(); ++i) {
             JPGUint &jpg = items[i];
+            std::vector<uchar> pic(jpg.jpeg_data, jpg.jpeg_data + jpg.len);
+            cv::Mat cvimage;
+            // 使用硬件转换为 bm_image对象
+            // 这里默认使用设备0
+            // 应根据实际card_num来平均负载到各设备上硬解
+            cv::imdecode(pic, cv::IMREAD_AVFRAME, &cvimage, 0);
             bm::FrameBaseInfo fbi;
             fbi.chan_id = 0;
             fbi.seq = jpg.image_id;
-            // TODO
-            // 使用硬件转换为 bm_image对象
             bm_image image;
-
+            cv::bmcv::toBMI(cvimage, &image, false);
+#if 0
+            char save_path[256];
+            snprintf(save_path, 256, "output.bmp");
+            bm_image_write_to_bmp(image, save_path);
+#endif
             fbi.original = image;
             // 平均分发给各芯片
             int card_index = fbi.seq % m_cards;
@@ -54,7 +62,7 @@ RuiLaiAPIWrapper::RuiLaiAPIWrapper(int card_num,
         // auto classify3 = std::make_shared<Resnet>(clsContextPtr3);
         // auto classify4 = std::make_shared<Resnet>(clsContextPtr4);
 
-        OneCardInferAppPtr appPtr = std::make_shared<OneCardInferApp>(appStatis, nullptr, nullptr, handle, 0, 0, 4, 1);
+        OneCardInferAppPtr appPtr = std::make_shared<OneCardInferApp>(m_appStatis, nullptr, nullptr, handle, 0, 0, 4, 1);
 
         // set detector delegator
         appPtr->setDetectorDelegate(detector);
@@ -73,7 +81,7 @@ RuiLaiAPIWrapper::RuiLaiAPIWrapper(int card_num,
 RuiLaiAPIWrapper::~RuiLaiAPIWrapper() {}
 
 
-int RuiLaiAPIWrapper::Infer(const unsigned char *jpeg_data, int len) {
+uint64_t RuiLaiAPIWrapper::Infer(const unsigned char *jpeg_data, int len) {
     uint64_t image_id = m_imageIndex++;
     JPGUint unit;
     unit.jpeg_data = jpeg_data;

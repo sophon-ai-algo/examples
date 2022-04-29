@@ -10,7 +10,10 @@ OneCardInferApp::OneCardInferApp(AppStatis& statis,bm::VideoUIAppPtr gui, bm::Ti
                                  int start_index, int num, int resize_queue_num, int skip)
   : m_detectorDelegate(nullptr), m_channel_num(num), m_appStatis(statis), m_callbackQueue(bm::TimerQueue::create()),
     m_img_result_cb_func(nullptr) {
-
+    
+    m_pResultThread = std::make_shared<std::thread>([this]{
+        m_callbackQueue->run_loop();
+    });
     m_guiReceiver = gui;
     m_timeQueue = tq;
     m_channel_start = start_index;
@@ -140,6 +143,7 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
 //                    total_crop_images.push_back(cfi);
                     m_resizeQueue->push(cfi);
                 }
+                //std::cout << "face num " << face_num << std::endl;
             }
             total_face_num += face_num;
         }
@@ -178,16 +182,17 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
             if (m_image_score_record.find(seq) == m_image_score_record.end()) {
                 m_image_score_record[seq] = iter->second;
                 if (m_img_result_cb_func != nullptr) {
-                    m_callbackQueue->create_timer(10, [this, seq]() {
-                        std::cout << "result callback.." << std::endl;
+                    m_callbackQueue->create_timer(20, [this, seq]() {
+//                        std::cout << "result callback.." << seq << std::endl;
                         std::lock_guard<decltype(m_mutex)> lock(m_mutex);
                         m_img_result_cb_func(seq, m_image_score_record[seq] > 0.5, m_image_score_record[seq]);
+                        m_image_score_record.erase(seq);
                     }, 0, nullptr);
                 }
-
             } else {
                 m_image_score_record[seq] = iter->second;
             }
+
         }
 
     });

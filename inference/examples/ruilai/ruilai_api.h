@@ -14,9 +14,10 @@ struct JPGUint {
     uint64_t image_id; 
 };
 
+using ImgResultCallBackFunc = std::function<void(uint64_t, bool, float)>;
+
 class RuiLaiAPIWrapper {
     using AppPtr = std::shared_ptr<OneCardInferApp>;
-    using ImgResultCallBackFunc = std::function<void(uint64_t, bool, float score)>;
 private:
     int m_cards;                    // 芯片数
     std::vector<AppPtr> m_vApps;    // 每个芯片对一个的app实例
@@ -24,6 +25,7 @@ private:
     WorkerPool<JPGUint> m_jpegWorkerPool;
     std::atomic<uint64_t> m_imageIndex;
     ImgResultCallBackFunc m_callbackFunc;
+    AppStatis m_appStatis;
 public:
     RuiLaiAPIWrapper(int card_num,
                      std::string retinaface_bmodel, float face_threshold,  // 这些threshold接口层先暴露给客户
@@ -35,9 +37,9 @@ public:
                      std::string config_file="./cameras.json");
     virtual ~RuiLaiAPIWrapper();
     // TODO
-    int Infer(const unsigned char *jpeg_data, int len);
+    uint64_t Infer(const unsigned char *jpeg_data, int len);
     // TODO
-    int InferBatch() {}
+    uint64_t InferBatch() {}
 
 };
 
