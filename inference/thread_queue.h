@@ -27,8 +27,8 @@ private:
 
     void wait_and_push_one(T &&data) {
         if (m_limit > 0 && this->size_impl() >= m_limit && !m_stop) {
-            std::cout << "WARNING: " << m_name << " queue_size(" << this->size_impl() << ") > "
-                      << m_limit << std::endl;
+//            std::cout << "WARNING: " << m_name << " queue_size(" << this->size_impl() << ") > "
+//                      << m_limit << std::endl;
             // flow control by dropping
             if (m_drop_fn != nullptr) {
                 this->drop_half_();

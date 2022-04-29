@@ -48,6 +48,7 @@ class OneCardInferApp {
     int m_skipN;
     std::string m_output_url;
     std::mutex m_mutex;
+    std::shared_ptr<std::thread> m_pResultThread;
     std::map<uint64_t, float> m_image_score_record;
     std::function<void(uint64_t, bool, float)> m_img_result_cb_func;
     ruilai::BMInferencePipe<bm::FrameBaseInfo, bm::FrameInfo> m_inferPipe;
@@ -67,6 +68,11 @@ public:
 
     ~OneCardInferApp()
     {
+        if (m_pResultThread != nullptr) {
+            m_callbackQueue->stop();
+            if (m_pResultThread->joinable())
+                m_pResultThread->join();
+        }
         std::cout << cv::format("OneCardInfoApp (devid=%d) dtor", m_dev_id) <<std::endl;
     }
 
@@ -104,6 +110,7 @@ public:
                             std::vector<bm_image>& resized_image_320);
     inline int pushFrame(bm::FrameBaseInfo *frame) { m_inferPipe.push_frame(frame); }
     inline void setImgResultCallback(std::function<void(int, bool, float score)> func) { m_img_result_cb_func = func; }
+    bool runResultThread();
 };
 
 using OneCardInferAppPtr = std::shared_ptr<OneCardInferApp>;

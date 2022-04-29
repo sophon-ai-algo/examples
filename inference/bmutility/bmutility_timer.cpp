@@ -190,7 +190,7 @@ namespace bm {
                 else {
                     // timer is deleted, not existed any more.
                 }
-
+                m_QTimers.pop();
                 m_mLock.unlock();
             }
             std::cout << "rtc_timer_queue exit!" << std::endl;
