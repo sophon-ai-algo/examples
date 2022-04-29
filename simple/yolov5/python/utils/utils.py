@@ -17,7 +17,35 @@ def xywh2xyxy(x):
     y[:, 3] = x[:, 1] + x[:, 3] / 2  # bottom right y
     return y
 
+def box_iou_np(boxes1, boxes2):
+    area1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
+    area2 = (boxes2[:, 2] - boxes2[:, 0]) * (boxes2[:, 3] - boxes2[:, 1])
+ 
+    lt = np.maximum(boxes1[:, None, :2], boxes2[:, :2])  # [N,M,2]
+    rb = np.minimum(boxes1[:, None, 2:], boxes2[:, 2:])  # [N,M,2]
+ 
+    wh = (rb - lt).clip(min=0)  # [N,M,2]
+    inter = wh[:, :, 0] * wh[:, :, 1]  # [N,M]  
+ 
+    iou = inter / (area1[:, None] + area2 - inter)
+    return iou  # NxM
 
+def nms_np(boxes, scores, iou_threshold):
+    keep = []  
+    idxs = scores.argsort() 
+    while len(idxs) > 0:
+        max_score_index = idxs[-1]
+        max_score_box = boxes[max_score_index][None, :]  # [1, 4]
+        keep.append(max_score_index)
+        if len(idxs) == 1:
+            break
+        idxs = idxs[:-1]  
+        other_boxes = boxes[idxs]  # [?, 4]
+        ious = box_iou_np(max_score_box, other_boxes)  # 1XM
+        idxs = idxs[ious[0] <= iou_threshold]
+    return keep
+
+    
 def box_iou(box1, box2):
     # https://github.com/pytorch/vision/blob/master/torchvision/ops/boxes.py
     """

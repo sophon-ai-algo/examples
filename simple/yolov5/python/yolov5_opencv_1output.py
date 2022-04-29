@@ -6,6 +6,7 @@ import os
 import time
 
 from utils.colors import _COLORS
+from utils.utils import *
 
 # YOLOV5 1 output
 # input: x.1, [1, 3, 640, 640], float32, scale: 1
@@ -135,6 +136,7 @@ class YOLOV5_Detector(object):
         np.save('np_input_center', padded_img_rgb_data)
         return padded_img_rgb_data, (min(r_w, r_h), tx1, ty1)
 
+
     @staticmethod
     def _make_grid(nx=20, ny=20):
         xv, yv = np.meshgrid(np.arange(nx), np.arange(ny))
@@ -246,7 +248,7 @@ class YOLOV5_Detector(object):
         indices, boxes, confidences, classIds = self.postprocess(dets)
 
         for i in indices:
-            i = i[0]
+            #i = i[0]
             box = boxes[i]
             # scale to the origin image
             left = int((box[0] - tx1) / ratio)
@@ -259,6 +261,59 @@ class YOLOV5_Detector(object):
             result_image = self.drawPred(frame, classIds[i], confidences[i], round(
                 left), round(top), round(right), round(bottom))
 
+        return result_image
+
+    def postprocess_np(self, outs, max_wh = 7680):
+        bs = outs.shape[0]
+        output = [np.zeros((0,6))] * bs
+        xc = outs[..., 4] > self.confThreshold
+        for xi, x in enumerate(outs):
+            x = x[xc[xi]]
+            if not x.shape[0]:
+                continue
+            # Compute conf
+            x[:, 5:] *= x[:, 4:5]
+            # Box (center x, center y, width, height) to (x1, y1, x2, y2)
+            box = xywh2xyxy(x[:,:4])
+            conf = x[:,5:].max(1)
+            j = x[:,5:].argmax(1)
+            x = np.concatenate((box, conf.reshape(-1,1), j.reshape(-1,1)), 1)[conf > self.confThreshold]
+            c =  x[:, 5:6] * max_wh  # classes
+            boxes = x[:, :4] + c.reshape(-1,1)
+            scores = x[:, 4]
+            i = nms_np(boxes, scores, self.nmsThreshold)
+            output[xi] = x[i]
+            
+        return output
+
+    def inference_center_np(self, frame, use_np_file_as_input=False):
+        cul_time = time.time()
+        input_data, (ratio, tx1, ty1) = self.preprocess_center(
+            frame, 3, self.input_h, self.input_w)
+        print("img pre cost time",time.time() - cul_time)
+        #np.save('input', input_data)
+        cul_time = time.time()
+        dets = self.predict_center(input_data, use_np_file_as_input)
+
+        print("net cost time",time.time() - cul_time)
+        cul_time = time.time()
+        output = self.postprocess_np(dets)
+        print("post cost time",time.time() - cul_time)
+        
+        result_image = frame
+        for det in output[0]:
+            #label = self.classes[det[5]]
+            box = det[:4]
+            # scale to the origin image
+            left = int((box[0] - tx1) / ratio)
+            top = int((box[1] - ty1) / ratio)
+            right = int((box[2] - tx1) / ratio)
+            bottom = int((box[3] - ty1) / ratio)
+            
+            result_image = self.drawPred(frame, int(det[5]), det[4], round(
+                left), round(top), round(right), round(bottom))
+            
+       
         return result_image
 
     def drawPred(self, frame, classId, conf, left, top, right, bottom):
@@ -356,8 +411,8 @@ if __name__ == '__main__':
 
     if frame is not None:  # is picture file
 
-        result_image = yolov5.inference_center(frame, opt.use_np_file_as_input)
-
+        #result_image = yolov5.inference_center(frame, opt.use_np_file_as_input)
+        result_image = yolov5.inference_center_np(frame, opt.use_np_file_as_input)
         print(result_image.shape)
 
         cv2.imwrite(os.path.join(
