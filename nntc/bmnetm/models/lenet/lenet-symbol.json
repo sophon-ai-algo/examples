@@ -1,0 +1,179 @@
+{
+  "nodes": [
+    {
+      "op": "null", 
+      "name": "data", 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "convolution0_weight", 
+      "attrs": {
+        "kernel": "(5, 5)", 
+        "num_filter": "20"
+      }, 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "convolution0_bias", 
+      "attrs": {
+        "kernel": "(5, 5)", 
+        "num_filter": "20"
+      }, 
+      "inputs": []
+    }, 
+    {
+      "op": "Convolution", 
+      "name": "convolution0", 
+      "attrs": {
+        "kernel": "(5, 5)", 
+        "num_filter": "20"
+      }, 
+      "inputs": [[0, 0, 0], [1, 0, 0], [2, 0, 0]]
+    }, 
+    {
+      "op": "Activation", 
+      "name": "activation0", 
+      "attrs": {"act_type": "tanh"}, 
+      "inputs": [[3, 0, 0]]
+    }, 
+    {
+      "op": "Pooling", 
+      "name": "pooling0", 
+      "attrs": {
+        "kernel": "(2, 2)", 
+        "pool_type": "max", 
+        "stride": "(2, 2)"
+      }, 
+      "inputs": [[4, 0, 0]]
+    }, 
+    {
+      "op": "null", 
+      "name": "convolution1_weight", 
+      "attrs": {
+        "kernel": "(5, 5)", 
+        "num_filter": "50"
+      }, 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "convolution1_bias", 
+      "attrs": {
+        "kernel": "(5, 5)", 
+        "num_filter": "50"
+      }, 
+      "inputs": []
+    }, 
+    {
+      "op": "Convolution", 
+      "name": "convolution1", 
+      "attrs": {
+        "kernel": "(5, 5)", 
+        "num_filter": "50"
+      }, 
+      "inputs": [[5, 0, 0], [6, 0, 0], [7, 0, 0]]
+    }, 
+    {
+      "op": "Activation", 
+      "name": "activation1", 
+      "attrs": {"act_type": "tanh"}, 
+      "inputs": [[8, 0, 0]]
+    }, 
+    {
+      "op": "Pooling", 
+      "name": "pooling1", 
+      "attrs": {
+        "kernel": "(2, 2)", 
+        "pool_type": "max", 
+        "stride": "(2, 2)"
+      }, 
+      "inputs": [[9, 0, 0]]
+    }, 
+    {
+      "op": "Flatten", 
+      "name": "flatten0", 
+      "inputs": [[10, 0, 0]]
+    }, 
+    {
+      "op": "null", 
+      "name": "fullyconnected0_weight", 
+      "attrs": {"num_hidden": "500"}, 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "fullyconnected0_bias", 
+      "attrs": {"num_hidden": "500"}, 
+      "inputs": []
+    }, 
+    {
+      "op": "FullyConnected", 
+      "name": "fullyconnected0", 
+      "attrs": {"num_hidden": "500"}, 
+      "inputs": [[11, 0, 0], [12, 0, 0], [13, 0, 0]]
+    }, 
+    {
+      "op": "Activation", 
+      "name": "activation2", 
+      "attrs": {"act_type": "tanh"}, 
+      "inputs": [[14, 0, 0]]
+    }, 
+    {
+      "op": "null", 
+      "name": "fullyconnected1_weight", 
+      "attrs": {"num_hidden": "10"}, 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "fullyconnected1_bias", 
+      "attrs": {"num_hidden": "10"}, 
+      "inputs": []
+    }, 
+    {
+      "op": "FullyConnected", 
+      "name": "fullyconnected1", 
+      "attrs": {"num_hidden": "10"}, 
+      "inputs": [[15, 0, 0], [16, 0, 0], [17, 0, 0]]
+    }, 
+    {
+      "op": "null", 
+      "name": "softmax_label", 
+      "inputs": []
+    }, 
+    {
+      "op": "SoftmaxOutput", 
+      "name": "softmax", 
+      "inputs": [[18, 0, 0], [19, 0, 0]]
+    }
+  ], 
+  "arg_nodes": [0, 1, 2, 6, 7, 12, 13, 16, 17, 19], 
+  "node_row_ptr": [
+    0, 
+    1, 
+    2, 
+    3, 
+    4, 
+    5, 
+    6, 
+    7, 
+    8, 
+    9, 
+    10, 
+    11, 
+    12, 
+    13, 
+    14, 
+    15, 
+    16, 
+    17, 
+    18, 
+    19, 
+    20, 
+    21
+  ], 
+  "heads": [[20, 0, 0]], 
+  "attrs": {"mxnet_version": ["int", 10300]}
+}

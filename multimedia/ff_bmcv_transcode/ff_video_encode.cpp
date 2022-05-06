@@ -89,8 +89,9 @@ int VideoEnc_FFMPEG::openEnc(const char* output_filename, const char* codec_name
     out_stream->avg_frame_rate  = enc_ctx->framerate;
     out_stream->r_frame_rate    = out_stream->avg_frame_rate;
 
-
+#ifdef BM_PCIE_MODE
     av_dict_set_int(&dict, "sophon_idx", sophon_idx, 0);
+#endif
     av_dict_set_int(&dict, "gop_preset", 8, 0);
     /* Use system memory */
 

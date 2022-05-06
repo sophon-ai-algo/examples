@@ -1,0 +1,6 @@
+models/pnet_test_int8_unique_top.prototxt
+models/pnet.int8umodel
+models/rnet_test_int8_unique_top.prototxt
+models/rnet.int8umodel
+models/onet_test_int8_unique_top.prototxt
+models/onet.int8umodel

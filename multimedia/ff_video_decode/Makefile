@@ -3,11 +3,11 @@ DEBUG        ?= 0
 PRODUCTFORM  ?= soc
 
 INSTALL_DIR    ?= release
-top_dir :=../../..
+top_dir := $(REL_TOP)
 
-ifeq ($(PRODUCTFORM),x86) # pcie mode
-    CROSS_CC_PREFIX = x86_64-linux-
-endif
+#ifeq ($(PRODUCTFORM),x86) # pcie mode
+#    CROSS_CC_PREFIX = x86_64-linux-
+#endif
 
 ifeq ($(PRODUCTFORM),soc)
     CROSS_CC_PREFIX = aarch64-linux-gnu-
@@ -17,9 +17,9 @@ ifeq ($(PRODUCTFORM),arm_pcie)
     CROSS_CC_PREFIX = aarch64-linux-gnu-
 endif
 
-ifeq ($(PRODUCTFORM),loongarch64)
-    CROSS_CC_PREFIX = loongarch64-linux-gnu-
-endif
+#ifeq ($(PRODUCTFORM),loongarch64)
+#    CROSS_CC_PREFIX = loongarch64-linux-gnu-
+#endif
 
 CC  = $(CROSS_CC_PREFIX)gcc
 CXX = $(CROSS_CC_PREFIX)g++
@@ -29,6 +29,10 @@ ifeq ($(DEBUG), 0)
     CFLAGS += -O2
 else
     CFLAGS += -g
+endif
+
+ifneq ($(PRODUCTFORM),soc)
+    CFLAGS += -DBM_PCIE_MODE=1
 endif
 
 # NATIVE API SDK
@@ -54,30 +58,30 @@ FF_SDK_LDLIBS  := -lavfilter -lavformat -lavcodec -lswscale -lavutil -lswresampl
 
 CFLAGS  += $(NATIVE_SDK_HEADERS) $(FF_SDK_HEADERS)
 LDFLAGS := $(NATIVE_SDK_LDFLAGS) $(FF_SDK_LDFLAGS)
-LDLIBS  := $(FF_SDK_LDLIBS) $(NATIVE_SDK_LDLIBS) -lpthread
+LDLIBS  := $(FF_SDK_LDLIBS) $(NATIVE_SDK_LDLIBS) -lpthread -lm
 
 ifeq ($(PRODUCTFORM),loongarch64)
 LDLIBS   += -lm -lpthread  -lresolv  -lrt  -ldl -lstdc++
 endif
 
 
-TARGET=test_bm_restart
+TARGET=test_ff_video_decode
 MAKEFILE=Makefile
 ALLOBJS=*.o
 ALLDEPS=*.dep
 RM=rm -rf
 CP=cp -f
 
-SOURCES := demuxing_decoding_bm_restart.c
+SOURCES := ff_video_decode.cpp test_ff_video_decode.cpp
 
-OBJECTPATHS:=$(patsubst %.c,%.o,$(SOURCES))
+OBJECTPATHS:=$(patsubst %.cpp,%.o,$(SOURCES))
 
 .phony: all clean
 
 all: $(TARGET)
 
 $(TARGET): $(OBJECTPATHS)
-	$(CC) -o $@ $(OBJECTPATHS) $(LDFLAGS) $(LDLIBS)
+	$(CXX) -o $@ $(OBJECTPATHS) $(LDFLAGS) $(LDLIBS)
 
 install: $(TARGET)
 	install -d $(INSTALL_DIR)/bin
@@ -91,5 +95,7 @@ clean:
 	$(RM) $(ALLDEPS)
 	$(RM) $(ALLOBJS)
 
-demuxing_decoding_bm_restart.o : demuxing_decoding_bm_restart.c $(MAKEFILE)
-	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
+ff_video_decode.o : ff_video_decode.cpp $(MAKEFILE)
+	$(CXX) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
+test_ff_video_decode.o : test_ff_video_decode.cpp $(MAKEFILE)
+	$(CXX) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)

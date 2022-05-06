@@ -16,8 +16,14 @@ extern "C" {
 #include "bmcv_api_ext.h"
 }
 
-
+//In SoC mode, heap distribution is the same as that of PCIe
+/*
+ * heap0   tpu
+ * heap1   vpp
+ * heap2   vpu
+*/
 #define USEING_MEM_HEAP2 4
+#define USEING_MEM_HEAP0 2
 
 typedef struct{
         bm_image *bmImg;

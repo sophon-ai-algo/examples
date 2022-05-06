@@ -106,8 +106,11 @@ static void * FnEncodeTest(void * arg)
             }
         }
     }
+    else if(save.cols == 0 && save.rows == 0){
+        printf("EncodeTest tid=%d (pid=%d) input file can not open.\n",tid,pid);
+    }
     else{
-        printf("decoding error,image size(width=%d,height=%d) is too small.\n",save.cols,save.rows);
+        printf("EncodeTest error,image size(width=%d,height=%d) is too small.\n",save.cols,save.rows);
     }
     return 0;
 }

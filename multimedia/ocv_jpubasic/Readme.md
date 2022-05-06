@@ -1,5 +1,5 @@
 ## How to build
- * modify the PRODUCTFORM and top_dir at the Mafefile accoring to the actual situation
+ * modify the PRODUCTFORM and top_dir at the Makefile accoring to the actual situation
  * PRODUCTFORM: can be x86,soc, arm_pcie
  * top_dir: the root directory of sdks
  

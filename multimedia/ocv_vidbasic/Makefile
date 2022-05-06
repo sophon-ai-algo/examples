@@ -4,11 +4,11 @@ PRODUCTFORM  ?= soc
 BM_MEDIA_ION ?= 0
 
 INSTALL_DIR    ?= release
-top_dir :=../../..
+top_dir := $(REL_TOP)
 
 
 ifeq ($(PRODUCTFORM),x86) # pcie mode
-    CROSS_CC_PREFIX = x86_64-linux-
+    CROSS_CC_PREFIX = 
 else # pcie_arm64 and soc mode
     CROSS_CC_PREFIX = aarch64-linux-gnu-
 endif
@@ -21,6 +21,10 @@ ifeq ($(DEBUG), 0)
     CPPFLAGS += -O2
 else
     CPPFLAGS += -g
+endif
+
+ifeq ($(PRODUCTFORM),soc)
+    CPPFLAGS += -DUSING_SOC=1
 endif
 
 # NATIVE API SDK
@@ -48,7 +52,7 @@ BMCV_SDK_LDLIBS  := -lbmcv -lbmlib
 
 CPPFLAGS += $(NATIVE_SDK_HEADERS) $(FF_SDK_HEADERS) $(OCV_SDK_HEADERS) $(BMCV_SDK_HEADERS)
 LDFLAGS  := $(NATIVE_SDK_LDFLAGS) $(FF_SDK_LDFLAGS) $(OCV_SDK_LDFLAGS) $(BMCV_SDK_LDFLAGS)
-LDLIBS   := $(NATIVE_SDK_LDLIBS) $(FF_SDK_LDLIBS) $(OCV_SDK_LDLIBS) $(BMCV_SDK_LDLIBS) -lstdc++
+LDLIBS   := $(NATIVE_SDK_LDLIBS) $(FF_SDK_LDLIBS) $(OCV_SDK_LDLIBS) $(BMCV_SDK_LDLIBS) -lm -lstdc++
 
 
 TARGET=test_ocv_vidbasic

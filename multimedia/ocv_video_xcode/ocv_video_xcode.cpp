@@ -21,6 +21,12 @@
 #endif
 #define IMAGE_MATQUEUE_NUM 25
 
+
+#define BM_ALIGN16(_x)             (((_x)+0x0f)&~0x0f)
+#define BM_ALIGN32(_x)             (((_x)+0x1f)&~0x1f)
+#define BM_ALIGN64(_x)             (((_x)+0x3f)&~0x3f)
+
+
 using namespace cv;
 using namespace std;
 
@@ -30,6 +36,7 @@ typedef struct  threadArg{
     int         frameNum;
     const char  *outputName;
     int         yuvEnable;
+    int         roiEnable;
     int         deviceId;
     const char  *encodeParams;
     int         startWrite;
@@ -161,7 +168,58 @@ DWORD WINAPI videoWriteThread(void* arg){
                 g_video_lock.lock();
                 toEncImage = threadPara->imageQueue->front();
                 g_video_lock.unlock();
-                writer.write(*toEncImage,out_buf,&out_buf_len);
+
+                if (threadPara->roiEnable == 1) {
+                    static unsigned int roi_frame_nums = 0;
+                    roi_frame_nums++;
+                    CV_RoiInfo  roiinfo;;
+
+                    if (strcmp(threadPara->codecType,"H264enc") ==0) {
+                        int nums = (BM_ALIGN16(threadPara->imageRows) >> 4) * (BM_ALIGN16(threadPara->imageCols) >> 4);
+                        roiinfo.numbers = nums;
+                        roiinfo.customRoiMapEnable = 1;
+                        roiinfo.field = (cv::RoiField*)malloc(sizeof(cv::RoiField)*nums);
+                        for (int i = 0;i <(BM_ALIGN16(threadPara->imageRows) >> 4);i++) {
+                            for (int j=0;j < (BM_ALIGN16(threadPara->imageCols) >> 4);j++) {
+                                int pos = i*(BM_ALIGN16(threadPara->imageCols) >> 4) + j;
+                                // roiinfo.field[pos].H264.mb_qp = roi_frame_nums%51;
+                                if ((i >= (BM_ALIGN16(threadPara->imageRows) >> 4)/2) && (j >= (BM_ALIGN16(threadPara->imageCols) >> 4)/2)) {
+                                    roiinfo.field[pos].H264.mb_qp = 10;
+                                }
+                            }
+                        }
+                    } else if (strcmp(threadPara->codecType,"H265enc") ==0) {
+                        int nums = (BM_ALIGN64(threadPara->imageRows) >> 6) * (BM_ALIGN64(threadPara->imageCols) >> 6);
+                        roiinfo.numbers = nums;
+                        roiinfo.field = (cv::RoiField*)malloc(sizeof(cv::RoiField)*nums);
+                        roiinfo.customRoiMapEnable    = 1;
+                        roiinfo.customModeMapEnable   = 0;
+                        roiinfo.customLambdaMapEnable = 0;
+                        roiinfo.customCoefDropEnable  = 0;
+
+                        for (int i = 0;i <(BM_ALIGN64(threadPara->imageRows) >> 6);i++) {
+                            for (int j=0;j < (BM_ALIGN64(threadPara->imageCols) >> 6);j++) {
+                                int pos = i*(BM_ALIGN64(threadPara->imageCols) >> 6) + j;
+                                if ((i >= (BM_ALIGN64(threadPara->imageRows) >> 6)/2) && (j >= (BM_ALIGN64(threadPara->imageCols) >> 6)/2)) {
+                                    roiinfo.field[pos].HEVC.ctu_force_mode = 0;
+                                    roiinfo.field[pos].HEVC.ctu_coeff_drop = 0;
+                                    roiinfo.field[pos].HEVC.sub_ctu_qp_0 = 10;
+                                    roiinfo.field[pos].HEVC.sub_ctu_qp_1 = 10;
+                                    roiinfo.field[pos].HEVC.sub_ctu_qp_2 = 10;
+                                    roiinfo.field[pos].HEVC.sub_ctu_qp_3 = 10;
+                                    roiinfo.field[pos].HEVC.lambda_sad_0 = 0;
+                                    roiinfo.field[pos].HEVC.lambda_sad_1 = 0;
+                                    roiinfo.field[pos].HEVC.lambda_sad_2 = 0;
+                                    roiinfo.field[pos].HEVC.lambda_sad_3 = 0;
+                                }
+                            }
+                        }
+                    }
+                    writer.write(*toEncImage,out_buf,&out_buf_len, &roiinfo);
+                }
+                else {
+                    writer.write(*toEncImage,out_buf,&out_buf_len);
+                }
                 if(out_buf_len > 0){
                     fwrite(out_buf,1,out_buf_len,fp_out);
                 }
@@ -238,14 +296,21 @@ int main(int argc, char* argv[])
     pthread_t threadId;
 #endif
 
-    if (argc < 6){
-        cout << "usage:  test encoder by HW(h.264/h.265) with difference contianer !!" << endl;
-        cout << "\t" << argv[0] << " input code_type frame_num outputname yuv_enable [device_id] [encodeparams]" <<endl;
+    if (argc < 7){
+        cout << "usage:  test encoder by HW(h.264/h.265) with different container !!" << endl;
+#ifdef USING_SOC
+        cout << "\t" << argv[0] << " input code_type frame_num outputname yuv_enable roi_enable [encodeparams]" <<endl;
         cout << "\t" << "eg: " << argv[0] << " rtsp://admin:bitmain.com@192.168.1.14:554  H265enc  30 encoder_test265.ts 1 0 bitrate=1000" <<endl;
+#else
+        cout << "\t" << argv[0] << " input code_type frame_num outputname yuv_enable roi_enable [device_id] [encodeparams]" <<endl;
+        cout << "\t" << "eg: " << argv[0] << " rtsp://admin:bitmain.com@192.168.1.14:554  H265enc  30 encoder_test265.ts 1 0 0 bitrate=1000" <<endl;
+#endif
         cout << "params:" << endl;
         cout << "\t" << "<code_type>: H264enc is h264; H265enc is h265." << endl;
         cout << "\t" << "<outputname>: null or NULL output pkt.dump." << endl;
         cout << "\t" << "<yuv_enable>: 0 decode output bgr; 1 decode output yuv420." << endl;
+        cout << "\t" << "<roi_enable>: 0 disable roi encoder; 1 enable roi encoder." << endl;
+        cout << "\t" << "              if roi_enable is 1, you should set null/Null in outputname." << endl;
         cout << "\t" << "<encodeparams>: gop=30:bitrate=800:gop_preset=2:mb_rc=1:delta_qp=3:min_qp=20:max_qp=40:push_stream=rtmp/rtsp." << endl;
         return -1;
     }
@@ -279,12 +344,20 @@ int main(int argc, char* argv[])
         }
         return 0;
     }
-    if (argc == 7) {threadPara->deviceId = atoi(argv[6]);}
+#ifdef USING_SOC
     if (argc == 8) {threadPara->encodeParams = argv[7];}
-
+#else
+    if (argc >= 8) {threadPara->deviceId = atoi(argv[7]);}
+    if (argc == 9) {threadPara->encodeParams = argv[8];}
+#endif
     threadPara->yuvEnable = atoi(argv[5]);
     if ((threadPara->yuvEnable != 0) && (threadPara->yuvEnable != 1)) {
         cout << "yuv_enable param err." << endl;
+        return -1;
+    }
+    threadPara->roiEnable = atoi(argv[6]);
+    if ((threadPara->roiEnable != 0) && (threadPara->roiEnable != 1)) {
+        cout << "roi_enable param err." << endl;
         return -1;
     }
     // open the default camera using default API

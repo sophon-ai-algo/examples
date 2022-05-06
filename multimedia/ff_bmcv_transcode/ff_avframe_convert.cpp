@@ -1,6 +1,7 @@
 #include "ff_avframe_convert.h"
 #include "bmlib_runtime.h"
 
+
 int map_bmformat_to_avformat(int bmformat)
 {
     int format;
@@ -79,6 +80,7 @@ int avframe_to_bm_image(bm_handle_t &bm_handle,AVFrame &in, bm_image &out){
     int plane                 = 0;
     int data_five_denominator = -1;
     int data_six_denominator  = -1;
+    static int mem_flags = USEING_MEM_HEAP2;
 
 
     switch(in.format){
@@ -150,7 +152,13 @@ int avframe_to_bm_image(bm_handle_t &bm_handle,AVFrame &in, bm_image &out){
                 DATA_TYPE_EXT_1N_BYTE,
                 &out);
         //bm_image_dev_mem_alloc(out);
-        bm_image_alloc_dev_mem_heap_mask(out,USEING_MEM_HEAP2);
+        if(mem_flags == USEING_MEM_HEAP2 && bm_image_alloc_dev_mem_heap_mask(out,USEING_MEM_HEAP2) != BM_SUCCESS){
+            mem_flags = USEING_MEM_HEAP0;
+        }
+        if(mem_flags == USEING_MEM_HEAP0 && bm_image_alloc_dev_mem_heap_mask(out,USEING_MEM_HEAP0) != BM_SUCCESS){
+            printf("bmcv allocate mem failed!!!");
+        }
+
         bmcv_rect_t crop_rect = {0, 0, in.width, in.height};
         bmcv_image_vpp_convert(bm_handle, 1, cmp_bmimg, &out, &crop_rect);
         bm_image_destroy(cmp_bmimg);
@@ -306,7 +314,7 @@ int bm_image_to_avframe(bm_handle_t &bm_handle,bm_image *in,AVFrame *out){
 */
 int avframeToAvframeConvertPixSize(bm_handle_t &bmHandle,AVFrame *inPic,AVFrame *outPic,int enc_frame_height,int enc_frame_width,int enc_pix_format){
 
-
+    static int mem_flags = USEING_MEM_HEAP2;
     if(!inPic){
         return -1;
     }
@@ -329,7 +337,13 @@ int avframeToAvframeConvertPixSize(bm_handle_t &bmHandle,AVFrame *inPic,AVFrame 
     bm_image_format_ext bmOutFormat = (bm_image_format_ext)map_avformat_to_bmformat(enc_pix_format);
     bm_image_create(bmHandle,enc_frame_height,enc_frame_width,bmOutFormat,DATA_TYPE_EXT_1N_BYTE, bmImageout);
     //vpu cannot use other heap memory(soc and pcie)
-    bm_image_alloc_dev_mem_heap_mask(*bmImageout,USEING_MEM_HEAP2);
+
+    if(mem_flags == USEING_MEM_HEAP2 && bm_image_alloc_dev_mem_heap_mask(*bmImageout,USEING_MEM_HEAP2) != BM_SUCCESS){
+        mem_flags = USEING_MEM_HEAP0;
+    }
+    if(mem_flags == USEING_MEM_HEAP0 && bm_image_alloc_dev_mem_heap_mask(*bmImageout,USEING_MEM_HEAP0) != BM_SUCCESS){
+        printf("bmcv allocate mem failed!!!");
+    }
 
     if(!bm_image_is_attached(*bmImageout)){
         return -1;

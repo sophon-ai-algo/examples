@@ -22,6 +22,12 @@ extern "C" {
 #ifdef WIN32
 #define strcasecmp stricmp
 #endif
+
+#define BM_ALIGN16(_x)             (((_x)+0x0f)&~0x0f)
+#define BM_ALIGN32(_x)             (((_x)+0x1f)&~0x1f)
+#define BM_ALIGN64(_x)             (((_x)+0x3f)&~0x3f)
+
+
 class VideoEnc_FFMPEG
 {
 public:
@@ -29,7 +35,7 @@ public:
     ~VideoEnc_FFMPEG();
 
     int  openEnc(const char* filename, int soc_idx, int codecId, int framerate,
-                 int width, int height,int inputformat,int bitrate);
+                 int width, int height,int inputformat,int bitrate, int roi_enable);
     void closeEnc();
     int  writeFrame(const uint8_t* data, int step, int width, int height);
     int  flush_encoder();
@@ -83,7 +89,7 @@ VideoEnc_FFMPEG::~VideoEnc_FFMPEG()
 }
 
 int VideoEnc_FFMPEG::openEnc(const char* filename, int soc_idx, int codecId, int framerate,
-                             int width, int height, int inputformat, int bitrate)
+                             int width, int height, int inputformat, int bitrate, int roi_enable)
 {
     int ret = 0;
     AVCodec *encoder;
@@ -123,7 +129,6 @@ int VideoEnc_FFMPEG::openEnc(const char* filename, int soc_idx, int codecId, int
     enc_ctx->time_base.den = framerate;
     enc_ctx->framerate.num = framerate;
     enc_ctx->framerate.den = 1;
-
     av_log(NULL, AV_LOG_DEBUG, "enc_ctx->bit_rate = %ld\n", enc_ctx->bit_rate);
 
     out_stream = avformat_new_stream(ofmt_ctx, encoder);
@@ -134,6 +139,12 @@ int VideoEnc_FFMPEG::openEnc(const char* filename, int soc_idx, int codecId, int
     av_dict_set_int(&dict, "gop_preset", 8, 0);
     /* Use system memory */
     av_dict_set_int(&dict, "is_dma_buffer", 0, 0);
+    // av_dict_set_int(&dict, "qp", 25, 0);
+    if (roi_enable == 1) {
+        av_dict_set_int(&dict, "roi_enable", 1, 0);
+    }else{
+        av_dict_set_int(&dict, "roi_enable", 0, 0);
+    }
 
     /* Third parameter can be used to pass settings to encoder */
     ret = avcodec_open2(enc_ctx, encoder, &dict);
@@ -166,6 +177,13 @@ int VideoEnc_FFMPEG::openEnc(const char* filename, int soc_idx, int codecId, int
     picture->width = width;
     picture->height = height;
 
+    if (roi_enable == 1) {
+        AVFrameSideData *fside = av_frame_new_side_data(picture, AV_FRAME_DATA_BM_ROI_INFO, sizeof(AVBMRoiInfo));
+        if (fside == NULL) {
+            return -1;
+        }
+    }
+
     return 0;
 }
 
@@ -177,6 +195,94 @@ int VideoEnc_FFMPEG::writeFrame(const uint8_t* data, int step, int width, int he
     if (step % STEP_ALIGNMENT != 0) {
         av_log(NULL, AV_LOG_ERROR, "input step must align with STEP_ALIGNMENT\n");
         return -1;
+    }
+    static unsigned int frame_nums = 0;
+    frame_nums++;
+    AVFrameSideData *fside = av_frame_get_side_data(picture, AV_FRAME_DATA_BM_ROI_INFO);
+    if (fside) {
+        AVBMRoiInfo *roiinfo = (AVBMRoiInfo*)fside->data;
+        memset(roiinfo, 0, sizeof(AVBMRoiInfo));
+        if (enc_ctx->codec_id  == AV_CODEC_ID_H264) {
+            if (false) {
+            // if (frame_nums >= 20) {
+                roiinfo->customRoiMapEnable = 0;
+                roiinfo->customModeMapEnable = 0;
+            }else{
+                roiinfo->customRoiMapEnable = 1;
+                roiinfo->customModeMapEnable = 0;
+                for (int i = 0;i <(BM_ALIGN16(height) >> 4);i++) {
+                    for (int j=0;j < (BM_ALIGN16(width) >> 4);j++) {
+                        int pos = i*(BM_ALIGN16(width) >> 4) + j;
+                        // test_1
+                        if ( (j >= 9) && (i >= 11) ) {
+                            roiinfo->field[pos].H264.mb_qp = 10;
+                        }else{
+                            roiinfo->field[pos].H264.mb_qp = 20;
+                        }
+
+                        // test_2
+                        // roiinfo->field[pos].H264.mb_qp = frame_nums%51;
+
+                        // test_3
+                        // if (i> 10) {
+                        //     roiinfo->field[pos].H264.mb_qp = 29;
+                        // } else {
+                        //     roiinfo->field[pos].H264.mb_qp = 15;
+                        // }
+                    }
+                }
+            }
+        } else if (enc_ctx->codec_id  == AV_CODEC_ID_H265) {
+            roiinfo->customRoiMapEnable    = 1;
+            roiinfo->customModeMapEnable   = 0;
+            roiinfo->customLambdaMapEnable = 0;
+            roiinfo->customCoefDropEnable  = 0;
+
+            for (int i = 0;i <(BM_ALIGN64(height) >> 6);i++) {
+                for (int j=0;j < (BM_ALIGN64(width) >> 6);j++) {
+                    int pos = i*(BM_ALIGN64(width) >> 6) + j;
+
+                    // test_1
+                    if ( (j>2) && (i>2) ) {
+                        roiinfo->field[pos].HEVC.sub_ctu_qp_0 = 10;
+                        roiinfo->field[pos].HEVC.sub_ctu_qp_1 = 10;
+                        roiinfo->field[pos].HEVC.sub_ctu_qp_2 = 10;
+                        roiinfo->field[pos].HEVC.sub_ctu_qp_3 = 10;
+                    } else {
+                        roiinfo->field[pos].HEVC.sub_ctu_qp_0 = 20;
+                        roiinfo->field[pos].HEVC.sub_ctu_qp_1 = 20;
+                        roiinfo->field[pos].HEVC.sub_ctu_qp_2 = 20;
+                        roiinfo->field[pos].HEVC.sub_ctu_qp_3 = 20;
+                    }
+
+                    // test_2
+                    // roiinfo->field[pos].HEVC.sub_ctu_qp_0 = frame_nums%51;
+                    // roiinfo->field[pos].HEVC.sub_ctu_qp_1 = frame_nums%51;
+                    // roiinfo->field[pos].HEVC.sub_ctu_qp_2 = frame_nums%51;
+                    // roiinfo->field[pos].HEVC.sub_ctu_qp_3 = frame_nums%51;
+
+                    // test_3
+                    // if ((i == 3) || (i == 4)) {
+                    //     roiinfo->field[pos].HEVC.sub_ctu_qp_0 = 30;
+                    //     roiinfo->field[pos].HEVC.sub_ctu_qp_1 = 30;
+                    //     roiinfo->field[pos].HEVC.sub_ctu_qp_2 = 30;
+                    //     roiinfo->field[pos].HEVC.sub_ctu_qp_3 = 30;
+                    // }else {
+                    //     roiinfo->field[pos].HEVC.sub_ctu_qp_0 = 10;
+                    //     roiinfo->field[pos].HEVC.sub_ctu_qp_1 = 10;
+                    //     roiinfo->field[pos].HEVC.sub_ctu_qp_2 = 10;
+                    //     roiinfo->field[pos].HEVC.sub_ctu_qp_3 = 10;
+                    // }
+
+                    roiinfo->field[pos].HEVC.ctu_force_mode = 0;
+                    roiinfo->field[pos].HEVC.ctu_coeff_drop = 0;
+                    roiinfo->field[pos].HEVC.lambda_sad_0 = 0;
+                    roiinfo->field[pos].HEVC.lambda_sad_1 = 0;
+                    roiinfo->field[pos].HEVC.lambda_sad_2 = 0;
+                    roiinfo->field[pos].HEVC.lambda_sad_3 = 0;
+                }
+            }
+        }
     }
 
     av_image_fill_arrays(picture->data, picture->linesize, (uint8_t *) data, enc_ctx->pix_fmt, width, height, 1);
@@ -258,10 +364,11 @@ void VideoEnc_FFMPEG::closeEnc()
     flush_encoder();
     av_write_trailer(ofmt_ctx);
 
-    av_free(picture);
+    av_frame_free(&picture);
 
     if (input_picture)
         av_free(input_picture);
+
 
     avcodec_free_context(&enc_ctx);
 
@@ -279,8 +386,7 @@ int main(int argc, char **argv)
     int inputformat = AV_PIX_FMT_YUV420P;
     int framerate = 30;
     int ret;
-
-    if (argc < 6 || argc > 10) {
+    if (argc < 6 || argc > 11) {
         usage(argv[0]);
         return -1;
     }
@@ -298,12 +404,16 @@ int main(int argc, char **argv)
 
     int width  = atoi(argv[4]);
     int height = atoi(argv[5]);
+    int roi_enable = 0;
+    if (argc >=7) {
+        roi_enable = atoi(argv[6]);
+    }
 
-    if (argc >= 7) {
-        if (strcasecmp(argv[6], "I420") == 0 ||
-            strcasecmp(argv[6], "YUV") == 0) // deprecated
+    if (argc >= 8) {
+        if (strcasecmp(argv[7], "I420") == 0 ||
+            strcasecmp(argv[7], "YUV") == 0) // deprecated
             inputformat = AV_PIX_FMT_YUV420P;
-        else if (strcasecmp(argv[6], "NV12") == 0)
+        else if (strcasecmp(argv[7], "NV12") == 0)
             inputformat = AV_PIX_FMT_NV12;
         else {
             usage(argv[0]);
@@ -314,20 +424,20 @@ int main(int argc, char **argv)
     int bitrate = framerate*width*height/8;
     if (enc_id == AV_CODEC_ID_H265)
         bitrate = bitrate/2;
-    if (argc >= 8) {
-        int temp = atoi(argv[7]);
-        if (temp >10 && temp < 10000)
+    if (argc >= 9) {
+        int temp = atoi(argv[8]);
+        if (temp >10 && temp < 100000)
             bitrate = temp*1000;
     }
 
-    if (argc >= 9) {
-        int temp = atoi(argv[8]);
+    if (argc >= 10) {
+        int temp = atoi(argv[9]);
         if (temp >10 && temp <= 60)
             framerate = temp;
     }
 
-    if (argc == 10) {
-        soc_idx = atoi(argv[9]);
+    if (argc == 11) {
+        soc_idx = atoi(argv[10]);
         if (soc_idx < 0)
             soc_idx = 0;
     }
@@ -353,7 +463,7 @@ int main(int argc, char **argv)
 
     VideoEnc_FFMPEG writer;
 
-    ret = writer.openEnc(argv[2], soc_idx, enc_id, framerate , width, height, inputformat, bitrate);
+    ret = writer.openEnc(argv[2], soc_idx, enc_id, framerate , width, height, inputformat, bitrate, roi_enable);
     if (ret !=0 ) {
         av_log(NULL, AV_LOG_ERROR,"writer.openEnc failed\n");
         return -1;
@@ -390,16 +500,19 @@ int main(int argc, char **argv)
 static void usage(char* app_name)
 {
     char usage_str[] =
-    "Usage:\n\t%s <input file> <output file>  <encoder> <width> <height> <input pixel format> <bitrate(kbps)> <frame rate> <sophon device index>\n"
+    "Usage:\n\t%s <input file> <output file>  <encoder> <width> <height> <roi_enable> <input pixel format> <bitrate(kbps)> <frame rate> <sophon device index>\n"
     "\t encoder             : H264(default), H265.\n"
+    "\t roi_enable          : 0 disable(default), 1 enable roi.\n"
     "\t input pixel format  : I420(YUV, default), NV12. YUV is deprecated.\n"
-    "\t sophon device index : used in PCIE mode.\n"
+    "\t bitrate : bitrate > 10 and bitrate < 100000\n"
+    "\t framerate : framerate > 10 and framerate <= 60\n"
+    "\t sophon device index : used in PCIE mode. min valuse is 0.\n"
     "For example:\n"
-    "\t%s <input file> <output file> H264 width height I420 3000 30 2\n"
-    "\t%s <input file> <output file> H264 width height I420 3000 30\n"
-    "\t%s <input file> <output file> H265 width height I420\n"
-    "\t%s <input file> <output file> H265 width height NV12\n"
-    "\t%s <input file> <output file> H265 width height\n";
+    "\t%s <input file> <output file> H264 width height 0 I420 3000 30 2\n"
+    "\t%s <input file> <output file> H264 width height 0 I420 3000 30\n"
+    "\t%s <input file> <output file> H265 width height 0 I420\n"
+    "\t%s <input file> <output file> H265 width height 0 NV12\n"
+    "\t%s <input file> <output file> H265 width height 0\n";
 
     av_log(NULL, AV_LOG_ERROR, usage_str,
            app_name, app_name, app_name, app_name, app_name, app_name);

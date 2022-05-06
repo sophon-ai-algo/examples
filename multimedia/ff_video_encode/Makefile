@@ -3,11 +3,11 @@ DEBUG        ?= 0
 PRODUCTFORM  ?= soc
 
 INSTALL_DIR    ?= release
-top_dir :=../../..
+top_dir := $(REL_TOP)
 
-ifeq ($(PRODUCTFORM),x86) # pcie mode
-    CROSS_CC_PREFIX = x86_64-linux-
-endif
+#ifeq ($(PRODUCTFORM),x86) # pcie mode
+#    CROSS_CC_PREFIX = x86_64-linux-
+#endif
 
 ifeq ($(PRODUCTFORM),soc)
     CROSS_CC_PREFIX = aarch64-linux-gnu-
@@ -17,9 +17,9 @@ ifeq ($(PRODUCTFORM),arm_pcie)
     CROSS_CC_PREFIX = aarch64-linux-gnu-
 endif
 
-ifeq ($(PRODUCTFORM),loongarch64)
-    CROSS_CC_PREFIX = loongarch64-linux-gnu-
-endif
+#ifeq ($(PRODUCTFORM),loongarch64)
+#    CROSS_CC_PREFIX = loongarch64-linux-gnu-
+#endif
 
 CC  = $(CROSS_CC_PREFIX)gcc
 CXX = $(CROSS_CC_PREFIX)g++
@@ -29,6 +29,10 @@ ifeq ($(DEBUG), 0)
     CPPFLAGS += -O2
 else
     CPPFLAGS += -g
+endif
+
+ifneq ($(PRODUCTFORM),soc)
+    CPPFLAGS += -DBM_PCIE_MODE=1
 endif
 
 # NATIVE API SDK
@@ -53,7 +57,7 @@ FF_SDK_LDLIBS  := -lavfilter -lavformat -lavcodec -lswscale -lavutil -lswresampl
 
 CPPFLAGS += $(NATIVE_SDK_HEADERS) $(FF_SDK_HEADERS)
 LDFLAGS  := $(NATIVE_SDK_LDFLAGS) $(FF_SDK_LDFLAGS)
-LDLIBS   := $(FF_SDK_LDLIBS) $(NATIVE_SDK_LDLIBS) -lpthread -lstdc++
+LDLIBS   := $(FF_SDK_LDLIBS) $(NATIVE_SDK_LDLIBS) -lpthread -lstdc++ -lm
 
 ifeq ($(PRODUCTFORM),loongarch64)
 LDLIBS   += -lm -lpthread  -lresolv  -lrt  -ldl -lstdc++

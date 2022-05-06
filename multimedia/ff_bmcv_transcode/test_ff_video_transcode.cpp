@@ -134,7 +134,7 @@ int main(int argc, char **argv)
 
 #ifdef BM_PCIE_MODE
     thread_arg->sophon_idx         = atoi(argv[++arg_index]);
-    if(thread_arg->sophon_idx != 0 && thread_arg->sophon_idx != 1){
+    if(thread_arg->sophon_idx < 0 && thread_arg->sophon_idx > 120){
         usage(argv[0]);
         return -1;
     }
@@ -170,13 +170,13 @@ int main(int argc, char **argv)
 
 void *startOneInst(void *arg){
     thread_count++;
+    int sophon_idx              = 0;
     THREAD_ARG *thread_arg      = (THREAD_ARG *)arg;
     int index                   = thread_arg->thread_index;
     const char *src_filename    = thread_arg->src_filename;
     //const char *decoder_name    = thread_arg->decoder_name;
     const char *output_filename = thread_arg->output_filename;
     const char *codecer_name    = thread_arg->codecer_name;
-    int sophon_idx              = thread_arg->sophon_idx;
     int output_format_mode      = thread_arg->output_format_mode;
     //int pre_allocation_frame    = thread_arg->pre_allocation_frame;
     //int is_by_filename          = thread_arg->is_by_filename;
@@ -188,6 +188,7 @@ void *startOneInst(void *arg){
     //int is_dma_buffer           = thread_arg->is_dma_buffer;
 #ifdef BM_PCIE_MODE
     int zero_copy               = thread_arg->zero_copy;
+    sophon_idx                  = thread_arg->sophon_idx;
 #endif
     int ret                     =  0;
     bm_handle_t bmHandle        = {0};
@@ -195,12 +196,6 @@ void *startOneInst(void *arg){
     struct timeval tv1, tv2;
     unsigned int time;
 
-#ifdef BM_PCIE_MODE
-    if(sophon_idx == 1)
-        sophon_idx = sophon_idx % (PCIE_CARD_NUM * 3);
-    else
-     sophon_idx = 0;
-#endif
     width = (width + SET_ALIGNMENT - 1) & ~(SET_ALIGNMENT - 1);
     height = (height + SET_ALIGNMENT - 1) & ~(SET_ALIGNMENT - 1);
     strcpy(file_name,output_filename);
@@ -209,7 +204,7 @@ void *startOneInst(void *arg){
     sprintf(file_name,"%s%d%s",name_start,index,name_end);
 
     VideoDec_FFMPEG reader;
-#if BM_PCIE_MODE
+#ifdef BM_PCIE_MODE
     ret = reader.openDec(src_filename,1,NULL,output_format_mode,9,sophon_idx,zero_copy);
 #else
     ret = reader.openDec(src_filename,1,NULL,output_format_mode,9);
@@ -217,7 +212,7 @@ void *startOneInst(void *arg){
     if(ret < 0 )
     {
         printf("open input media failed\n");
-     thread_count--;
+        thread_count--;
         return (void *)-1;
     }
 
@@ -232,7 +227,7 @@ void *startOneInst(void *arg){
      height = frame->height;
     }
     else{
-        if(bm_dev_request(&bmHandle,0) != BM_SUCCESS){
+        if(bm_dev_request(&bmHandle, sophon_idx) != BM_SUCCESS){
         //exit(EXIT_FAILURE);
          exit(-1);
         }
@@ -245,7 +240,7 @@ void *startOneInst(void *arg){
 #endif
     if (ret !=0 ) {
         av_log(NULL, AV_LOG_ERROR,"writer.openEnc failed\n");
-     thread_count--;
+        thread_count--;
         return (void *)-1;
     }
     gettimeofday(&tv1, NULL);
@@ -305,18 +300,18 @@ void *startOneInst(void *arg){
 static void usage(char *program_name)
 {
 #ifdef BM_PCIE_MODE
-    av_log(NULL, AV_LOG_ERROR, "Usage: \n\t%s [src_filename] [output_filename] [encode_pixel_format] [codecer_name] [height] [width] [frame_rate] [bitrate] [thread_num] [zero_copy] [sophon_idx]\n", program_name);
+    av_log(NULL, AV_LOG_ERROR, "Usage: \n\t%s [src_filename] [output_filename] [encode_pixel_format] [codecer_name] [width] [height] [frame_rate] [bitrate] [thread_num] [zero_copy] [sophon_idx]\n", program_name);
     av_log(NULL, AV_LOG_ERROR, "\t[src_filename]            input file name x.mp4 x.ts...\n");
     av_log(NULL, AV_LOG_ERROR, "\t[output_filename]         encode output file name x.mp4,x.ts...\n");
     av_log(NULL, AV_LOG_ERROR, "\t[encode_pixel_format]     encode format I420.\n");
-    av_log(NULL, AV_LOG_ERROR, "\t[encoder_name]            encode h264_bm,hevc_bm,h265_bm.\n");
-    av_log(NULL, AV_LOG_ERROR, "\t[height]                  encode height.\n");
+    av_log(NULL, AV_LOG_ERROR, "\t[encoder_name]            encode h264_bm,h265_bm.\n");
     av_log(NULL, AV_LOG_ERROR, "\t[width]                   encode width.\n");
+    av_log(NULL, AV_LOG_ERROR, "\t[height]                  encode height.\n");
     av_log(NULL, AV_LOG_ERROR, "\t[frame_rate]              encode frame_rate.\n");
-    av_log(NULL, AV_LOG_ERROR, "\t[bitrate]                 encode bitrate.\n");
+    av_log(NULL, AV_LOG_ERROR, "\t[bitrate]                 encode bitrate 500 < bitrate < 10000\n");
     av_log(NULL, AV_LOG_ERROR, "\t[thread_num]              thread num.\n");
     av_log(NULL, AV_LOG_ERROR, "\t[zero_copy ]              0: copy host mem,1: nocopy.\n");
-    av_log(NULL, AV_LOG_ERROR, "\t[sophon_idx]              0: sophon devices 0 , 1: Multiple sophon device.\n");
+    av_log(NULL, AV_LOG_ERROR, "\t[sophon_idx]              sophon devices idx\n");
     av_log(NULL, AV_LOG_ERROR, "\t%s example.mp4 test.ts I420 h264_bm 800 400 25 3000 3 0 0\n", program_name);
 
 #else
@@ -324,11 +319,11 @@ static void usage(char *program_name)
     av_log(NULL, AV_LOG_ERROR, "\t[src_filename]            input file name x.mp4 x.ts...\n");
     av_log(NULL, AV_LOG_ERROR, "\t[output_filename]         encode output file name x.mp4,x.ts...\n");
     av_log(NULL, AV_LOG_ERROR, "\t[encode_pixel_format]     encode format I420,NV12\n");
-    av_log(NULL, AV_LOG_ERROR, "\t[encoder_name]            h264_bm,hevc_bm...\n");
-    av_log(NULL, AV_LOG_ERROR, "\t[height]                  encode height.\n");
+    av_log(NULL, AV_LOG_ERROR, "\t[encoder_name]            h264_bm,h265_bm\n");
     av_log(NULL, AV_LOG_ERROR, "\t[width]                   encode width.\n");
+    av_log(NULL, AV_LOG_ERROR, "\t[height]                  encode height.\n");
     av_log(NULL, AV_LOG_ERROR, "\t[frame_rate]              encode frame_rate.\n");
-    av_log(NULL, AV_LOG_ERROR, "\t[bitrate]                 encode bitrate.\n");
+    av_log(NULL, AV_LOG_ERROR, "\t[bitrate]                 encode bitrate 500 < bitrate < 10000\n");
     av_log(NULL, AV_LOG_ERROR, "\t[thread_num]              thread num.\n");
     av_log(NULL, AV_LOG_ERROR, "\t%s example.mp4 test.ts I420 h264_bm 1920 1080 25 3000 3\n", program_name);
 

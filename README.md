@@ -1,28 +1,31 @@
-## BMMNSDK2样例仓介绍
+## BMMNSDK样例仓介绍
 
-BMNNSDK2是算能科技基于其自主研发的 AI 芯片所定制的深度学习SDK，涵盖了神经网络推理阶段所需的模型优化、高效运行时支持等能力，为深度学习应用开发和部署提供易用、高效的全栈式解决方案。
+BMNNSDK是算能科技基于其自主研发的 AI 芯片所定制的深度学习SDK，涵盖了神经网络推理阶段所需的模型优化、高效运行时支持等能力，为深度学习应用开发和部署提供易用、高效的全栈式解决方案。
 
-算能样例仓就是以BMNNSDK2接口进行开发，制作的一系列给开发者进行参考学习的样例。在开发者朋友们开发自己的样例时，也可以就样例仓的相关案例进行参考。
+算能样例仓就是以BMNNSDK接口进行开发，制作的一系列给开发者进行参考学习的样例。在开发者朋友们开发自己的样例时，也可以就样例仓的相关案例进行参考。
 
 ## 版本说明
 
-**master分支样例版本适配情况请参见[样例表单及适配说明](#Version-of-samples)。     
-历史版本请参考[表1 版本说明](#Version-Description)下载对应发行版**。
+**历史版本请参考[表1 版本说明](#Version-Description)下载对应发行版**。
 
 **表1** 版本说明<a name="Version-Description"></a>
-| BMNNSDK2版本 | 否维护 | Examples 获取方式 |
+| Examples分支 | 否维护 | 适用BMNNSDK版本 |
 |---|---|---|
-| [BMNNSDK2-2.7.0](https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/18/11/bmnnsdk2_bm1684_v2.7.0.zip) | 是 |  |
-| [BMNNSDK2-2.6.0](https://sophon-file.sophon.cn/sophon-prod-s3/drive/21/12/16/16/bmnnsdk2_bm1684_v2.6.0.zip) | 是 | Release 2.6.0发行版，[点击跳转](https://github.com/sophon-ai-algo/examples/releases/v2.6.0) |
+| master | 是 | BMNNSDK > 2.7.0 |
+| 2.7.0 | 是 | [BMNNSDK-2.7.0](https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/04/14/10/bmnnsdk2_bm1684_v2.7.0_20220316_patched_0413.zip) |
+| 2.6.0 | 否 | [BMNNSDK-2.6.0](https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/02/10/18/bmnnsdk2_bm1684_v2.6.0.zip) |
 
 
 ## 目录结构与说明
 | 目录 | 说明 |
 |---|---|
-| [inference](./inference) | 简易的推理框架及其使用示例 |
-| [multimedia](./multimedia) | 基于ffmpeg/opencv的示例目录 |
-| [pipeline](./pipeline) | 基于Pipeline的全流程示例目录 | 
-| [simple](./simple) | 单个模型推理简单样例目录 |
+| [calibration](./calibration) | 量化工具使用示例 |
+| [inference](./inference) | 简易的推理框架Inference framework及其使用示例 |
+| [multimedia](./multimedia) | 基于ffmpeg/opencv的使用示例 |
+| [nntc](./nntc) | NNToolChain模型转换工具使用示例 |
+| [other](./other) | TODO，其他参考示例，如推流、websocket推图片流到web显示等 |
+| [sail](./sail) | SAIL接口使用示例 |
+| [simple](./simple) | 单个模型推理示例 |
 
 
 ## 使用指南
@@ -31,18 +34,9 @@ BMNNSDK2是算能科技基于其自主研发的 AI 芯片所定制的深度学�
 
 请参考在线入门文档：https://sophgo-doc.gitbook.io/bmnnsdk2-bm1684/
 
-## 样例表单&适配说明<a name="Version-of-samples"></a>
-
-| 样例名称 | 语言 | 适配BMNNSDK2版本 | 简介 |
-|---|---|---|---|
-| [YoloV5](./simple/yolov5) |  c++/python | >=2.6.0 | 使用bmcv/opencv做前处理，bmrt推理的示例程序 |
-|[centernet](./simple/centernet) | c++/python | >=2.6.0 | CenterNet 推理示例，采用BMCV做前后处理。 |
-|[retinaface](./simple/retinaface) | c++/python | >=2.6.0 | RetinaFace 推理示例，采用BMCV做前后处理。 |
-|[yolox](./simple/yolox) | c++/python | >=2.6.0 | YOLOX 推理示例，采用BMCV做前后处理。 |
-|[yolov4](./simple/yolov4) | c++/python | >=2.6.0 | YOLOV3/YOLOV4 推理示例，采用BMCV做前后处理。 |
 ## 文档
 
-参考社区网站[产品文档](https://developer.sophon.cn/document/index.html)获取相关文档。
+参考社区网站[产品文档](https://developer.sophon.cn/site/index/document/all/all.html)获取相关文档。
 
 ## 社区
 
