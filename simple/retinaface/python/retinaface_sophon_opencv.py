@@ -34,11 +34,11 @@ class Retinaface_sophon(object):
 
     def __init__(self, cfg, bmodel_file_path, tpu_id, score_threshold = 0.5, nms_threshold = 0.3):
         """
-        :param cfg: retinaface使用的backbone及网络配置参数
-        :param bmodel_file_path: 模型路径
-        :param tpu_id: tpu序列号
-        :param score_threshold: 置信度阈值
-        :param nms_threshold: nms阈值
+        :param cfg: retinaface backbone config file
+        :param bmodel_file_path: bmodel file
+        :param tpu_id: tpu id
+        :param score_threshold: confidence
+        :param nms_threshold: nms
         """
         # Create a Context on sophon device
         tpu_count = sail.get_available_tpu_num()
@@ -200,7 +200,7 @@ class Retinaface_sophon(object):
         logger.debug("output tensor 0 = {} , output tensor 1 = {}, output tensor 2 = {} ".format(
             outputs[0].shape, outputs[1].shape, outputs[2].shape))
 
-        # 根据shape取出相应的tensor
+        # get tensor by shape
         for i in range(3):
             if outputs[i].shape[-1] == 2:
                 conf = outputs[i]
@@ -234,7 +234,7 @@ class Retinaface_sophon(object):
 
         logger.debug("after output decode: boxes = {} , landmarks = {} , scores = {} ".format(boxes.shape, landms.shape, scores.shape))
 
-        # 根据置信度过滤, 减少后续运算量
+        # filter
         inds = np.where(scores >= self.score_threshold)[0]
         boxes = boxes[inds]
         scores = scores[inds]
@@ -344,8 +344,8 @@ if __name__ == "__main__":
 
     opt = parser.parse_args()
 
-    logger.remove()#删去import logger之后自动产生的handler，不删除的话会出现重复输出的现象
-    handler_id = logger.add(sys.stderr, level="INFO")#添加一个可以修改控制的handler 
+    logger.remove() # remove default handler to avoid from repeated output log
+    handler_id = logger.add(sys.stderr, level="INFO") # add a new handler
 
     save_path = os.path.join(
         save_path, time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
@@ -374,9 +374,7 @@ if __name__ == "__main__":
 
         logger.info("source image shape: {}".format(frame.shape))
 
-        for i in range(10):
-
-            result_image = retinaface.predict_numpy(frame)
+        result_image = retinaface.predict_numpy(frame)
 
         logger.info("result image shape: {}".format(result_image.shape))
 

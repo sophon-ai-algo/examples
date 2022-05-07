@@ -1,4 +1,4 @@
-top_dir = /workspace
+top_dir = $(REL_TOP)
 sdk_dir = $(top_dir)/
 install_dir = $(top_dir)/install
 

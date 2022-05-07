@@ -24,7 +24,6 @@ opt = None
 save_path = os.path.join(os.path.dirname(
     __file__), "result_imgs", os.path.basename(__file__).split('.')[0])
 
-# # 设置numpy运算精度
 # np.set_printoptions(threshold=np.inf)
 
 class Retinaface_sophon(object):
@@ -34,12 +33,12 @@ class Retinaface_sophon(object):
 
     def __init__(self, cfg, bmodel_file_path, tpu_id, score_threshold = 0.5, nms_threshold = 0.3):
         """
-        :param cfg: retinaface使用的backbone及网络配置参数
-        :param bmodel_file_path: 模型路径
-        :param tpu_id: tpu序列号
+        :param cfg: retinaface backbone cfg file
+        :param bmodel_file_path: bmodel file
+        :param tpu_id: tpu id
         :param layers: 18 , 50
-        :param score_threshold: 置信度阈值
-        :param nms_threshold: nms阈值
+        :param score_threshold: confidence
+        :param nms_threshold: nms
         """
         # Create a Context on sophon device
         tpu_count = sail.get_available_tpu_num()
@@ -192,7 +191,7 @@ class Retinaface_sophon(object):
             self.engine.process(self.graph_name, self.input_tensors, self.output_tensors)
             logger.debug("engine process end")
         
-        # convert output tensor to numpy, 遍历output_names过程中会将输出按照名称排序      
+        # convert output tensor to numpy, sort by output_names      
         output_nps = [output_tensor.asnumpy(self.output_shapes[output_name]) \
             for output_name, output_tensor in self.output_tensors.items()]
 
@@ -221,7 +220,7 @@ class Retinaface_sophon(object):
         logger.debug("output tensor 0 = {} , output tensor 1 = {}, output tensor 2 = {} ".format(
             outputs[0].shape, outputs[1].shape, outputs[2].shape))
 
-        # 根据shape取出相应的tensor
+        # get tensor by shape
         for i in range(3):
             if outputs[i].shape[-1] == 2:
                 conf = outputs[i]
@@ -240,7 +239,7 @@ class Retinaface_sophon(object):
 
         logger.debug("loc = {} , landms = {}, conf = {} ".format(loc.shape, landms.shape, conf.shape))
         
-        # 解码
+        # decode output
         scale = np.array([origin_w, origin_h, origin_w, origin_h])
         boxes = decode(loc.squeeze(0), self.priors, self.cfg['variance'])
         boxes = boxes * scale
@@ -255,7 +254,7 @@ class Retinaface_sophon(object):
 
         logger.debug("after output decode: boxes = {} , landmarks = {} , scores = {} ".format(boxes.shape, landms.shape, scores.shape))
 
-        # 根据置信度过滤, 减少后续运算量
+        # filter
         inds = np.where(scores >= self.score_threshold)[0]
         boxes = boxes[inds]
         scores = scores[inds]
@@ -367,8 +366,8 @@ if __name__ == "__main__":
 
     opt = parser.parse_args()
 
-    logger.remove()#删去import logger之后自动产生的handler，不删除的话会出现重复输出的现象
-    handler_id = logger.add(sys.stderr, level="INFO")#添加一个可以修改控制的handler
+    logger.remove() # remove default handler to avoid from repeated output log
+    handler_id = logger.add(sys.stderr, level="INFO") # add a new handler
 
     save_path = os.path.join(
         save_path, time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
@@ -407,9 +406,7 @@ if __name__ == "__main__":
 
         print_info(input_bmimg)
 
-        for i in range(100):
-
-            result_image = retinaface.predict_bmimage(input_bmimg) # opt.use_np_file_as_input
+        result_image = retinaface.predict_bmimage(input_bmimg) # opt.use_np_file_as_input
         
         retinaface.bmcv.imwrite(os.path.join(save_path, "test_output.jpg"), result_image)
 
