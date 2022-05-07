@@ -280,8 +280,13 @@ int Retinaface::preprocess(
         call(
             bmcv_image_convert_to,
             handle, num, impl_->convert_attr, resized_images.data(), input_images.data());
+        call(bm_image_dettach_contiguous_mem, num, input_images.data());
+        for (auto &img : input_images) {
+            call(bm_image_destroy, img);
+        }
         frame_infos.push_back(std::move(frame_info));
     }
+
     impl_->resized_pool->free(resized_images.size(), resized_images.data());
     if (w_) w_->mark("preprocess");
 }
@@ -546,6 +551,15 @@ cond:
             auto &y = obj.landmark.y[i];
             x = (x - frame.x_offset) / frame.x_scale * frame.width;
             y = (y - frame.y_offset) / frame.y_scale * frame.height;
+        }
+    }
+    // sanity check
+    for (auto iter = objs.begin(); iter < objs.end(); ) {
+        if (iter->x1 < 0 || iter->y1 < 0 ||
+            iter->x2 > frame.width || iter->y2 > frame.height) {
+            iter = objs.erase(iter);
+        } else {
+            ++iter;
         }
     }
     return objs;

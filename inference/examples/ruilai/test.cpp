@@ -65,10 +65,18 @@ int main(int argc, char* argv[]) {
 #endif
     start = std::chrono::high_resolution_clock::now();
 
-    for (int i = 0; i < 1000; ++i) {
+#if 1
+    for (int i = 0; i < TEST_PICS_NUM; ++i) {
         uint64_t image_id = instance.Infer((const unsigned char*)data_ptr,
                                            data_size);
     }
+#else
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        uint64_t image_id = instance.Infer((const unsigned char*)data_ptr,
+                                           data_size);
+    }
+#endif
     std::this_thread::sleep_for(std::chrono::seconds(1000));
     std::cout << "exit.." << std::endl;
     return 0;

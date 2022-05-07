@@ -13,6 +13,7 @@
 #include "resnet50.h"
 #include "common_types.h"
 #include "mobilenetv2.h"
+#include "wsdan.h"
 
 
 struct TChannel: public bm::NoCopyable {

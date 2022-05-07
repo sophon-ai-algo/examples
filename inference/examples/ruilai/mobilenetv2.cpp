@@ -2,10 +2,10 @@
 #include <numeric>
 
 MobileNetV2::MobileNetV2(bm::BMNNContextPtr bmctx):m_bmctx(bmctx) {
-    m_bmnet = std::make_shared<bm::BMNNNetwork>(m_bmctx->bmrt(), "qinhua.mo_bmnetp");
+    m_bmnet = std::make_shared<bm::BMNNNetwork>(m_bmctx->bmrt(), m_bmctx->network_name(0));
     assert(m_bmnet != nullptr);
-    m_beta  = -103.94;
-    m_alpha = 1.0;
+//    m_beta  = -103.94;
+//    m_alpha = 1.0;
 
     auto shape = m_bmnet->inputTensor(0)->get_shape();
     // for NCHW

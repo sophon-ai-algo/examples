@@ -26,7 +26,7 @@ public:
         bm::BMNNContextPtr bmctx,
         bool keep_original = true,
         float nms_threshold = 0.5,
-        float conf_threshold = 0.6,
+        float conf_threshold = 0.5,
         std::string net_name = "",
         bm::Watch *watch = nullptr);
     ~Retinaface();

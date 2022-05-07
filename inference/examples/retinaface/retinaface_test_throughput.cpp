@@ -25,8 +25,8 @@ int main(int argc, char *argv[])
     std::shared_ptr<bm::BMNNNetwork> net = context->network(0);
     LOG(INFO) << *net;
     bool keep_original = true;
-    float nms_threshold = 0.4;
-    float conf_threshold = 0.02;
+    float nms_threshold = 0.5;
+    float conf_threshold = 0.5;
     bm::Watch w;
     const char *net_name = "";
 #if 0
