@@ -6,7 +6,7 @@ BM_MEDIA_ION ?= 0
 INSTALL_DIR    ?= release
 top_dir := $(REL_TOP)
 
-ifeq ($(PRODUCTFORM), x86) # pcie mode
+ifeq ($(PRODUCTFORM),pcie) # pcie mode
     CROSS_CC_PREFIX = 
 else # pcie_arm64 and soc mode
     CROSS_CC_PREFIX = aarch64-linux-gnu-

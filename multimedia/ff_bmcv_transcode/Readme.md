@@ -1,12 +1,12 @@
 ## How to build ?
 
  * modify the PRODUCTFORM and top_dir at the Makefile accoring to the actual situation
- * PRODUCTFORM: can be x86,soc, arm_pcie, loongarch64
+ * PRODUCTFORM: can be pcie,soc, arm_pcie
  * top_dir: the root directory of sdks
 
-For example, on x86:
+For example, on x86 with pcie cards:
 ``` bash
-make PRODUCTFORM=x86 -j4
+make PRODUCTFORM=pcie -j4
 ```
 ## How to run ?
 

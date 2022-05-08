@@ -6,9 +6,9 @@ INSTALL_DIR    ?= release
 
 top_dir := $(REL_TOP)
 
-#ifeq ($(PRODUCTFORM),x86) # pcie mode
-#    CROSS_CC_PREFIX = x86_64-linux-
-#endif
+ifeq ($(PRODUCTFORM),pcie) # pcie mode
+   CROSS_CC_PREFIX = 
+endif
 
 ifeq ($(PRODUCTFORM),soc) # soc mode
     CROSS_CC_PREFIX = aarch64-linux-gnu-
