@@ -41,14 +41,14 @@ function download_nas()
 
     type $command >/dev/null 2>&1 || { echo >&2 "Using brew to install GUN grep first.  Aborting."; exit 1; }
     
-    web_prefix="https://disk.sophgo.vip/fsdownload/"
+    web_prefix="http://219.142.246.77:65000/fsdownload/"
     file_url=$1
     
     # id=echo $file_url | ggrep -Po '(?<=sharing/).*(?=/)'
     id=`echo $file_url | cut -d "/" -f 5`
     sid=`curl -i $file_url | $command  -Po '(?<=sid=).*(?=;path)'`
     v=`curl -i $file_url | $command -Po '(?<=none"&v=).*(?=">)'`
-    file_name=`curl -b "sharing_sid=${sid}" -i "https://disk.sophgo.vip/sharing/webapi/entry.cgi?api=SYNO.Core.Sharing.Session&version=1&method=get&sharing_id=%22${id}%22&sharing_status=%22none%22&v=${v}" | $command -Po '(?<="filename" : ").*(?=")'`
+    file_name=`curl -b "sharing_sid=${sid}" -i "http://219.142.246.77:65000/sharing/webapi/entry.cgi?api=SYNO.Core.Sharing.Session&version=1&method=get&sharing_id=%22${id}%22&sharing_status=%22none%22&v=${v}" | $command -Po '(?<="filename" : ").*(?=")'`
     
     if [ $# -eq 2 ];then
         save_path=$2
@@ -78,7 +78,7 @@ function download_files()
     file_name=$data_dir/yolox_s_int8_bs4.bmodel
     if [ ! -f $file_name ]; then
         echo "Start download file: "$file_name
-        file_url=https://disk.sophgo.vip/sharing/OZ7RjrjNB
+        file_url=http://219.142.246.77:65000/sharing/OZ7RjrjNB
         download_nas $file_url $file_name
         echo "Downloaded"$file_name
     else
@@ -88,7 +88,7 @@ function download_files()
     file_name=$data_dir/yolox_s_fp32_bs1.bmodel
     if [ ! -f $file_name ]; then
         echo "Start download file: "$file_name
-        file_url=https://disk.sophgo.vip/sharing/Zao2JR3AR
+        file_url=http://219.142.246.77:65000/sharing/Zao2JR3AR
         download_nas $file_url $file_name
         echo "Downloaded"$file_name
     else
@@ -98,7 +98,7 @@ function download_files()
     file_name=$data_dir/test_data.tar.gz
     if [ ! -f $file_name ]; then
         echo "Start download file: "$file_name
-        file_url=https://disk.sophgo.vip/sharing/7z2YjOMag
+        file_url=http://219.142.246.77:65000/sharing/7z2YjOMag
         download_nas $file_url $file_name
         echo "Downloaded"$file_name
     else
