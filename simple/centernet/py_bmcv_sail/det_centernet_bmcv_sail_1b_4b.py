@@ -20,6 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('--loops',  default=1,  type=int, required=False)
     parser.add_argument('--tpu_id', default=0,  type=int, required=False)
     parser.add_argument('--bmodel', default=os.path.join(DATA_DIR, 'models/ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel'), type=str, required=False)
+    parser.add_argument('--class_path', default=os.path.join(DATA_DIR, 'coco_classes.txt'), type=str, required=False)
 
     opt = parser.parse_args()
     
@@ -30,7 +31,7 @@ if __name__ == '__main__':
 
     # Initialize centernet detector instance
     cet_detector = CtdetDetector(
-        arch='dlav0', model_path=opt.bmodel, tpu_id=opt.tpu_id, class_path=os.path.join(DATA_DIR, 'coco_classes.txt')
+        arch='dlav0', model_path=opt.bmodel, tpu_id=opt.tpu_id, class_path=opt.class_path
     )
     
     batch_size = cet_detector.get_batchsize()

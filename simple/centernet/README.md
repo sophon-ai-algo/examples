@@ -32,8 +32,6 @@ CenterNet 是一种 anchor-free 的目标检测网络，不仅可以用于目标
 
 [MS COCO](http://cocodataset.org/#home)，是微软构建的一个包含分类、检测、分割等任务的大型的数据集。使用[CenterNet](https://github.com/xingyizhou/CenterNet)基于COCO Detection 2017预训练好的80类通用目标检测模型。
 
-> MS COCO提供了一些[API](https://github.com/cocodataset/cocoapi)，方便对数据集的使用和模型评估，您可以使用pip安装` pip3 install pycocotools`，并使用COCO提供的API进行下载。
-
 ## 3. 准备环境与数据
 
 
@@ -69,36 +67,45 @@ CenterNet 是一种 anchor-free 的目标检测网络，不仅可以用于目标
 
 #### 3.1.2 SDK软件包下载：
 
-- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://sophon.cn/drive/44.html)，Ubuntu 16.04 with Python 3.5
+- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/all.html)，Ubuntu 16.04 with Python 3.7
 
   ```bash
-  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/01/18/10/bmnnsdk2-bm1684-ubuntu-docker-py35.zip
+  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
   ```
 
-- SDK软件包：[点击前往官网下载SDK软件包](https://sophon.cn/drive/45.html)，BMNNSDK 2.6.0_20220130_042200
+- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/17/all.html)，BMNNSDK 2.7.0
 
   ```bash
-  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/02/10/18/bmnnsdk2_bm1684_v2.6.0.zip
+  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/04/14/10/bmnnsdk2_bm1684_v2.7.0_20220316_patched_0413.zip
   ```
 
 #### 3.1.3 创建docker开发环境：
+- 安装工具
+  ```bash
+  sudo apt update
+  sudo apt install unzip
+  ```
 
 - 加载docker镜像:
 
   ```bash
+  unzip bmnnsdk2-bm1684-ubuntu-docker-py37.zip
+  cd bmnnsdk2-bm1684-ubuntu-docker-py37
   docker load -i bmnnsdk2-bm1684-ubuntu.docker
   ```
 
 - 解压缩SDK：
 
   ```bash
-  tar zxvf bmnnsdk2-bm1684_v2.6.0.tar.gz
+  unzip bmnnsdk2_bm1684_v2.7.0_20220316_patched_0413.zip
+  cd bmnnsdk2_bm1684_v2.7.0_20220316_patched/
+  tar zxvf bmnnsdk2-bm1684_v2.7.0.tar.gz
   ```
 
 - 创建docker容器，SDK将被挂载映射到容器内部供使用：
 
   ```bash
-  cd bmnnsdk2-bm1684_v2.6.0
+  cd bmnnsdk2-bm1684_v2.7.0/
   # 若您没有执行前述关于docker命令免root执行的配置操作，需在命令前添加sudo
   ./docker_run_bmnnsdk.sh
   ```
@@ -136,8 +143,9 @@ JIT（Just-In-Time）是一组编译工具，用于弥合PyTorch研究与生产�
 # 下载dlav0作为主干网的预训练模型
 sudo apt update
 sudo apt install curl
-cd scripts
+cd ../examples/centernet/data/scripts/
 ./download_pt.sh
+# 下载成功后，文件位于../build/ctdet_coco_dlav0_1x.pth
 
 # 创建python虚拟环境
 cd ../build
@@ -179,8 +187,10 @@ cp ctdet_coco_dlav0_1x.torchscript.pt ../models
 我们选取其中的200张图片进行量化
 
 ```bash
+sudo apt install unzip
 cd ../scripts
 ./00_prepare.sh
+# 下载成功后，JPG文件位于../images文件夹中
 ```
 
 
@@ -227,6 +237,7 @@ INT8 BModel的生成需要经历中间格式UModel，即：原始模型→FP32 U
 
 ```shell
 ./2_gen_int8bmodel.sh
+# 转换成功后，模型位于../models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel
 ```
 
 ### 4.2.1 生成LMDB
@@ -239,7 +250,8 @@ INT8 BModel的生成需要经历中间格式UModel，即：原始模型→FP32 U
 ./20_create_lmdb.sh
 ```
 
-上述脚本会在指定目录中生成lmdb的文件夹，其中存放着量化好的LMDB文件：`data.mdb`。请注意根据模型输入要求修改脚本中`convert_imageset`命令中的`resize_width`和`resize_height`等参数。
+上述脚本会在`../images/`中生成`data.mdb`的文件
+请注意根据模型输入要求修改脚本中`convert_imageset`命令中的`resize_width`和`resize_height`等参数。
 
 #### 4.2.2 生成FP32 UModel
 
@@ -248,8 +260,7 @@ INT8 BModel的生成需要经历中间格式UModel，即：原始模型→FP32 U
 ```bash
 ./21_gen_fp32umodel.sh
 ```
-
-上述脚本会在`int8model/`下生成`*_bmnetp_test_fp32.prototxt`、`*_bmnetp.fp32umodel`文件，即转换好的FP32 UModel。
+上述脚本会在`../build/int8model/`下生成`*_bmnetp_test_fp32.prototxt`、`*_bmnetp.fp32umodel`文件，即转换好的FP32 UModel。
 
 #### 4.2.3 修改FP32 UModel
 
@@ -277,7 +288,7 @@ INT8 BModel的生成需要经历中间格式UModel，即：原始模型→FP32 U
 ./24_gen_int8bmodel.sh
 ```
 
-上述脚本会在`../models/`下生成`*_int8_1b.bmodel`，即转换好的INT8 BModel，使用`bm_model.bin --info`查看的模型具体信息如下：
+上述脚本会在`../models/`下生成`ctdet_coco_dlav0_1output_512_int8_4batch.bmodel`，即转换好的INT8 BModel，使用`bm_model.bin --info`查看的模型具体信息如下：
 
 ```bash
 bmodel version: B.2.2
@@ -324,6 +335,8 @@ export PYTHONPATH=$PYTHONPATH:/system/lib
 
 ```bash
 # 请指定numpy版本为1.17.2
+sudo apt update
+sudo apt-get install python3-pip
 sudo pip3 install numpy==1.17.2
 ```
 
@@ -334,7 +347,7 @@ sudo pip3 install numpy==1.17.2
 - 编译
 
 ```bash
-$ cd cpp_bmcv_sail
+$ cd ../../cpp_bmcv_sail
 # 先手动修改Makefile.pcie里的top_dir地址，指向实际SDK的根路径
 # docker容器中，默认为/workspace
 $ make -f Makefile.pcie # 生成centernet_bmcv_sail.pcie
@@ -345,9 +358,13 @@ $ make -f Makefile.pcie # 生成centernet_bmcv_sail.pcie
 ```bash
 # 1batch
 $ ./centernet_bmcv_sail.pcie --bmodel=../data/models/ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel --image=../data/ctdet_test.jpg
+# 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx.jpg格式的图片
+# 图片上检测出11个目标
+
 # 4batch
 $ ./centernet_bmcv_sail.pcie --bmodel=../data/models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --image=../data/ctdet_test.jpg
-
+# 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx-bx.jpg格式的图片
+# 按照量化结果差异，图片上检测出11-12个目标，均属正常范围
 ```
 
 #### 5.2.2 arm平台SE5
@@ -361,25 +378,57 @@ $ cd cpp_bmcv_sail
 $ make -f Makefile.arm # 生成centernet_bmcv_sail.arm
 ```
 
-- 将生成的可执行文件及所需的模型和测试图片或视频文件拷贝到盒子中测试
-
+- 将以下文件拷贝到盒子中同一个目录中，进行测试
+1. `centernet_bmcv_sail.arm`
+2. `../data/models/ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel`
+3. `../data/models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel`
+4. `../data/ctdet_test.jpg`
+5. `../data/coco_classes.txt`
 ```bash
 # 1batch
-$ ./centernet_bmcv_sail.arm --bmodel=../data/models/ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel --image=../data/ctdet_test.jpg
+$ ./centernet_bmcv_sail.arm --bmodel=ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel --image=ctdet_test.jpg
+# 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx.jpg格式的图片
+# 图片上检测出11个目标
+
 # 4batch
-$ ./centernet_bmcv_sail.arm --bmodel=../data/models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --image=../data/ctdet_test.jpg
+$ ./centernet_bmcv_sail.arm --bmodel=ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --image=ctdet_test.jpg
+# 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx-bx.jpg格式的图片
+# 按照量化结果差异，图片上检测出11-12个目标，均属正常范围
 ```
-运行成功后会在当前目录生成`ctdet_result_*.jpg`格式的图片
 
 ### 5.3 Python例程部署测试
 
 Python代码无需编译，无论是x86 SC平台还是arm SE5平台配置好环境之后就可直接运行。
+> 运行之前需要安装sail包
+ 
+#### 5.3.1 x86平台PCIe模式
+```bash
+# 在容器里, 以python3.7的docker为例
+cd /workspace/lib/sail/python3/pcie/py37
+pip3 install sophon-2.7.0-py3-none-any.whl
 
+cd /workspace/examples/centernet/py_bmcv_sail
+
+# 1batch
+python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../data/models/ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel --input=../data/ctdet_test.jpg
+
+# 4batch
+python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../data/models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --input=../data/ctdet_test.jpg
 ```
-cd py_bmcv_sail
-$ python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../data/models/ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel --input=../data/ctdet_test.jpg
-```
-运行成功后会在当前目录生成`ctdet_result_*.jpg`格式的图片
+运行成功后会在当前目录生成`ctdet_result_20xx-xx-xx-xx-xx-xx_b_x.jpg`格式的图片
+
+1. 如果是fp32的模型，图片有11个框
+2. 如果是int8的模型，按照量化结果差异，图片上检测出11-12个目标，均属正常范围
 
 > **使用SAIL模块的注意事项：**对于INT8 BModel来说，当输入输出为int8时，含有scale，需要在处理时将输入输出乘以相应的scale。使用SAIL接口推理时，当sail.Engine.process()接口输入为numpy时，SAIL内部会自动乘以scale，用户无需操作；而输入为Tensor时，需要手动在数据送入推理接口前乘以scale。
 > 这是因为Tensor作为输入的话，一般图像来源就是bm_image，这样就可以直接调用vpp进行scale等操作，所以推理之前由用户乘以scale更高效；而在python接口中，当numpy作为输入的话，推理之前没办法调用vpp，sail内部使用SSE指令进行了加速。
+#### 5.3.2 SE5智算盒SoC模式
+> 将py_bmcv_sail整个文件夹拷贝到SE5中，和`5.2.2`中bmodel和jpg文件同一目录下
+```bash
+cd py_bmcv_sail
+# 1batch
+python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --input=../ctdet_test.jpg --class_path=../coco_classes.txt
+# 4batch
+python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel --input=../ctdet_test.jpg --class_path=../coco_classes.txt
+ ```
+成功后，在当前目录下生成和`5.3.1`相同的`ctdet_result_20xx-xx-xx-xx-xx-xx_b_x.jpg`图片

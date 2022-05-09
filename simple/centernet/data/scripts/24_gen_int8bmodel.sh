@@ -22,5 +22,5 @@ function gen_int8bmodel()
 pushd $build_dir
 
 gen_int8bmodel
-echo "${root_dir}/models/${dst_model_prefix}_${img_size}_int8_4batch.bmodel done."
+echo "[Success] ${root_dir}/models/${dst_model_prefix}_${img_size}_int8_4batch.bmodel done."
 popd

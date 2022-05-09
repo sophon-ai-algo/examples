@@ -1,0 +1,21 @@
+11a12,25
+>   transform_param {
+>     transform_op {
+>       op: RESIZE
+>       resize_h: 512
+>       resize_w: 512
+>     }
+>     transform_op {
+>       op: STAND
+>       mean_value: 104.01195
+>       mean_value: 114.03422
+>       mean_value: 119.91659
+>       scale: 0.014
+>     }
+>   }
+2732a2747
+>   forward_with_float: true
+2793a2809
+>   forward_with_float: true
+2854a2871
+>   forward_with_float: true

@@ -27,7 +27,8 @@ function download_val_dataset()
   echo "choose 200 images and copy to ./images"
   # 拷贝200张图片到images文件夹
   ls -l val2017 | sed -n '2,201p' | awk -F " " '{print $9}' | xargs -t -i cp ./val2017/{} ../images
-}
+  echo "[Success] 200 jpg files has been located in ../images/"
+} 
 
 
 download_val_dataset

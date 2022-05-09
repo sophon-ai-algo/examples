@@ -23,7 +23,7 @@ fi
 #                         target width
 #   --bgr2rgb BGR2RGB     convert bgr to rgb
 #   --gray GRAY           if True, read image as gray
-rm ${lmdb_src_dir}/*.mdb
+rm -rf ${lmdb_src_dir}/*.mdb
 python3 convert_imageset.py \
         --imageset_rootfolder=${lmdb_src_dir} \
         --imageset_lmdbfolder=${lmdb_src_dir} \

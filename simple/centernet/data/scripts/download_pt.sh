@@ -3,6 +3,7 @@ source model_info.sh
 
 ./download_from_nas.sh http://219.142.246.77:65000/sharing/SEZwCtk1M
 mv ctdet_coco_dlav0_1x.pth ../build/
+echo "[Success] ctdet_coco_dlav0_1x.pth has been downloaded in ../build/"
 
 #url="https://docs.google.com/uc"
 #method_name="export=download"
