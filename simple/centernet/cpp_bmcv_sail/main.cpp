@@ -66,10 +66,10 @@ void PrintModelInputInfo(sail::Engine& engine) {
     });
     LOG(INFO) << "input tensor shape -> " << input_tensor_shape;
     
-    if (input_shape[0] > 1) {
-        LOG(FATAL) << "此cppDemo暂时支持1batch模型, 多batch的请查看python例程" << input_tensor_shape;
-        exit(0);
-    }
+    // if (input_shape[0] > 1) {
+    //     LOG(FATAL) << "此cppDemo暂时支持1batch模型, 多batch的请查看python例程" << input_tensor_shape;
+    //     exit(0);
+    // }
 
     // 网络输出尺寸
     output_shape = engine.get_output_shape(gh_names[0], output_names[0]);
@@ -85,7 +85,7 @@ void PrintModelInputInfo(sail::Engine& engine) {
 
     // 网络输出数据类型
     output_dtype = engine.get_output_dtype(gh_names[0], output_names[0]);
-    LOG(INFO) << "input dtype -> "<< output_dtype << ", is fp32=" << ((input_dtype == BM_FLOAT32) ? "true" : "false");
+    LOG(INFO) << "output dtype -> "<< output_dtype << ", is fp32=" << ((output_dtype == BM_FLOAT32) ? "true" : "false");
 }
 
 
@@ -132,13 +132,13 @@ int main(int argc, char** argv) {
     PrintModelInputInfo(engine);
 
     sail::Handle handle = engine.get_handle();
-    sail::Tensor input_tensor(handle,  input_shape,  input_dtype,  true, true);
+    sail::Tensor input_tensor(handle,  input_shape,  input_dtype,  false, false);
     sail::Tensor output_tensor(handle, output_shape, output_dtype, true,  true);
 
     std::map<std::string, sail::Tensor*> input_tensors  = {{ input_names[0],  &input_tensor}}; 
     std::map<std::string, sail::Tensor*> output_tensors = {{ output_names[0], &output_tensor}}; 
 
-    engine.set_io_mode(gh_names[0], sail::SYSIO);
+    engine.set_io_mode(gh_names[0], sail::SYSO);
     sail::Bmcv bmcv(handle);
 
     // 根据网络输入类型确定网络图片输入类型
@@ -147,69 +147,99 @@ int main(int argc, char** argv) {
     CenterNetPreprocessor preprocessor(bmcv, input_shape[3], input_shape[2], 
                                        engine.get_input_scale(gh_names[0], input_names[0]));
     sail::Decoder decoder((const string)image_file, true, tpu_id);
-    CenterNetPostprocessor postprocessor(output_shape, confidence);
+    CenterNetPostprocessor postprocessor(output_shape, confidence, engine.get_output_scale(gh_names[0], output_names[0]));
 
     // 网络输入的batch
     int input_batch_size = input_shape[0];
 
     for (int i = 0; i < test_loop; i++) {
-        // sail::BMImageArray<4> imgs_0;
-        // sail::BMImageArray<4> imgs_1(handle, input_shape[2], input_shape[3],
-        //                              FORMAT_BGR_PLANAR, img_dtype);
-        sail::BMImage imgs_0;
-        sail::BMImage imgs_1(handle, input_shape[2], input_shape[3],
-                             FORMAT_BGR_PLANAR, img_dtype);
-        // read 4 images from image files or a video file
-        bool flag = false;
-        std::vector<std::pair<int,int>> ost_size_list;
-        for (int j = 0; j < input_batch_size; ++j) {
+        if (input_batch_size == 1) {
+            sail::BMImage imgs_0;
+            sail::BMImage imgs_1(handle, input_shape[2], input_shape[3],
+                                 FORMAT_BGR_PLANAR, img_dtype);
             imgs_0 = decoder.read(handle);
-            // if (ret != 0) {
-            //     LOG(INFO) << "Read the End!";
-            //     flag = true;
-            //     break;
-            // }
-            // ost_size_list.push_back(std::pair<int,int>(imgs_0[j].width, imgs_0[j].height));
+            sail::BMImage rgb_img = bmcv.convert_format(imgs_0);
+            LOG(INFO) << "Preprocess begin";
+            bool  align_width;
+            float ratio;
+            preprocessor.Process(rgb_img, imgs_1, align_width, ratio);
+            bmcv.bm_image_to_tensor(imgs_1, input_tensor);
+            LOG(INFO) << "Preprocess end";
+            LOG(INFO) << "Inference begin";
+            engine.process(gh_names[0], input_tensors, output_tensors);
+            LOG(INFO) << "Inference end";
+
+            LOG(INFO) << "Postprocess begin";
+            float* output_data = reinterpret_cast<float*>(output_tensor.sys_data());
+            postprocessor.Process(output_data, align_width, ratio);
+            std::shared_ptr<std::vector<BMBBox>> pVectorBBox =
+                postprocessor.CenternetCorrectBBox(rgb_img.height(), rgb_img.width());
+            LOG(INFO) << "Postprocess end";
+
+            for (auto iter = pVectorBBox->begin(); iter != pVectorBBox->end(); iter++) {
+                LOG(INFO) << "Got one object, confidence:" << iter->conf;
+                bmcv.rectangle(rgb_img, iter->x, iter->y,
+                                iter->w, iter->h, std::make_tuple(255, 0, 0), 3);
+            }
+            // save result
+            auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+            std::stringstream ss;
+            ss << std::put_time(std::localtime(&t), "%Y-%m-%d-%H-%M-%S");
+            bmcv.imwrite("ctdet_result_" + ss.str() + ".jpg", rgb_img);
+            LOG(INFO) << "save result";
+        } else if (input_batch_size == 4) {
+            std::vector<sail::BMImage> imgs_0;
+            imgs_0.resize(4);
+            sail::BMImageArray<4> imgs_1(handle, input_shape[2], input_shape[3],
+                                          FORMAT_BGR_PLANAR, img_dtype);
+            // read 4 images from image files or a video file
+            std::vector<std::pair<int,int>> ost_size_list;
+            for (int j = 0; j < input_batch_size; ++j) {
+                int ret = decoder.read(handle, imgs_0[j]);
+                if (ret != 0) {
+                    LOG(FATAL) << "read failed";
+                }
+            }
+
+            bool align_width;
+            float ratio;
+            preprocessor.Process(imgs_0, imgs_1, align_width, ratio);
+            bmcv.bm_image_to_tensor(imgs_1, input_tensor);
+            LOG(INFO) << "Inference begin";
+            engine.process(gh_names[0], input_tensors, output_tensors);
+            LOG(INFO) << "Inference end";
+
+            LOG(INFO) << "Postprocess begin";
+
+            float* output_data = reinterpret_cast<float*>(output_tensor.sys_data());
+            for (int b = 0; b < output_shape[0]; ++b) {
+                postprocessor.Process(output_data + b * postprocessor.GetBatchOffset(),
+                                      align_width, ratio);
+                std::shared_ptr<std::vector<BMBBox>> pVectorBBox =
+                        postprocessor.CenternetCorrectBBox(imgs_0[b].height(), imgs_0[b].width());
+                LOG(INFO) << "Postprocess end";
+
+                // bm_image to cvmat, to avoid YUV444 case that can not draw
+                cv::Mat mat1;
+                cv::bmcv::toMAT(&imgs_0[b].data(), mat1);
+                for (auto iter = pVectorBBox->begin(); iter != pVectorBBox->end(); iter++) {
+                    LOG(INFO) << "Got one object, confidence:" << iter->conf;
+                    cv::rectangle(mat1,
+                                  cv::Point(iter->x, iter->y),
+                                  cv::Point(iter->x + iter->w, iter->y + iter->h),
+                                  cv::Scalar (255, 0, 0), 2);
+//                bmcv.rectangle(imgs_0[0], iter->x, iter->y,
+//                               iter->w, iter->h, std::make_tuple(255, 0, 0), 3);
+                }
+                // save result
+                auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+                std::stringstream ss;
+                ss << std::put_time(std::localtime(&t), "%Y-%m-%d-%H-%M-%S");
+                cv::imwrite("ctdet_result_" + ss.str() + "_b" + std::to_string(b) + ".jpg", mat1);
+//            bmcv.imwrite("ctdet_result_" + ss.str() + ".jpg", imgs_0[0]);
+                LOG(INFO) << "save result";
+            }
         }
-        // if (flag) {
-        //     break;
-        // }
-        sail::BMImage rgb_img = bmcv.convert_format(imgs_0);
-
-        LOG(INFO) << "Preprocess begin";
-        preprocessor.Process(rgb_img, imgs_1);
-        bmcv.bm_image_to_tensor(imgs_1, input_tensor);
-        // float* sys_data = reinterpret_cast<float*>(input_tensor.sys_data());
-
-        // preprocessor.BGRNormalization(sys_data);
-        // input_tensor.sync_s2d();
-        LOG(INFO) << "Preprocess end";
-
-        LOG(INFO) << "Inference begin";
-        engine.process(gh_names[0], input_tensors, output_tensors);
-        LOG(INFO) << "Inference end";
-
-        LOG(INFO) << "Postprocess begin";
-        float* output_data = reinterpret_cast<float*>(output_tensor.sys_data());
-        postprocessor.Process(output_data);
-        std::shared_ptr<std::vector<BMBBox>> pVectorBBox =
-            postprocessor.CenternetCorrectBBox(rgb_img.height(), rgb_img.width());
-        LOG(INFO) << "Postprocess end";
-
-        for (auto iter = pVectorBBox->begin(); iter != pVectorBBox->end(); iter++) {
-            LOG(INFO) << "Got one object, confidence:" << iter->conf;
-            bmcv.rectangle(rgb_img, iter->x, iter->y, 
-                            iter->w, iter->h, std::make_tuple(255, 0, 0), 3);
-        }
-        // save result
-        auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        std::stringstream ss;
-        ss << std::put_time(std::localtime(&t), "%Y-%m-%d-%H-%M-%S");
-        bmcv.imwrite("ctdet_result_" + ss.str() + ".jpg", rgb_img);
-        LOG(INFO) << "save result";
-
     }
-
-
     return 0;
 }

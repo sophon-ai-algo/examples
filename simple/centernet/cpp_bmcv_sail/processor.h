@@ -22,7 +22,6 @@ typedef struct BMBBox {
           conf{_conf} {}
 } BMBBox;
 
-#ifdef USE_BMCV
 class CenterNetPreprocessor {
 
 public:
@@ -45,7 +44,7 @@ public:
      * @param input Input data
      * @param input Output data
      */
-    void Process(sail::BMImage& input, sail::BMImage& output);
+    void Process(sail::BMImage& input, sail::BMImage& output, bool& align_width, float& ratio);
 
     /**
      * @brief Execution function of preprocessing for multiple images.
@@ -54,9 +53,48 @@ public:
      * @param input Output data
      */
     template<std::size_t N>
-    void process(sail::BMImageArray<N>& input, sail::BMImageArray<N>& output) {
-        sail::BMImageArray<N> tmp = bmcv_.vpp_resize(input, resize_w_, resize_w_);
-        bmcv_.convert_to(tmp, output,
+    void Process(std::vector<sail::BMImage>& input, sail::BMImageArray<N>& output, bool& align_width, float& ratio) {
+//        assert((input[0].width() == input[1].width() && input[0].height() == input[1].height()));
+//        assert((input[1].width() == input[2].width() && input[1].height() == input[2].height()));
+//        assert((input[2].width() == input[3].width() && input[2].height() == input[3].height()));
+        sail::BMImageArray<4> array_input;
+        sail::BMImage tmp;
+        for (size_t i = 0; i < input.size(); ++i) {
+            float resize_ratio;
+            int target_w, target_h;
+            if (input[i].width() > input[i].height()) {
+                resize_ratio = (float)resize_w_ / input[i].width();
+                target_w     = resize_w_;
+                target_h     = int(input[i].height() * resize_ratio);
+                align_width  = true;
+                ratio        = (float)target_h / target_w;
+            } else {
+                resize_ratio = (float)resize_h_ / input[i].height();
+                target_w     = int(input[i].width() * resize_ratio);
+                target_h     = resize_h_;
+                align_width  = false;
+                ratio        = (float)target_w / target_h;
+            }
+
+            sail::PaddingAtrr pad = sail::PaddingAtrr();
+            int offset_x = target_w >= target_h ? 0 : ((resize_w_  - target_w) / 2);
+            int offset_y = target_w <= target_h ? 0 : ((resize_h_  - target_h) / 2);
+            pad.set_stx(offset_x);
+            pad.set_sty(offset_y);
+            pad.set_w(target_w);
+            pad.set_h(target_h);
+            pad.set_r(0);
+            pad.set_g(0);
+            pad.set_b(0);
+            tmp = bmcv_.crop_and_resize_padding(
+                input[i], 0, 0,
+                input[i].width(), input[i].height(),
+                resize_w_, resize_h_,
+                pad);
+            array_input.copy_from(i, tmp);
+
+        }
+        bmcv_.convert_to(array_input, output,
                          std::make_tuple(std::make_pair(ab_[0], ab_[1]),
                                          std::make_pair(ab_[2], ab_[3]),
                                          std::make_pair(ab_[4], ab_[5])));
@@ -71,7 +109,6 @@ private:
     float ab_[6];
 
 };
-#endif
 
 
 class CenterNetPostprocessor {
@@ -80,12 +117,12 @@ class CenterNetPostprocessor {
     constexpr static int kOffsetChanels   = 2;      // channel number of offset to center
 
 public:
-    CenterNetPostprocessor(std::vector<int>& output_shape, float threshold);
+    CenterNetPostprocessor(std::vector<int>& output_shape, float threshold, float scale = 1.0);
 
     virtual ~CenterNetPostprocessor();
 
     // Entry of postprocess
-    void Process(float* output_data);
+    void Process(float* output_data, bool align_width, float ratio);
 
     // Simple implemtation of maxpool, stride is 3, padding 1
     void SimplyMaxpool2D(float* data);
@@ -95,6 +132,9 @@ public:
 
     // Get predicted bboxes
     std::shared_ptr<std::vector<BMBBox>> CenternetCorrectBBox(int height, int width);
+
+    // batch offset
+    int GetBatchOffset() { return output_size_[0]; }
 private:
     std::vector<int>                          output_shape_;                     // 网络输出shape
     int                                       output_size_[4];                   // 按byte计算每个维度的stride
@@ -106,6 +146,7 @@ private:
     std::unique_ptr<float[]>                  confidence_ptr_;                   // centernet中每个grid置信度最高的confidence
     std::unique_ptr<float[]>                  detected_objs_;                    // 经过后处理，检测到bbox坐标+置信度+种类
     int                                       detected_count_;                   // 经过后处理，检测到的目标框数量
+    float                                     scale_;                            // 网络output的scale
 };
 
 #endif //_CPP_BMCV_SAIL_H_
