@@ -117,7 +117,7 @@ function run_make(){
 
 function run_make_sdkpath(){
   make -f Makefile.pcie clean
-  make -f Makefile.pcie top_dir=$SDK_PATH
+  make -f Makefile.pcie sdk_dir=$SDK_PATH
 }
 
 function build_cpp(){
