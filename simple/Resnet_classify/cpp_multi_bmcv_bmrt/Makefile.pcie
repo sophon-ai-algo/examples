@@ -1,0 +1,57 @@
+top_dir ?= $(REL_TOP)
+sdk_dir := $(top_dir)
+install_dir = $(top_dir)/install
+
+CXX = g++
+
+INC_DIR += -I$(sdk_dir)/include
+INC_DIR += -I$(sdk_dir)/include/bmruntime
+INC_DIR += -I$(sdk_dir)/include/bmlib
+INC_DIR += -I$(sdk_dir)/include/third_party/boost/include
+INC_DIR += -I$(sdk_dir)/include/opencv/opencv4
+INC_DIR += -I$(sdk_dir)/include/ffmpeg
+INC_DIR += -I$(top_dir)/NeuralNetwork/include
+INC_DIR += -I/usr/local/include
+
+CXXFLAGS := -g -O2 -Wall -std=c++14 -fuse-ld=gold $(INC_DIR)
+LOCAL_MEM_ADDRWIDTH ?= 19
+CXXFLAGS += -DCONFIG_LOCAL_MEM_ADDRWIDTH=$(LOCAL_MEM_ADDRWIDTH)
+
+LDLIBS := -lbmrt -lbmlib -lbmcv -ldl \
+	-lopencv_core -lopencv_imgproc -lopencv_imgcodecs -lopencv_videoio \
+	-lswresample -lswscale -lavformat -lavutil -lopencv_highgui \
+        -lavdevice -lavfilter -lavcodec -lbmvideo -lbmjpuapi -lbmjpulite \
+	-lprotobuf -lgflags -lglog -lboost_system -lboost_filesystem -lboost_thread -lpthread
+
+LIB_DIR += -L$(sdk_dir)/lib/thirdparty/x86
+LIB_DIR += -L$(sdk_dir)/lib/bmnn/pcie
+LIB_DIR += -L$(sdk_dir)/lib/opencv/pcie
+LIB_DIR += -L$(sdk_dir)/lib/ffmpeg/pcie
+LIB_DIR += -L$(sdk_dir)/lib/decode/pcie
+LIB_DIR += -L$(sdk_dir)/lib/sys/x86
+LIB_DIR += -L/usr/local/lib
+
+LDFLAGS = -Wl,-rpath=$(sdk_dir)/lib/bmnn/pcie
+LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/opencv/pcie
+LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/ffmpeg/pcie
+LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/decode/pcie
+LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/thirdparty/x86
+LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/sys/x86
+LDFLAGS += $(LIB_DIR)
+
+all: resnet_multi_bmcv_bmrt.pcie
+
+resnet_multi_bmcv_bmrt.pcie: main.cpp resnet.cpp
+	$(CXX) $^ $(CXXFLAGS) $(LDLIBS) $(LDFLAGS) -o $@
+
+clean:
+	rm -f resnet_multi_bmcv_bmrt.pcie
+
+install:
+	@mkdir -p $(install_dir)/model/resnet
+	@mkdir -p $(install_dir)/res/resnet
+	@mkdir -p $(install_dir)/bin
+	cp resnet_multi_bmcv_bmrt.pcie $(install_dir)/bin/
+	cp ../model/resnet50.int8.bmodel $(install_dir)/model/resnet
+	cp $(install_dir)/../res/image/vehicle_1.jpg $(install_dir)/res/resnet
+	for i in `seq 2 1000`; do cp $(install_dir)/res/resnet/vehicle_1.jpg $(install_dir)/res/resnet/vehicle_$$i.jpg; done
