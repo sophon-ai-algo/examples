@@ -257,9 +257,13 @@ class YOLOV5_Detector(object):
         print(dets.shape)
 
         indices, boxes, confidences, classIds = self.postprocess(dets)
-
+        if len(boxes) == 0:
+            return frame
+        # opencv return (n,1) or (n, ) in different version
+        if len(indices.shape) == 2:
+            indices = indices.squeeze(1)
+            
         for i in indices:
-            #i = i[0]
             box = boxes[i]
             # scale to the origin image
             left = box[0]/ratio
@@ -334,9 +338,13 @@ class YOLOV5_Detector(object):
         print(dets.shape)
 
         indices, boxes, confidences, classIds = self.postprocess(dets)
-
+        if len(boxes) == 0:
+            return frame
+        # opencv return (n,1) or (n, ) in different version
+        if len(indices.shape) == 2:
+            indices = indices.squeeze(1)
+            
         for i in indices:
-            i = i[0]
             box = boxes[i]
             # scale to the origin image
             left = int((box[0] - tx1) / ratio)
