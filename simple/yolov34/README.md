@@ -151,6 +151,8 @@ you probably need to install NumPy, then you could use OpenCV and SAIL:
 
 ```bash
 # please specify numpy version 1.17.2
+sudo apt update
+sudo apt-get install python3-pip
 sudo pip3 install numpy==1.17.2
 ```
 
