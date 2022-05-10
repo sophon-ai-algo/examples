@@ -1,5 +1,4 @@
-top_dir ?= ../../..
-sdk_dir = $(top_dir)/
+sdk_dir = $(REL_TOP)
 install_dir = $(top_dir)/install
 
 CXX = g++
@@ -24,12 +23,12 @@ LDLIBS := -lbmrt -lbmlib -lbmcv -ldl \
 LIB_DIR = -L$(sdk_dir)/lib/thirdparty/x86
 LIB_DIR += -L$(sdk_dir)/lib/sys/x86
 LIB_DIR += -L$(sdk_dir)/lib/bmnn/pcie
-LIB_DIR += -L$(sdk_dir)/lib/opencv/x86 -L$(sdk_dir)/lib/ffmpeg/x86 -L$(sdk_dir)/lib/decode/x86
+LIB_DIR += -L$(sdk_dir)/lib/opencv/pcie -L$(sdk_dir)/lib/ffmpeg/pcie -L$(sdk_dir)/lib/decode/pcie
 
 LDFLAGS = -Wl,-rpath=$(sdk_dir)/lib/bmnn/pcie
-LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/opencv/x86
-LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/ffmpeg/x86
-LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/decode/x86
+LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/opencv/pcie
+LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/ffmpeg/pcie
+LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/decode/pcie
 LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/thirdparty/x86
 LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/sys/x86
 LDFLAGS += $(LIB_DIR)
