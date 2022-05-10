@@ -392,7 +392,7 @@ $ ./centernet_bmcv_sail.arm --bmodel=ctdet_coco_dlav0_1output_512_fp32_1batch.bm
 
 # 4batch
 $ ./centernet_bmcv_sail.arm --bmodel=ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --image=ctdet_test.jpg
-# 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx-bx.jpg格式的图片
+# 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx_bx.jpg格式的图片
 # 按照量化结果差异，图片上检测出11-12个目标，均属正常范围
 ```
 
@@ -411,11 +411,14 @@ cd /workspace/examples/centernet/py_bmcv_sail
 
 # 1batch
 python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../data/models/ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel --input=../data/ctdet_test.jpg
+# 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx_b_x.jpg格式的图片
+# 图片上检测出11个目标
 
 # 4batch
 python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../data/models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --input=../data/ctdet_test.jpg
+# 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx_b_x.jpg格式的图片
+# 按照量化结果差异，图片上检测出11-12个目标，均属正常范围
 ```
-运行成功后会在当前目录生成`ctdet_result_20xx-xx-xx-xx-xx-xx_b_x.jpg`格式的图片
 
 1. 如果是fp32的模型，图片有11个框
 2. 如果是int8的模型，按照量化结果差异，图片上检测出11-12个目标，均属正常范围
