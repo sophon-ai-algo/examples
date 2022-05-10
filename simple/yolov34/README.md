@@ -128,6 +128,34 @@ $ ./yolo_test.arm image imagelist.txt ../../data/models/yolov4_608_coco_fp32.bmo
 
 ### 2.2.1 for x86 with SC5 & arm SE5/SM5
 
+#### Installations
+
+- for x86 SC5, the environment variable is set when `source envsetup_pcie.sh`, you need to install SAIL
+
+```bash
+# for example, python3.7 in docker
+cd /workspace/lib/sail/python3/pcie/py37
+pip3 install sophon-2.7.0-py3-none-any.whl
+```
+
+- for arm SE5, you need to set the environment variable:
+
+```bash
+# set the environment variable
+export PATH=$PATH:/system/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/lib/:/system/usr/lib/aarch64-linux-gnu
+export PYTHONPATH=$PYTHONPATH:/system/lib
+```
+
+you probably need to install NumPy, then you could use OpenCV and SAIL:
+
+```bash
+# please specify numpy version 1.17.2
+sudo pip3 install numpy==1.17.2
+```
+
+#### Usages
+
 ``` shell
 $ cd python
 $ python3 main.py # default: --cfgfile=configs/yolov3_416.yml --input=../data/images/person.jpg
