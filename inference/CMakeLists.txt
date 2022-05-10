@@ -57,10 +57,10 @@ else()
 endif()
 
 if (${TARGET_ARCH} STREQUAL "x86")
-    set(bm_ffmpeg_link_dirs ${BMNNSDK2_TOP}/lib/ffmpeg/x86 ${BMNNSDK2_TOP}/lib/decode/x86
+    set(bm_ffmpeg_link_dirs ${BMNNSDK2_TOP}/lib/ffmpeg/pcie ${BMNNSDK2_TOP}/lib/decode/pcie
             ${BMNNSDK2_TOP}/lib/bmnn/pcie
             ${BMNNSDK2_TOP}/lib/thirdparty/x86)
-    set(bm_opencv_link_dirs ${BMNNSDK2_TOP}/lib/opencv/x86)
+    set(bm_opencv_link_dirs ${BMNNSDK2_TOP}/lib/opencv/pcie)
     set(bmnnsdk_link_dirs ${BMNNSDK2_TOP}/lib/bmnn/pcie)
 
 elseif (${TARGET_ARCH} STREQUAL "arm64")
