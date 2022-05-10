@@ -2,8 +2,8 @@ function test_auto_cali_demo()
 {
     pushd ./auto_cali_demo
     ./extract_tar.sh
-    python3 -m ufw.cali.cali_model --model test_models/pytorch/resnet18.pt \
-        --cali_lmdb test_models/imagenet_preprocessed_by_pytorch_100/ --input_shapes '(1,3,224,224)' \
+    python3 -m ufw.cali.cali_model --model pytorch/resnet18.pt \
+        --cali_lmdb imagenet_preprocessed_by_pytorch_100/ --input_shapes '(1,3,224,224)' \
         --test_iterations 50 --net_name resnet18  --postprocess_and_calc_score_class topx_accuracy_for_classify \
         --cali_iterations=100
     popd
@@ -100,7 +100,7 @@ function test_on_to_fp32umodel_demo()
 function test_pp_to_fp32umodel_demo()
 {
     pushd ./pp_to_fp32umodel_demo
-    python3 postnet_to_umodel.py
+    python3 ppocr_rec_to_umodel.py
     popd
 }
 
@@ -142,7 +142,7 @@ function test_all()
     test_mx_to_fp32umodel_demo
     test_object_detection_python_demo
     test_on_to_fp32umodel_demo
-    # test_pp_to_fp32umodel_demo
+    test_pp_to_fp32umodel_demo
     test_pt_to_fp32umodel_demo
     test_tf_to_fp32umodel_demo
     test_yolov5s_demo
