@@ -10,12 +10,16 @@ namespace bm {
     public:
         virtual ~MediaDelegate() {}
 
+        virtual int draw(std::vector<T2>& frames, std::vector<T2>& output) = 0;
         virtual int stitch(std::vector<T2>& frames, std::vector<T1>& output) = 0;
         virtual int encode(std::vector<T1>& frames) = 0;
     };
 
     struct MediaParam {
         MediaParam() {}
+
+        int draw_queue_size;
+        int draw_thread_num;
 
         int stitch_queue_size;
         int stitch_thread_num;
@@ -32,6 +36,8 @@ namespace bm {
     template<typename T1, typename T2>
     class BMMediaPipeline {
         std::shared_ptr<MediaDelegate<T1, T2>> m_media_delegate;
+        std::shared_ptr<BlockingQueue<T2>> m_drawQue;
+        WorkerPool<T2> m_drawWorkerPool;
 
         std::shared_ptr<BlockingQueue<T2>> m_stitchQue;
         WorkerPool<T2> m_stitchWorkerPool;
@@ -50,9 +56,11 @@ namespace bm {
         }
 
         void flow_control(std::function<void(T2& obj)> fn1,
-                          std::function<void(T1& obj)> fn2) {
-            m_stitchQue->set_drop_fn(fn1);
-            m_encodeQue->set_drop_fn(fn2);
+                          std::function<void(T2& obj)> fn2,
+                          std::function<void(T1& obj)> fn3) {
+            m_drawQue->set_drop_fn(fn1);
+            m_stitchQue->set_drop_fn(fn2);
+            m_encodeQue->set_drop_fn(fn3);
         }
 
         template<typename... T>
@@ -60,12 +68,22 @@ namespace bm {
             m_media_delegate = delegate;
 
             const int underlying_type_std_queue = 0;
+            m_drawQue = std::make_shared<BlockingQueue<T2>>(
+                    "draw", underlying_type_std_queue,
+                    param.draw_queue_size);
+
             m_stitchQue = std::make_shared<BlockingQueue<T2>>(
                     "stitch", underlying_type_std_queue,
                     param.stitch_queue_size);
 
-            m_stitchWorkerPool.init(m_stitchQue.get(), 1, 1,
-                                    1);
+            m_drawWorkerPool.init(m_drawQue.get(), 1, 1, 1);
+            m_drawWorkerPool.startWork([this, &param](std::vector<T2> &items) {
+                std::vector<T2> frames;
+                m_media_delegate->draw(items, frames);
+                this->m_stitchQue->push(frames);
+            });
+
+            m_stitchWorkerPool.init(m_stitchQue.get(), 1, 1, 1);
             m_stitchWorkerPool.startWork([this, &param](std::vector<T2> &items) {
                 std::vector<T1> frames;
                 m_media_delegate->stitch(items, frames);
@@ -86,17 +104,17 @@ namespace bm {
         }
 
         int flush_frame() {
-            m_stitchWorkerPool.flush();
+            m_drawWorkerPool.flush();
             return 0;
         }
 
         int push_frame(T2& frame) {
-            m_stitchQue->push(frame);
+            m_drawQue->push(frame);
             return 0;
         }
 
         int push_frame(T1 *frame) {
-            m_stitchQue->push(*frame);
+            m_drawQue->push(*frame);
             return 0;
         }
     };
@@ -122,6 +140,8 @@ namespace bm {
 
         virtual int postprocess(std::vector<T2> &frames) = 0;
 
+        virtual int track(std::vector<T2> &frames) = 0;
+
         virtual int set_detected_callback(DetectedFinishFunc func) { m_pfnDetectFinish = func; return 0;};
     };
 
@@ -146,6 +166,10 @@ namespace bm {
 
         int postprocess_queue_size;
         int postprocess_thread_num;
+
+        int track_queue_size;
+        int track_thread_num;
+
         int batch_num;
 
     };
@@ -158,10 +182,12 @@ namespace bm {
         std::shared_ptr<BlockingQueue<T1>> m_preprocessQue;
         std::shared_ptr<BlockingQueue<T2>> m_postprocessQue;
         std::shared_ptr<BlockingQueue<T2>> m_forwardQue;
+        std::shared_ptr<BlockingQueue<T2>> m_trackQue;
 
         WorkerPool<T1> m_preprocessWorkerPool;
         WorkerPool<T2> m_forwardWorkerPool;
         WorkerPool<T2> m_postprocessWorkerPool;
+        WorkerPool<T2> m_trackWorkerPool;
 
 
     public:
@@ -175,10 +201,12 @@ namespace bm {
 
         void flow_control(std::function<void(T1& obj)> fn1,
                           std::function<void(T2& obj)> fn2,
-                          std::function<void(T2& obj)> fn3) {
-            m_preprocessQue->set_drop_fn( fn1);
-            m_forwardQue->set_drop_fn( fn2);
-            m_postprocessQue->set_drop_fn( fn3);
+                          std::function<void(T2& obj)> fn3,
+                          std::function<void(T2& obj)> fn4) {
+            m_preprocessQue->set_drop_fn(fn1);
+            m_forwardQue->set_drop_fn(fn2);
+            m_postprocessQue->set_drop_fn(fn3);
+            m_trackQue->set_drop_fn(fn4);
         }
 
         template<typename... T>
@@ -193,6 +221,9 @@ namespace bm {
             m_postprocessQue = std::make_shared<BlockingQueue<T2>>(
                     "postprocess", underlying_type_std_queue,
                     param.postprocess_queue_size);
+            m_trackQue = std::make_shared<BlockingQueue<T2>>(
+                    "track", underlying_type_std_queue,
+                    param.track_queue_size);
             m_forwardQue = std::make_shared<BlockingQueue<T2>>(
                     "inference", underlying_type_std_queue,
                     param.inference_queue_size);
@@ -213,6 +244,12 @@ namespace bm {
             m_postprocessWorkerPool.init(m_postprocessQue.get(), param.postprocess_thread_num, 1, 8);
             m_postprocessWorkerPool.startWork([this, &param](std::vector<T2> &items) {
                 m_detect_delegate->postprocess(items);
+                this->m_trackQue->push(items);
+            });
+
+            m_trackWorkerPool.init(m_trackQue.get(), param.track_thread_num, 1, 8);
+            m_trackWorkerPool.startWork([this, &param](std::vector<T2> &items) {
+                m_detect_delegate->track(items);
             });
 
             flow_control(std::forward<T>(args)...);

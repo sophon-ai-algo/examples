@@ -10,13 +10,14 @@
 #include "stream_pusher.h"
 #include "configuration.h"
 #include "yolov5s.h"
+#include "encoder.h"
 
 struct TChannel: public bm::NoCopyable {
     int channel_id;
     uint64_t seq;
     bm::StreamDecoder *decoder;
     bm::FfmpegOutputer *outputer;
-    TChannel():channel_id(0), seq(0), decoder(nullptr) {
+    TChannel():channel_id(0), seq(1), decoder(nullptr) {
         outputer = nullptr;
     }
 
@@ -42,9 +43,10 @@ class OneCardInferApp {
     bm::BMInferencePipe<bm::FrameBaseInfo, bm::FrameInfo> m_inferPipe;
     std::map<int, TChannelPtr> m_chans;
     std::vector<std::string> m_urls;
+    bm_handle_t m_handle;
 public:
-    OneCardInferApp(bm::TimerQueuePtr tq, bm::BMNNContextPtr ctx, int start_index, int num, int skip = 0, int max_batch=1):
-            m_detectorDelegate(nullptr), m_channel_num(num), m_bmctx(ctx)
+    OneCardInferApp(bm::TimerQueuePtr tq, bm::BMNNContextPtr ctx, int start_index, int num, bm_handle_t handle, int skip = 0, int max_batch=1):
+            m_detectorDelegate(nullptr), m_channel_num(num), m_bmctx(ctx), m_handle(handle)
     {
         //m_guiReceiver = gui;
         m_dev_id = m_bmctx->dev_id();

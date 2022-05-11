@@ -146,7 +146,6 @@ namespace bm {
         virtual int run_loop() override {
             m_isRunning = true;
             m_stopped = false;
-            m_mapTimers.clear();
             while (m_isRunning)
             {
                 auto timeNow = gettime_msec();

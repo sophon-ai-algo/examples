@@ -21,6 +21,12 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
             m_appStatis.m_statis_lock.lock();
             m_appStatis.m_total_statis++;
             m_appStatis.m_statis_lock.unlock();
+
+            // tracker
+            if (frameInfo.out_datums[i].obj_rects.size() > 0) {
+                m_chans[ch]->tracker->update(frameInfo.out_datums[i].obj_rects, frameInfo.out_datums[i].track_rects);
+            }
+
             //to display
 #if USE_QTGUI
             bm::UIFrame jpgframe;

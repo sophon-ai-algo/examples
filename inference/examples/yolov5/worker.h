@@ -11,14 +11,18 @@
 #include "configuration.h"
 
 #include "yolov5/yolov5s.h"
+#include "bm_tracker.h"
 
 struct TChannel: public bm::NoCopyable {
     int channel_id;
     uint64_t seq;
     bm::StreamDecoder *decoder;
     bm::FfmpegOutputer *outputer;
+    std::shared_ptr<bm::BMTracker> tracker;
+
     TChannel():channel_id(0), seq(0), decoder(nullptr) {
-         outputer = nullptr;
+        tracker = bm::BMTracker::create();
+        outputer = nullptr;
     }
 
     ~TChannel() {

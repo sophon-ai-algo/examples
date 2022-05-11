@@ -17,6 +17,8 @@
 #include <pthread.h>
 #include "bmutility_timer.h"
 
+static int cpu_index = 0;
+
 template <typename T>
 class BlockingQueue {
 private:
@@ -27,8 +29,8 @@ private:
 
     void wait_and_push_one(T &&data) {
         if (m_limit > 0 && this->size_impl() >= m_limit && !m_stop) {
-//            std::cout << "WARNING: " << m_name << " queue_size(" << this->size_impl() << ") > "
-//                      << m_limit << std::endl;
+            std::cout << "WARNING: " << m_name << " queue_size(" << this->size_impl() << ") > "
+                      << m_limit << std::endl;
             // flow control by dropping
             if (m_drop_fn != nullptr) {
                 this->drop_half_();
@@ -305,10 +307,26 @@ public:
                     m_work_item_func(items);
                 }
             });
-
+            //setCPU(*pth);
             m_threads.push_back(pth);
         }
         return 0;
+    }
+
+    void setCPU(std::thread &th) {
+        static int cpu_count = std::thread::hardware_concurrency();
+        cpu_set_t  cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET(cpu_index++ % cpu_count, &cpuset);
+        int ret = pthread_setaffinity_np(th.native_handle(),
+                                         sizeof(cpu_set_t),
+                                         &cpuset);
+        if (ret != 0) {
+            std::cerr << "[ERROR] caling pthread_setaffinity_np failed" << std::endl;
+            exit(-1);
+        } else {
+            std::cout<< "[SUCCESS] caling pthread_setaffinity_np success, " << cpu_index << std::endl;
+        }
     }
 
     int stopWork() {

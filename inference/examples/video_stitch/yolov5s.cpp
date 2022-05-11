@@ -4,7 +4,7 @@
 
 #include "yolov5s.h"
 
-YoloV5::YoloV5(bm::BMNNContextPtr bmctx, int max_batch):m_bmctx(bmctx),MAX_BATCH(max_batch)
+YoloV5::YoloV5(bm::BMNNContextPtr bmctx, int start_chan, int chan_num, int max_batch):m_bmctx(bmctx),MAX_BATCH(max_batch)
 {
     // the bmodel has only one yolo network.
     auto net_name = m_bmctx->network_name(0);
@@ -16,6 +16,11 @@ YoloV5::YoloV5(bm::BMNNContextPtr bmctx, int max_batch):m_bmctx(bmctx),MAX_BATCH
     //YOLOV5 input is NCHW
     m_net_h = tensor->get_shape()->dims[2];
     m_net_w = tensor->get_shape()->dims[3];
+
+    for (int i = start_chan; i < start_chan + chan_num; ++i) {
+        m_trackerPerChanel.insert(std::make_pair(i, bm::BMTracker::create()));
+    }
+    
 }
 
 YoloV5::~YoloV5()
@@ -49,24 +54,26 @@ int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::F
 
         for(int i = 0;i < num; ++i) {
             bm_image image1;
-            bm::BMImage::from_avframe(handle, frames[start_idx + i].avframe, image1, false);
+           // bm::BMImage::from_avframe(handle, frames[start_idx + i].avframe, image1, false);
+            image1 =  frames[start_idx + i].original;
             ret = bmcv_image_vpp_convert(handle, 1, image1, &resized_imgs[i]);
             assert(BM_SUCCESS == ret);
 
             // convert data to jpeg
-            uint8_t *jpeg_data=NULL;
-            size_t out_size = 0;
-#if USE_QTGUI
-            bmcv_image_jpeg_enc(handle, 1, &image1, (void**)&jpeg_data, &out_size);
-#endif
-            frames[start_idx + i].jpeg_data = std::make_shared<bm::Data>(jpeg_data, out_size);
-            frames[start_idx + i].height= frames[start_idx + i].avframe->height;
-            frames[start_idx + i].width = frames[start_idx + i].avframe->width;
+//            uint8_t *jpeg_data=NULL;
+//            size_t out_size = 0;
+//#if USE_QTGUI
+//            bmcv_image_jpeg_enc(handle, 1, &image1, (void**)&jpeg_data, &out_size);
+//#endif
+//            frames[start_idx + i].jpeg_data = std::make_shared<bm::Data>(jpeg_data, out_size);
+//            frames[start_idx + i].height= frames[start_idx + i].avframe->height;
+//            frames[start_idx + i].width = frames[start_idx + i].avframe->width;
 //            av_frame_unref(frames[start_idx + i].avframe);
 //            av_frame_free(&frames[start_idx + i].avframe);
-
+            frames[start_idx + i].height = frames[start_idx + i].original.height;
+            frames[start_idx + i].width  = frames[start_idx + i].original.width;
             finfo.frames.push_back(frames[start_idx+i]);
-            bm_image_destroy(image1);
+            //bm_image_destroy(image1);
         }
 
         //2. Convert to
@@ -115,8 +122,7 @@ int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::F
 
         frame_infos.push_back(finfo);
     }
-
-
+    return 0;
 }
 
 int YoloV5::forward(std::vector<bm::FrameInfo>& frame_infos)
@@ -145,7 +151,7 @@ int YoloV5::postprocess(std::vector<bm::FrameInfo> &frame_infos)
     for(int i=0;i < frame_infos.size(); ++i) {
 
         // Free AVFrames
-        auto frame_info = frame_infos[i];
+        auto &frame_info = frame_infos[i];
 
         // extract face detection
         extract_yolobox_cpu(frame_info);
@@ -154,32 +160,33 @@ int YoloV5::postprocess(std::vector<bm::FrameInfo> &frame_infos)
             m_pfnDetectFinish(frame_info);
         }
 
-        for(int j = 0; j < frame_info.frames.size(); ++j) {
-
-            auto reff = frame_info.frames[j];
-            assert(reff.avpkt != nullptr);
-            av_packet_unref(reff.avpkt);
-            av_packet_free(&reff.avpkt);
-
-            //assert(reff.avframe == nullptr);
-//            av_frame_unref(reff.avframe);
-//            av_frame_free(&reff.avframe);
-        }
-
-        // Free Tensors
-        for(auto& tensor : frame_info.input_tensors) {
-            bm_free_device(m_bmctx->handle(), tensor.device_mem);
-        }
-
-        for(auto& tensor: frame_info.output_tensors) {
-            bm_free_device(m_bmctx->handle(), tensor.device_mem);
-        }
-
-        if (m_nextMediaPipe) {
-            m_nextMediaPipe->push_frame(frame_info);
-        }
+//         for(int j = 0; j < frame_info.frames.size(); ++j) {
+//
+//             auto reff = frame_info.frames[j];
+//             assert(reff.avpkt != nullptr);
+//             av_packet_unref(reff.avpkt);
+//             av_packet_free(&reff.avpkt);
+//
+//             //assert(reff.avframe == nullptr);
+// //            av_frame_unref(reff.avframe);
+// //            av_frame_free(&reff.avframe);
+//         }
+//
+//         // Free Tensors
+//         for(auto& tensor : frame_info.input_tensors) {
+//             bm_free_device(m_bmctx->handle(), tensor.device_mem);
+//         }
+//
+//         for(auto& tensor: frame_info.output_tensors) {
+//             bm_free_device(m_bmctx->handle(), tensor.device_mem);
+//         }
+//
+//         if (m_nextMediaPipe) {
+//             m_nextMediaPipe->push_frame(frame_info);
+//         }
 
     }
+    return 0;
 }
 
 float YoloV5::sigmoid(float x)
@@ -356,5 +363,53 @@ void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
         bm::NetOutputDatum datum(yolobox_vec);
         frameInfo.out_datums.push_back(datum);
     }
+    return;
 
+}
+
+int YoloV5::track(std::vector<bm::FrameInfo> &frames) {
+    for (int i = 0; i < frames.size(); ++i) {
+        auto &frame_info = frames[i];
+        for (int j = 0; j < frame_info.frames.size(); ++j) {
+            // tracker
+            if (frame_info.out_datums[j].obj_rects.size() > 0) {
+//                if (frame_info.frames[j].chan_id == 0) {
+//                    cv::Mat output_mat;
+//                    cv::bmcv::toMAT(& frame_info.frames[j].original, output_mat, true);
+//                    std::string filename = "jpgs/raw_" + std::to_string(frame_info.frames[j].seq) + ".jpg";
+//                    cv::imwrite(filename.c_str(), output_mat);
+//                }
+                if (m_trackerPerChanel.count(frame_info.frames[j].chan_id) != 0) {
+                    m_trackerPerChanel[frame_info.frames[j].chan_id]->update(
+                        frame_info.out_datums[j].obj_rects, frame_info.out_datums[j].track_rects);
+                   // std::cout << frame_info.out_datums[j].track_rects.size() << std::endl;
+                } else {
+                    std::cerr << "unknown channel id " << frame_info.frames[j].chan_id << " when tracking" << std::endl;
+                }               
+            }
+
+//            auto reff = frame_info.frames[j];
+//            assert(reff.avpkt != nullptr);
+//            av_packet_unref(reff.avpkt);
+//            av_packet_free(&reff.avpkt);
+
+            //assert(reff.avframe == nullptr);
+//            av_frame_unref(reff.avframe);
+//            av_frame_free(&reff.avframe);
+        }
+        
+        // Free Tensors
+        for(auto& tensor : frame_info.input_tensors) {
+            bm_free_device(m_bmctx->handle(), tensor.device_mem);
+        }
+
+        for(auto& tensor: frame_info.output_tensors) {
+            bm_free_device(m_bmctx->handle(), tensor.device_mem);
+        }
+
+        if (m_nextMediaPipe) {
+            m_nextMediaPipe->push_frame(frame_info);
+        }
+    }
+    return 0;
 }
