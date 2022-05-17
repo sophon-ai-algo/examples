@@ -36,6 +36,7 @@ protected:
   bm_handle_t bm_handle_;
   bmcv_convert_to_attr convert_attr_;
   bm_shape_t input_shape_;
+  bm_image* resize_bmcv_;
   bm_image* scaled_inputs_;
   int net_h_;
   int net_w_;

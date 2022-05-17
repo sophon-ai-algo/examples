@@ -27,9 +27,8 @@ public:
   void set_score_threshold(float score_threshold);
 
 private:
-  void preprocess(const std::vector<bm_image>& input_imgs,
-                                   std::vector<bm_image>& processed_imgs);
-  void postprocess(std::vector<std::vector<stFaceRect> >& results);
+  void preprocess(const std::vector<bm_image>& input_imgs);
+  void postprocess(std::vector<std::vector<stFaceRect> >& results, std::vector<cv::Mat>& input_imgs);
 
 private:
   std::shared_ptr<RetinaFacePostProcess> post_process_;
