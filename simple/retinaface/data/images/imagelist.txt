@@ -1,0 +1,6 @@
+../data/images/face1.jpg
+../data/images/face2.jpg
+../data/images/face3.jpg
+../data/images/face4.jpg
+../data/images/face5.jpg
+../data/images/face6.jpg
