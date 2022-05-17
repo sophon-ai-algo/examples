@@ -26,7 +26,7 @@ public:
         bm::BMNNContextPtr bmctx,
         bool keep_original = true,
         float nms_threshold = 0.5,
-        float conf_threshold = 0.6,
+        float conf_threshold = 0.5,
         std::string net_name = "",
         bm::Watch *watch = nullptr);
     ~Retinaface();
@@ -38,6 +38,7 @@ public:
     virtual int forward(std::vector<bm::FrameInfo> &frame_info) override;
     virtual int postprocess(std::vector<bm::FrameInfo> &frame_info) override;
     bm_image read_image(bm::FrameBaseInfo &frame);
+    int getBatchSize();
 };
 
 

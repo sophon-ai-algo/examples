@@ -1,7 +1,7 @@
-#include "mobilenetv2.h"
+#include "wsdan.h"
 #include <numeric>
 
-MobileNetV2::MobileNetV2(bm::BMNNContextPtr bmctx):m_bmctx(bmctx) {
+WSDAN::WSDAN(bm::BMNNContextPtr bmctx):m_bmctx(bmctx) {
     m_bmnet = std::make_shared<bm::BMNNNetwork>(m_bmctx->bmrt(), m_bmctx->network_name(0));
     assert(m_bmnet != nullptr);
 //    m_beta  = -103.94;
@@ -11,16 +11,15 @@ MobileNetV2::MobileNetV2(bm::BMNNContextPtr bmctx):m_bmctx(bmctx) {
     // for NCHW
     m_net_h = shape->dims[2];
     m_net_w = shape->dims[3];
-    m_batch_size = shape->dims[0];
 
 }
 
-MobileNetV2::~MobileNetV2()
+WSDAN::~WSDAN()
 {
 
 }
 
-int MobileNetV2::preprocess(std::vector<bm::ResizeFrameInfo> &frames)
+int WSDAN::preprocess(std::vector<bm::ResizeFrameInfo> &frames)
 {
     int ret = 0;
     bm_handle_t handle = m_bmctx->handle();
@@ -77,21 +76,31 @@ int MobileNetV2::preprocess(std::vector<bm::ResizeFrameInfo> &frames)
 
 }
 
-int MobileNetV2::forward(std::vector<bm::ResizeFrameInfo> &frame_infos)
+int WSDAN::forward(std::vector<bm::ResizeFrameInfo> &frame_infos)
 {
     int ret = 0;
     for(int b = 0; b < frame_infos.size(); ++b) {
-        for (int i = 0; i < m_bmnet->outputTensorNum(); ++i) {
-            bm_tensor_t tensor;
-            frame_infos[b].output_tensors.push_back(tensor);
+        int i = 0;
+        while (i++ < 3) {
+            if (frame_infos[b].output_tensors.size() != 0) {
+                for (auto &tensor: frame_infos[b].output_tensors) {
+                    bm_free_device(m_bmctx->handle(), tensor.device_mem);
+                }
+                frame_infos[b].output_tensors.clear();
+            }
+            for (int i = 0; i < m_bmnet->outputTensorNum(); ++i) {
+                bm_tensor_t tensor;
+                frame_infos[b].output_tensors.push_back(tensor);
+            }
+
+            ret = m_bmnet->forward(frame_infos[b].input_tensors.data(), frame_infos[b].input_tensors.size(),
+                                   frame_infos[b].output_tensors.data(), frame_infos[b].output_tensors.size());
+            assert(BM_SUCCESS == ret);
         }
-        ret = m_bmnet->forward(frame_infos[b].input_tensors.data(), frame_infos[b].input_tensors.size(),
-                               frame_infos[b].output_tensors.data(), frame_infos[b].output_tensors.size());
-        assert(BM_SUCCESS == ret);
     }
 }
 
-int MobileNetV2::postprocess(std::vector<bm::ResizeFrameInfo> &frameinfos)
+int WSDAN::postprocess(std::vector<bm::ResizeFrameInfo> &frameinfos)
 {
     for(int i=0;i < frameinfos.size(); ++i) {
 
@@ -116,7 +125,7 @@ int MobileNetV2::postprocess(std::vector<bm::ResizeFrameInfo> &frameinfos)
     }
 }
 
-void MobileNetV2::extract_feature_cpu(bm::ResizeFrameInfo &frame_info) {
+void WSDAN::extract_feature_cpu(bm::ResizeFrameInfo &frame_info) {
 
     int frameNum = frame_info.v_resized_imgs.size();
     for(int frameIdx = 0; frameIdx < frameNum;++frameIdx) {
@@ -150,7 +159,7 @@ void MobileNetV2::extract_feature_cpu(bm::ResizeFrameInfo &frame_info) {
     }
 }
 
-bm::BMNNTensorPtr MobileNetV2::get_output_tensor(const std::string &name, bm::ResizeFrameInfo& frame_info, float scale=1.0) {
+bm::BMNNTensorPtr WSDAN::get_output_tensor(const std::string &name, bm::ResizeFrameInfo& frame_info, float scale=1.0) {
     int output_tensor_num = frame_info.output_tensors.size();
     int idx = m_bmnet->outputName2Index(name);
     if (idx < 0 && idx > output_tensor_num - 1) {
@@ -160,8 +169,4 @@ bm::BMNNTensorPtr MobileNetV2::get_output_tensor(const std::string &name, bm::Re
     bm::BMNNTensorPtr tensor = std::make_shared<bm::BMNNTensor>(m_bmctx->handle(), name, scale,
                                                                 &frame_info.output_tensors[idx]);
     return tensor;
-}
-
-int MobileNetV2::getBatchSize() {
-    return m_batch_size;
 }

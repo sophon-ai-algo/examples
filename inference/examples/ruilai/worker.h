@@ -5,7 +5,6 @@
 #ifndef INFERENCE_FRAMEWORK_WORKER_H
 #define INFERENCE_FRAMEWORK_WORKER_H
 #include "bmutility.h"
-#include "bmgui.h"
 #include "inference.h"
 #include "stream_pusher.h"
 #include "configuration.h"
@@ -13,6 +12,7 @@
 #include "resnet50.h"
 #include "common_types.h"
 #include "mobilenetv2.h"
+#include "wsdan.h"
 
 
 struct TChannel: public bm::NoCopyable {
@@ -33,7 +33,6 @@ using TChannelPtr = std::shared_ptr<TChannel>;
 
 
 class OneCardInferApp {
-    bm::VideoUIAppPtr m_guiReceiver;
     AppStatis &m_appStatis;
     std::shared_ptr<ruilai::DetectorDelegate<bm::FrameBaseInfo, bm::FrameInfo>> m_detectorDelegate;
     std::shared_ptr<ruilai::ClassifyDelegate<bm::ResizeFrameInfo>> m_classifyDelegate224;
@@ -59,12 +58,13 @@ class OneCardInferApp {
     std::vector<std::string> m_urls;
     std::shared_ptr<BlockingQueue<bm::CropFrameInfo>> m_resizeQueue;
     WorkerPool<bm::CropFrameInfo> m_resizeWorkerPool;
-;
+    int m_cls_batchsize;
+    int m_det_batchsize;
 
 public:
     OneCardInferApp(
-        AppStatis& statis,bm::VideoUIAppPtr gui, bm::TimerQueuePtr tq, bm::BMNNHandlePtr handle,
-        int start_index, int num, int resize_queue_num, int skip = 0);
+        AppStatis& statis, bm::TimerQueuePtr tq, bm::BMNNHandlePtr handle,
+        int start_index, int num, int resize_queue_num, int skip = 0, int cls_batch_size = 4, int det_batch_size = 4);
 
     ~OneCardInferApp()
     {

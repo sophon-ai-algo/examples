@@ -33,6 +33,13 @@ namespace bm {
 
 // BMCV_IMAGE
 struct BMImage {
+  static inline void safe_dalete_bm_image_ptr(bm_image **ptr) {
+      if (ptr == nullptr || *ptr == nullptr)
+          return;
+      bm_image_destroy(**ptr);
+      delete *ptr;
+      *ptr = nullptr;
+  }
   static inline bm_status_t bm_images_clone(bm_handle_t handle, 
                                             bm_image *in, 
                                             int num, 

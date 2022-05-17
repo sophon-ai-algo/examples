@@ -64,17 +64,20 @@ int main(int argc, char *argv[])
     // Only statistics encoder fps
     AppStatis appStatis(1);
 
-    std::shared_ptr<CVEncoder>       encoder = std::make_shared<CVEncoder>(25 / skip, 1920, 1080, 0, pRtspServer, &appStatis);
+    std::shared_ptr<CVEncoder>       encoder = std::make_shared<CVEncoder>(25, 1920, 1080, 0, pRtspServer, &appStatis);
     std::shared_ptr<VideoStitchImpl> stitch  = std::make_shared<VideoStitchImpl>(0, total_num, encoder);
     bm::BMMediaPipeline<bm::FrameBaseInfo, bm::FrameInfo> m_media_pipeline;
     bm::MediaParam param;
+    param.draw_thread_num = 1;
+    param.draw_queue_size = 8;
     param.stitch_thread_num = 1;
-    param.stitch_queue_size = 20;
+    param.stitch_queue_size = 8;
     param.encode_thread_num = 1;
-    param.encode_queue_size = 10;
+    param.encode_queue_size = 8;
 
     m_media_pipeline.init(
         param, stitch,
+        bm::FrameInfo::FrameInfoDestroyFn,
         bm::FrameInfo::FrameInfoDestroyFn,
         bm::FrameBaseInfo::FrameBaseInfoDestroyFn
     );
@@ -98,12 +101,12 @@ int main(int argc, char *argv[])
         }
 
         int max_batch = parser.get<int>("max_batch");
-        std::shared_ptr<YoloV5> detector = std::make_shared<YoloV5>(contextPtr, max_batch);
+        std::shared_ptr<YoloV5> detector = std::make_shared<YoloV5>(contextPtr, start_chan_index, channel_num, max_batch);
         detector->set_next_inference_pipe(&m_media_pipeline);
 
 
         OneCardInferAppPtr appPtr = std::make_shared<OneCardInferApp>(
-                tqp, contextPtr, start_chan_index, channel_num, skip, max_batch);
+                tqp, contextPtr, start_chan_index, channel_num, handle->handle(), skip, max_batch);
         start_chan_index += channel_num;
         // set detector delegator
         appPtr->setDetectorDelegate(detector);

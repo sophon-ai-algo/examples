@@ -100,7 +100,9 @@ pack_video_stitch_demo
 pack_yolov5s_demo
 pack_safe_hat_detect_demo
 pack_multi_demo
-
+cp /data/others/* release/
+cp release.md release/README.md
+cp /data/workspace/media/100new.264 release/
 echo "Done."
 
 

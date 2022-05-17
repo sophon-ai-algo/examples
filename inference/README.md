@@ -83,6 +83,9 @@ sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
    
    链接：https://pan.baidu.com/s/16d5E_NTj4ubVPkPmR6GG5A 
    提取码：sp2w 
+   
+   > 特別注意:`openpose`的模型`openpose_200_200.bmodel`已弃用!!!
+   请使用[NAS网盘](http://219.142.246.77:65000/sharing/cyJOgo8Te)中的新openpose量化模型: `openpose_coco_17_216_384.bmodel`或`openpose_body_25_216_384.bmodel`
 
 ## 客户端服务器模式运行
 ---

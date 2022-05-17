@@ -47,7 +47,7 @@ void H264FrameSource::doGetNextFrame()
         fFrameSize = pktData->len;
         memcpy(fTo, pktData->buf, pktData->len);
         gettimeofday(&fPresentationTime, NULL);
-        fDurationInMicroseconds = 1000 / 8 * 1000;
+        //fDurationInMicroseconds = 1000 / 25;
     } else {
         std::cerr << "Got 00000 from encoded queue" << std::endl;
     }

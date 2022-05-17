@@ -5,7 +5,7 @@
       "devid": 0,
       "cameras": [
         {
-          "address": "/data/workspace/media/station-1080p-25fps-2000kbps.h264",
+          "address": "/data/workspace/media/face.h264",
           "chan_num": 2
         }
       ]

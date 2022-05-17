@@ -27,5 +27,5 @@ message(STATUS ${PROJECT_SOURCE_DIR}/examples/video_stitch/rtsp/live555/liveMedi
 target_link_libraries(video_stitch_demo 
     bmutility
     live555
-    ${opencv_link_libs} ${ffmpeg_link_libs} ${bmnnsdk_link_libs} jsoncpp pthread
+    ${opencv_link_libs} ${ffmpeg_link_libs} ${bmnnsdk_link_libs} bmtracker jsoncpp pthread
 )

@@ -1,5 +1,6 @@
 #include "bmutility_timer.h"
 #include "stitch.h"
+#include "bmutility_profile.h"
 
 VideoStitchImpl::VideoStitchImpl(int chann_start, int chann_count, std::shared_ptr<CVEncoder>& encoder)
   : m_chan_start{chann_start},
@@ -40,16 +41,54 @@ int VideoStitchImpl::encode(std::vector<bm::FrameBaseInfo>& frames) {
     return 0;
 }
 
-int VideoStitchImpl::stitch(std::vector<bm::FrameInfo>& frames, std::vector<bm::FrameBaseInfo>& output) {
+int VideoStitchImpl::draw(std::vector<bm::FrameInfo>& frames, std::vector<bm::FrameInfo>& output) {
     // Sync data
     dataInput_(frames);
-
-    // Stitch when all channel updated
+    // draw when all channel updated
     if (m_chan_got_frame != m_chan_mask) {
-        return false;
+        return -1;
     }
-    m_chan_got_frame = 0;
 
+    m_chan_got_frame = 0;
+    bm::FrameInfo fi;
+    static int draw_flag = true;
+    for (int i = m_chan_start; i < m_chan_start + m_chan_count; ++i) {
+        auto iter = m_channels.find(i);
+        if (iter->second->objs.size() > 0) {
+            bmcv_rect_t rects[iter->second->objs.size()];
+            for (int j = 0; j < iter->second->objs.size(); ++j) {
+                rects[j].start_x = iter->second->objs[j].x1;
+                rects[j].start_y = iter->second->objs[j].y1;
+                rects[j].crop_w = iter->second->objs[j].x2 - iter->second->objs[j].x1;
+                rects[j].crop_h = iter->second->objs[j].y2 - iter->second->objs[j].y1;
+                // track id
+                if (!draw_flag)
+                    continue;
+                std::string text = std::to_string(iter->second->objs[j].track_id);
+                bmcv_point_t org = {rects[j].start_x, rects[j].start_y};
+                bmcv_color_t color = {255, 0, 0};
+                int thickness = 4;
+                float font_scale = 4;
+                bmcv_image_put_text(m_handle, *iter->second->bmimage, text.c_str(), org, color, font_scale, thickness);
+            }
+            bmcv_image_draw_rectangle(m_handle, *iter->second->bmimage, iter->second->objs.size(), rects, 3, 255, 0, 0);
+        }
+
+        bm::FrameBaseInfo fbi;
+        fbi.original = *iter->second->bmimage;
+        delete iter->second->bmimage;
+        iter->second->bmimage = nullptr;
+        fi.frames.push_back(fbi);
+        fi.out_datums.push_back( iter->second->objs);
+    }
+    draw_flag = !draw_flag;
+    output.push_back(fi);
+    return 0;
+}
+
+int VideoStitchImpl::stitch(std::vector<bm::FrameInfo>& frames, std::vector<bm::FrameBaseInfo>& output) {
+    assert(frames.size() == 1);
+    auto& frame_info = frames[0];
     std::vector<bm_image>  in;
     std::vector<bmcv_rect_t> srt;
     std::vector<bmcv_rect_t> drt;
@@ -65,28 +104,11 @@ int VideoStitchImpl::stitch(std::vector<bm::FrameInfo>& frames, std::vector<bm::
     stitch_image.width  = 1920;
     stitch_image.height = 1080;
 
-    for (int i = m_chan_start; i < m_chan_start + m_chan_count; ++i) {
-
-        auto iter = m_channels.find(i);
-        bm_image image1;
-
-        bm::BMImage::from_avframe(m_handle, iter->second->avframe, image1, false);
-        if (iter->second->objs.size() > 0) {
-            bmcv_rect_t rects[iter->second->objs.size()];
-            for (int j = 0; j < iter->second->objs.size(); ++j) {
-                rects[j].start_x = iter->second->objs[j].x1;
-                rects[j].start_y = iter->second->objs[j].y1;
-                rects[j].crop_w  = iter->second->objs[j].x2 -  iter->second->objs[j].x1;
-                rects[j].crop_h  = iter->second->objs[j].y2 -  iter->second->objs[j].y1;
-            }
-            bmcv_image_draw_rectangle(m_handle, image1, iter->second->objs.size(), rects, 3, 255, 0, 0);
-        }
-
-        in.push_back(image1);
-
+    for (int i = 0; i < 4; ++i) {
+        in.push_back(frame_info.frames[i].original);
         rt.start_x = rt.start_y = 0;
-        rt.crop_w  = image1.width;
-        rt.crop_h  = image1.height;
+        rt.crop_w  = frame_info.frames[i].width;
+        rt.crop_h  = frame_info.frames[i].height;
         srt.push_back(rt);
 
         rt.start_x = (i % 2) * (stitch_image.width / 2);
@@ -107,12 +129,26 @@ int VideoStitchImpl::stitch(std::vector<bm::FrameInfo>& frames, std::vector<bm::
 
     cv::Mat output_mat;
     cv::bmcv::toMAT(&stitch_image, output_mat, true);
-    bm::FrameBaseInfo frame_tp_encode;
-    frame_tp_encode.cvimg = output_mat;
-    output.push_back(frame_tp_encode);
+#if 0
+    static int fff = 0;
+    std::string filename = "jpgs/jpg_" + std::to_string(fff) + ".jpg";
+    cv::imwrite(filename.c_str(), output_mat);
+    for (int j = 0; j < 4; ++j) {
+        cv::Mat output_mat;
+        cv::bmcv::toMAT(& in[j], output_mat, true);
+        std::string filename = "jpgs/jpg_" + std::to_string(fff) +
+                + "_" + std::to_string(j) + ".jpg";
+        cv::imwrite(filename.c_str(), output_mat);
+    }
+    fff++;
+#endif
 
-    for (auto& img : in) {
-        bm_image_destroy(img);
+    bm::FrameBaseInfo frame_to_encode;
+    frame_to_encode.cvimg = output_mat;
+    output.push_back(frame_to_encode);
+
+    for (int i = 0; i < 4; ++i) {
+        bm_image_destroy(frame_info.frames[i].original);
     }
     bm_image_destroy(stitch_image);
 
@@ -123,23 +159,28 @@ void VideoStitchImpl::dataInput_(std::vector<bm::FrameInfo>& frames) {
         auto& frames_info = f.frames;
 
         for (int i = 0; i < frames_info.size(); ++i) {
+
             auto chan = m_channels.find(frames_info[i].chan_id);
-            if (chan->second->seq > 0 && frames_info[i].seq <= chan->second->seq) {
-                av_frame_unref(frames_info[i].avframe);
-                av_frame_free(&frames_info[i].avframe);
-                continue;
-            }
             if (chan == m_channels.end()) {
                 std::cerr << "dataInput failed, channel: " << frames_info[i].chan_id << " not found" << std::endl;
+                bm_image_destroy( frames_info[i].original);
+                continue;
+            }
+            if (chan->second->seq > 0 && frames_info[i].seq <= chan->second->seq) {
+                bm_image_destroy( frames_info[i].original);
                 continue;
             }
             m_chan_got_frame |= 1 << (frames_info[i].chan_id - m_chan_start);
-            if (chan->second->avframe != nullptr) {
-                av_frame_unref(chan->second->avframe);
-                av_frame_free(&chan->second->avframe);
+
+            if (chan->second->bmimage != nullptr) {
+                bm::BMImage::safe_dalete_bm_image_ptr(&chan->second->bmimage);
             }
-            chan->second->avframe = frames_info[i].avframe;
-            chan->second->objs    = f.out_datums[i].obj_rects;
+
+            chan->second->objs    = f.out_datums[i].track_rects;
+
+            chan->second->bmimage  = new bm_image;
+            *chan->second->bmimage = frames_info[i].original;
+            chan->second->seq      =  frames_info[i].seq;
         }
     }
 }

@@ -13,14 +13,18 @@ class VideoStitchImpl : public bm::MediaDelegate<bm::FrameBaseInfo, bm::FrameInf
         AVFrame* avframe;
         bm::NetOutputObjects objs;
         uint64_t seq;
+        bm_image* bmimage;
         SFrameAndBbox()
-          : avframe{nullptr},
-            seq{0} {}
+          : avframe{nullptr}
+          , seq{0}
+          , bmimage{nullptr} {}
     };
 public:
     VideoStitchImpl(int chann_start, int chann_count, std::shared_ptr<CVEncoder> &encoder);
 
     ~VideoStitchImpl();
+
+    int draw(std::vector<bm::FrameInfo>& frames, std::vector<bm::FrameInfo>& output) override;
 
     int stitch(std::vector<bm::FrameInfo>& frames, std::vector<bm::FrameBaseInfo>& output) override;
 

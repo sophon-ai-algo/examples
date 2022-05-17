@@ -166,7 +166,7 @@ namespace bm {
                     usleep(1); //sleep 1 million second
                     continue;
                 }
-
+                m_QTimers.remove(timer);
                 m_mLock.unlock();
 
                 if (timer->lamdaCb != nullptr) {
@@ -190,7 +190,6 @@ namespace bm {
                 else {
                     // timer is deleted, not existed any more.
                 }
-                m_QTimers.pop();
                 m_mLock.unlock();
             }
             std::cout << "rtc_timer_queue exit!" << std::endl;
