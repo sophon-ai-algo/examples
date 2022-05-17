@@ -11,9 +11,11 @@
 BmodelBase::~BmodelBase() {
   if (batch_size_ >= 1) {
     bm_image_destroy_batch(scaled_inputs_, batch_size_);
+    bm_image_destroy_batch(resize_bmcv_, batch_size_);
   }
   if (scaled_inputs_) {
     delete []scaled_inputs_;
+    delete []resize_bmcv_;
   }
   for (size_t i = 0; i < outputs_.size(); i++) {
     if (BM_FLOAT32 == net_info_->output_dtypes[i]) {
@@ -92,6 +94,7 @@ void BmodelBase::load_model() {
   net_w_ = input_shape.dims[3];
   input_shape_ = {4, {batch_size_, 3, net_h_, net_w_}};
   scaled_inputs_ = new bm_image[batch_size_];
+  resize_bmcv_ = new bm_image[batch_size_];
   return;
 }
 
