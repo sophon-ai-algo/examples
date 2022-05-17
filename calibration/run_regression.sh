@@ -61,20 +61,6 @@ function test_face_demo()
     popd
 }
 
-function test_mtcnn_demo()
-{
-    pushd ./mtcnn_demo
-    source mtcnn_demo.sh
-    mtcnn_build
-    dump_fddb_lmdb
-    convert_mtcnn_demo_pnet_to_int8_pb
-    convert_mtcnn_demo_rnet_to_int8_pb
-    convert_mtcnn_demo_onet_to_int8_pb
-    run_demo_float
-    run_demo_int8
-    popd
-}
-
 function test_mx_to_fp32umodel_demo()
 {
     pushd ./mx_to_fp32umodel_demo
@@ -138,7 +124,6 @@ function test_all()
     test_create_lmdb_demo
     test_dn_to_fp32umodel_demo
     test_face_demo
-    test_mtcnn_demo
     test_mx_to_fp32umodel_demo
     test_object_detection_python_demo
     test_on_to_fp32umodel_demo

@@ -1,6 +1,0 @@
-models/pnet_orig.prototxt
-models/pnet.caffemodel
-models/rnet_orig.prototxt
-models/rnet.caffemodel
-models/onet_orig.prototxt
-models/onet.caffemodel

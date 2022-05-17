@@ -13,7 +13,8 @@
 - create_lmdb_demo, 使用ufwio制作lmdb数据集的demo
 - classify_demo, 
 - face_demo, 人脸检测网络量化，量化网络后可以把图片上人脸框出
-- mtcnn_demo, 
-- object_detection_python_demo, 
+- object_detection_python_demo, python物体检测demo
 
+## 准备工作
+请先运行`bash ./prepare.sh` 下载examples所需模型和数据集
 

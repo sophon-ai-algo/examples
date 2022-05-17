@@ -1,3 +1,0 @@
-data/pics/Abel_Pacheco_0004.jpg
-data/pics/test.jpg
-data/pics/test2.jpg
