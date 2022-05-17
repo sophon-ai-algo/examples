@@ -17,17 +17,19 @@ RuiLaiAPIWrapper::RuiLaiAPIWrapper(int card_num,
         throw std::runtime_error("read config fail");
     }  
 
-    m_jpegQueue = std::make_shared<BlockingQueue<JPGUint>>("jpeg", 0, 16);
-    m_jpegWorkerPool.init(m_jpegQueue.get(), 1, 1, 1);
+    m_jpegQueue = std::make_shared<BlockingQueue<JPGUint>>("jpeg", 0, 32);
+    m_jpegWorkerPool.init(m_jpegQueue.get(), 64, 1, 1);
     m_jpegWorkerPool.startWork([this](std::vector<JPGUint> &items) {
         for (int i = 0; i < items.size(); ++i) {
             JPGUint &jpg = items[i];
+            int card_index = jpg.image_id % m_cards;
+
             std::vector<uchar> pic(jpg.jpeg_data, jpg.jpeg_data + jpg.len);
             cv::Mat cvimage;
             // 使用硬件转换为 bm_image对象
             // 这里默认使用设备0
             // 应根据实际card_num来平均负载到各设备上硬解
-            cv::imdecode(pic, cv::IMREAD_AVFRAME, &cvimage, 0);
+            cv::imdecode(pic, cv::IMREAD_AVFRAME, &cvimage, card_index);
             bm::FrameBaseInfo fbi;
             fbi.chan_id = 0;
             fbi.seq = jpg.image_id;
@@ -40,7 +42,6 @@ RuiLaiAPIWrapper::RuiLaiAPIWrapper(int card_num,
 #endif
             fbi.original = image;
             // 平均分发给各芯片
-            int card_index = fbi.seq % m_cards;
             m_vApps[card_index]->pushFrame(&fbi);
         }
         
@@ -52,23 +53,23 @@ RuiLaiAPIWrapper::RuiLaiAPIWrapper(int card_num,
         bm::BMNNHandlePtr handle          = std::make_shared<bm::BMNNHandle>(dev_id);
         bm::BMNNContextPtr detContextPtr  = std::make_shared<bm::BMNNContext>(handle, retinaface_bmodel);
         bm::BMNNContextPtr clsContextPtr1 = std::make_shared<bm::BMNNContext>(handle, cls_bmodel1);
-        // bm::BMNNContextPtr clsContextPtr2 = std::make_shared<bm::BMNNContext>(handle, cls_bmodel2);
+        bm::BMNNContextPtr clsContextPtr2 = std::make_shared<bm::BMNNContext>(handle, cls_bmodel2);
         // bm::BMNNContextPtr clsContextPtr3 = std::make_shared<bm::BMNNContext>(handle, cls_bmodel3);
         // bm::BMNNContextPtr clsContextPtr4 = std::make_shared<bm::BMNNContext>(handle, cls_bmodel4);
 
         auto detector  = std::make_shared<Retinaface>(detContextPtr);
         auto classify1 = std::make_shared<MobileNetV2>(clsContextPtr1);
-        // auto classify2 = std::make_shared<Resnet>(clsContextPtr2);
+        auto classify2 = std::make_shared<WSDAN>(clsContextPtr2);
         // auto classify3 = std::make_shared<Resnet>(clsContextPtr3);
         // auto classify4 = std::make_shared<Resnet>(clsContextPtr4);
 
-        OneCardInferAppPtr appPtr = std::make_shared<OneCardInferApp>(m_appStatis, nullptr, nullptr, handle, 0, 0, 4, 1);
+        OneCardInferAppPtr appPtr = std::make_shared<OneCardInferApp>(m_appStatis, nullptr, handle, 0, 0, 4, 1, classify1->getBatchSize(), detector->getBatchSize());
 
         // set detector delegator
         appPtr->setDetectorDelegate(detector);
         // set classify delegator
         appPtr->setClassifyDelegate_224(classify1);
-        // appPtr->setClassifyDelegate_320(classify2);
+        appPtr->setClassifyDelegate_320(classify2);
         // appPtr->setClassifyDelegate_320(classify3);
         // appPtr->setClassifyDelegate_320(classify4);
         appPtr->setImgResultCallback(m_callbackFunc);

@@ -665,9 +665,6 @@ namespace bm {
             for (auto& f : frames) {
                 f.destroy();
             }
-            for (auto& f : frames) {
-                f.destroy();
-            }
             // Free Tensors
             for(auto& tensor : input_tensors) {
                 bm_free_device(handle, tensor.device_mem);

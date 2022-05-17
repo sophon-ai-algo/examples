@@ -1,12 +1,12 @@
-#ifndef INFERENCE_FRAMEWORK_MOBILENETV2_H
-#define INFERENCE_FRAMEWORK_MOBILENETV2_H
+#ifndef INFERENCE_FRAMEWORK_WSDAN_H
+#define INFERENCE_FRAMEWORK_WSDAN_H
 
 #include "pipeline.h"
 #include "bmcv_api_ext.h"
 #include "common_types.h"
 
 
-class MobileNetV2 : public ruilai::ClassifyDelegate<bm::ResizeFrameInfo>  {
+class WSDAN : public ruilai::ClassifyDelegate<bm::ResizeFrameInfo>  {
     bm::BMNNContextPtr m_bmctx;
     bm::BMNNNetworkPtr m_bmnet;
 
@@ -15,16 +15,14 @@ class MobileNetV2 : public ruilai::ClassifyDelegate<bm::ResizeFrameInfo>  {
 
     int m_net_h;
     int m_net_w;
-    int m_batch_size;
 
 public:
-    MobileNetV2(bm::BMNNContextPtr bmctx);
-    ~MobileNetV2();
+    WSDAN(bm::BMNNContextPtr bmctx);
+    ~WSDAN();
 
     virtual int preprocess(std::vector<bm::ResizeFrameInfo> &frames) override;
     virtual int forward(std::vector<bm::ResizeFrameInfo> &frames) override;
     virtual int postprocess(std::vector<bm::ResizeFrameInfo> &frames) override;
-    int getBatchSize();
 
 private:
     bm::BMNNTensorPtr get_output_tensor(const std::string &name, bm::ResizeFrameInfo& frame_info, float scale);
@@ -32,4 +30,4 @@ private:
 };
 
 
-#endif //INFERENCE_FRAMEWORK_MOBILENETV2_H
+#endif //INFERENCE_FRAMEWORK_WSDAN_H

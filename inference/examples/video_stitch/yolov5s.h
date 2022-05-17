@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include "bmutility.h"
 #include "inference3.h"
+#include "bm_tracker.h"
 
 /*
 struct FrameBaseInfo {
@@ -48,14 +49,17 @@ class YoloV5 : public bm::DetectorDelegate<bm::FrameBaseInfo, bm::FrameInfo> {
                                                          {{30, 61}, {62, 45}, {59, 119}},
                                                          {{116, 90}, {156, 198}, {373, 326}}};
     const int m_anchor_num = 3;
+    std::map<int, std::shared_ptr<bm::BMTracker>> m_trackerPerChanel;
 
 public:
-    YoloV5(bm::BMNNContextPtr bmctx, int max_batch=1);
+    YoloV5(bm::BMNNContextPtr bmctx, int start_chan, int chan_num, int max_batch=1);
     ~YoloV5();
 
     virtual int preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::FrameInfo>& frame_info) override ;
     virtual int forward(std::vector<bm::FrameInfo>& frame_info) override ;
     virtual int postprocess(std::vector<bm::FrameInfo> &frame_info) override;
+    virtual int track(std::vector<bm::FrameInfo> &frames) override;
+
 private:
     float sigmoid(float x);
     int argmax(float* data, int dsize);

@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     const char *base_keys="{help | 0 | Print help information.}"
                      "{output | None | Output stream URL}"
                      "{skip | 1 | skip N frames to detect}"
-                     "{num | 1 | Channels to run}";
+                     "{num | 10 | Channels to run}";
 
     std::string keys;
     keys = base_keys;

@@ -6,15 +6,14 @@
 #include "stream_sei.h"
 #include "bmutility_image.h"
 
-OneCardInferApp::OneCardInferApp(AppStatis& statis,bm::VideoUIAppPtr gui, bm::TimerQueuePtr tq, bm::BMNNHandlePtr handle,
-                                 int start_index, int num, int resize_queue_num, int skip)
+OneCardInferApp::OneCardInferApp(AppStatis& statis, bm::TimerQueuePtr tq, bm::BMNNHandlePtr handle,
+                                 int start_index, int num, int resize_queue_num, int skip, int cls_batch_size, int det_batch_size)
   : m_detectorDelegate(nullptr), m_channel_num(num), m_appStatis(statis), m_callbackQueue(bm::TimerQueue::create()),
-    m_img_result_cb_func(nullptr) {
+    m_img_result_cb_func(nullptr), m_cls_batchsize{cls_batch_size}, m_det_batchsize{det_batch_size} {
     
     m_pResultThread = std::make_shared<std::thread>([this]{
         m_callbackQueue->run_loop();
     });
-    m_guiReceiver = gui;
     m_timeQueue = tq;
     m_channel_start = start_index;
     m_skipN = skip;
@@ -24,7 +23,7 @@ OneCardInferApp::OneCardInferApp(AppStatis& statis,bm::VideoUIAppPtr gui, bm::Ti
     m_v320ClassifyPipes.resize(3);
 
     m_resizeQueue = std::make_shared<BlockingQueue<bm::CropFrameInfo>>("resize", 0, 32);
-    m_resizeWorkerPool.init(m_resizeQueue.get(), resize_queue_num, 4, 4);
+    m_resizeWorkerPool.init(m_resizeQueue.get(), resize_queue_num, m_cls_batchsize, m_cls_batchsize);
     m_resizeWorkerPool.startWork([this](std::vector<bm::CropFrameInfo> &items) {
 //        assert(items.size() == 4);
 //        std::vector<bm_image> resized_image_224;
@@ -38,13 +37,15 @@ OneCardInferApp::OneCardInferApp(AppStatis& statis,bm::VideoUIAppPtr gui, bm::Ti
         bm::ResizeFrameInfo rfi_224;
         bm::ResizeFrameInfo rfi_320;
         for (int i = 0; i < items.size(); ++i) {
-            rfi_224.v_seq.push_back(items[i].seq);
-            rfi_224.v_resized_imgs.push_back(items[i].crop_img_224);
-            //rfi_320.v_resized_imgs.push_back(items[i].crop_img_320);
+
+             rfi_224.v_seq.push_back(items[i].seq);
+             rfi_224.v_resized_imgs.push_back(items[i].crop_img_224);
+             rfi_320.v_seq.push_back(items[i].seq);
+             rfi_320.v_resized_imgs.push_back(items[i].crop_img_320);
         }
-        //rfi_224.v_resized_imgs.swap(resized_image_224);
-        m_224ClassifyPipe.push_frame(&rfi_224);
-        //m_v320ClassifyPipes[0].push_frame(&rfi_320);
+        
+         m_224ClassifyPipe.push_frame(&rfi_224);
+         m_v320ClassifyPipes[0].push_frame(&rfi_320);
 
         // 320x320 Input
 //        for(int i = 0; i < m_v320ClassifyPipes.size() - 1; ++i) {
@@ -67,7 +68,6 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
     m_detectorDelegate->set_detected_callback([this](bm::FrameInfo &frame_info) {
         int ret = 0;
         int total_face_num = 0;
-        std::vector<bm::CropFrameInfo> total_crop_images;
         for (int frameIdx = 0; frameIdx < frame_info.out_datums.size(); ++frameIdx) {
             auto &rcs = frame_info.out_datums[frameIdx].obj_rects;
             int face_num = rcs.size();
@@ -92,18 +92,15 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
                     padding_attr[k].dst_crop_h   = crop_rects[k].crop_h;
                     padding_attr[k].dst_crop_w   = crop_rects[k].crop_w;
 
-//                    ret = bm::BMImage::create_batch(m_handle, crop_rects[k].crop_h, crop_rects[k].crop_w,
-//                                                    FORMAT_BGR_PLANAR, DATA_TYPE_EXT_1N_BYTE,
-//                                                    &crop_images[k], 1, 64);
                     ret = bm::BMImage::create_batch(m_handle, 224, 224,
                                                     FORMAT_BGR_PLANAR, DATA_TYPE_EXT_1N_BYTE,
                                                     &crop_images_224[k], 1, 64);
                     assert(BM_SUCCESS == ret);
 
-//                    ret = bm::BMImage::create_batch(m_handle, 224, 224,
-//                                                    FORMAT_BGR_PLANAR, DATA_TYPE_EXT_1N_BYTE,
-//                                                    &crop_images_320[k], 1, 64);
-//                    assert(BM_SUCCESS == ret);
+                    ret = bm::BMImage::create_batch(m_handle, 320, 320,
+                                                    FORMAT_BGR_PLANAR, DATA_TYPE_EXT_1N_BYTE,
+                                                    &crop_images_320[k], 1, 64);
+                    assert(BM_SUCCESS == ret);
                 }
                 bm::BMPerf p1("crop", 10);
 
@@ -118,10 +115,11 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
                                               crop_images_224.data(),
                                               crop_rects);
                  assert(BM_SUCCESS == ret);
-//                 ret = bmcv_image_vpp_convert(m_handle, face_num,
-//                                             frame_info.frames[frameIdx].original,
-//                                             crop_images_320.data(),
-//                                             crop_rects);
+                 ret = bmcv_image_vpp_convert(m_handle, face_num,
+                                             frame_info.frames[frameIdx].original,
+                                             crop_images_320.data(),
+                                             crop_rects);
+                assert(BM_SUCCESS == ret);
                 // ret = bmcv_image_crop(handle, face_num, crop_rects,
                 //                       frame_info.frames[frameIdx].original,
                 //                       crop_images.data());
@@ -135,19 +133,20 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
                     cfi.chan_id  = frame_info.frames[frameIdx].chan_id;
                     cfi.seq      = frame_info.frames[frameIdx].seq;
                     cfi.crop_img_224 = crop_images_224[i];
-                    //cfi.crop_img_320 = crop_images_320[i];
+                    cfi.crop_img_320 = crop_images_320[i];
 //                    char vv[256];
 //                    static int ii = 0;
-//                    snprintf(vv, 256, "output_%d.bmp", );
+//                    snprintf(vv, 256, "output_%d.bmp", ii++);
 //                    call(bm_image_write_to_bmp, crop_images_224[i], vv);
-//                    total_crop_images.push_back(cfi);
                     m_resizeQueue->push(cfi);
                 }
                 //std::cout << "face num " << face_num << std::endl;
+            } else {
+            // face num == 0
+                m_img_result_cb_func(frame_info.frames[frameIdx].seq, false, -1.f);
             }
             total_face_num += face_num;
         }
-        //m_resizeQueue->push(total_crop_images);
 
         
         for (int i = 0; i < frame_info.frames.size(); ++i) {
@@ -166,21 +165,12 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
         int batch_size = output_shape->dims[0];
         int class_num = output_shape->dims[1];
         int total = batch_size * class_num;
-        std::map<uint64_t, float> score_record;
+
+        std::lock_guard<decltype(m_mutex)> lock(m_mutex);
         for (int i = 0; i < frame_info.v_resized_imgs.size(); ++i) {
             uint64_t seq = frame_info.v_seq[i];
-            auto iter = score_record.find(seq);
-            if (iter == score_record.end()) {
-                score_record[seq] = data[i*2 + 1];
-            } else if (iter->second < data[i*2 + 1]) {
-                iter->second = data[i*2 + 1];
-            }
-        }
-        std::lock_guard<decltype(m_mutex)> lock(m_mutex);
-        for (auto iter = score_record.begin(); iter != score_record.end(); ++iter) {
-            uint64_t seq = iter->first;
             if (m_image_score_record.find(seq) == m_image_score_record.end()) {
-                m_image_score_record[seq] = iter->second;
+                m_image_score_record[seq] = data[i*2 + 1];
                 if (m_img_result_cb_func != nullptr) {
                     m_callbackQueue->create_timer(20, [this, seq]() {
 //                        std::cout << "result callback.." << seq << std::endl;
@@ -189,16 +179,15 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
                         m_image_score_record.erase(seq);
                     }, 0, nullptr);
                 }
-            } else {
-                m_image_score_record[seq] = iter->second;
+            } else if (m_image_score_record[seq] < data[i*2 + 1]) {
+                m_image_score_record[seq] = data[i*2 + 1];
             }
-
         }
-
     });
 
     ruilai::DetectorParam param;
     loadConfig<ruilai::DetectorParam>(param, config);
+    param.batch_num = m_det_batchsize;
     // detector init
     m_inferPipe.init(param, m_detectorDelegate);
     // classify init
