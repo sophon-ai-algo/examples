@@ -4,6 +4,7 @@
 
 using namespace std;
 
+
 anchor_win  _whctrs(anchor_box anchor) {
   anchor_win win;
   win.w = anchor.x2 - anchor.x1 + 1;
@@ -355,18 +356,15 @@ vector<FaceDetectInfo> RetinaFacePostProcess::nms(vector<FaceDetectInfo>& bboxes
   return bboxes_nms;
 }
 
+
 void RetinaFacePostProcess::run(
             const bm_net_info_t& net_info,
             float** preds, 
-            vector<stFaceRect>& results, int max_face_count,
+            vector<stFaceRect>& results, int img_h, int img_w, int max_face_count,
             float threshold, float scales) {
   auto &input_shape = net_info.stages[0].input_shapes[0];
   int hs = input_shape.dims[2];
   int ws = input_shape.dims[3];
-
-  string name_bbox = "face_rpn_bbox_pred_";
-  string name_score = "face_rpn_cls_prob_reshape_";
-  string name_landmark = "face_rpn_landmark_pred_";
 
   map<string, int> output_names_map;
   vector<int> output_sizes;
@@ -377,65 +375,71 @@ void RetinaFacePostProcess::run(
     auto count = bmrt_shape_count(&output_shape);
     output_sizes.push_back(count / output_shape.dims[0]);
   }
+  float* cls_data = preds[output_names_map["cls"]];
+  float *land_data = preds[output_names_map["land"]];
+  float *loc_data = preds[output_names_map["loc"]];
 
+  const int num_layer = 3;
+  const size_t steps[] = {8, 16, 32};
+  const int num_anchor = 2;
+  const size_t anchor_sizes[][2] = {
+        {16, 32},
+        {64, 128},
+        {256, 512}};
+  const float variances[] = {0.1, 0.2};
+
+  size_t index = 0, min_size;
+  const float *loc, *land;
+  float x, y, w, h, conf;
+  float anchor_w, anchor_h, anchor_x, anchor_y;
+  FaceDetectInfo obj;
   vector<FaceDetectInfo> faceInfo;
-  for(size_t i = 0; i < _feat_stride_fpn.size(); i++) {
-    string key = "stride" + std::to_string(_feat_stride_fpn[i]);
-    int stride = _feat_stride_fpn[i];
-
-    string str = name_score + key;
-    int idx = output_names_map[str];
-    float* score_blob = preds[idx];
-    float* scoreB = score_blob + output_sizes[idx] / 2;
-    float* scoreE = scoreB + output_sizes[idx] / 2;
-    vector<float> score = vector<float>(scoreB, scoreE);
-    auto &output_shape = net_info.stages[0].output_shapes[idx];
-    int height = output_shape.dims[2];
-    int width = output_shape.dims[3];
-
-    str = name_bbox + key;
-    idx = output_names_map[str];
-    float* bboxB = preds[idx];
-    float* bboxE = bboxB + output_sizes[idx];
-    vector<float> bbox_delta = vector<float>(bboxB, bboxE);
-
-    str = name_landmark + key;
-    idx = output_names_map[str];
-    float* landmarkB = preds[idx];
-    float* landmarkE = landmarkB + output_sizes[idx];
-    vector<float> landmark_delta = vector<float>(landmarkB, landmarkE);
-
-    size_t count = width * height;
-    size_t num_anchor = _num_anchors[key];
-    vector<anchor_box> anchors =
-             anchors_plane(height, width, stride, _anchors_fpn[key]);
-    for(size_t num = 0; num < num_anchor; num++) {
-      for(size_t j = 0; j < count; j++) {
-        float conf = score[j + count * num];
-        if(conf <= threshold) {
-          continue;
+  for (int il = 0; il < num_layer; ++il){
+    int feature_width = (ws + steps[il] - 1) / steps[il];
+    int feature_height = (hs + steps[il] - 1) / steps[il];
+    for (int iy = 0; iy < feature_height; ++iy){
+      for (int ix = 0; ix < feature_width; ++ix){
+        for (int ia = 0; ia < num_anchor; ++ia){
+          conf = cls_data[index * 2 + 1];
+          if (conf < threshold) goto cond;
+          min_size = anchor_sizes[il][ia];
+          anchor_x = (ix + 0.5) * steps[il] / ws;
+          anchor_y = (iy + 0.5) * steps[il] / hs;
+          anchor_w = min_size * 1. / ws;
+          anchor_h = min_size * 1. / hs;
+          obj.score = conf;
+          loc = loc_data + index * 4;
+          w = exp(loc[2] * variances[1]) * anchor_w;
+          h = exp(loc[3] * variances[1]) * anchor_h;
+          x = anchor_x + loc[0] * variances[0] * anchor_w;
+          y = anchor_y + loc[1] * variances[0] * anchor_h;
+          obj.rect.x1 = (x - w / 2) * img_w;
+          obj.rect.x2 = (x + w / 2) * img_w;
+          obj.rect.y1 = (y - h / 2) * img_h;
+          obj.rect.y2 = (y + h / 2) * img_h;
+          land = land_data + index * 10;
+          for (int i = 0; i < 5; ++i){
+            obj.pts.x[i] = (anchor_x +
+                land[i * 2] * variances[0] * anchor_w) * img_w;
+            obj.pts.y[i] = (anchor_y +
+                land[i * 2 + 1] * variances[0] * anchor_h) * img_h;
+          }
+          // cout << "obj.score = " << obj.score << endl;
+          // cout << "obj.rect.x1 = " << obj.rect.x1 << endl;
+          // cout << "obj.rect.x2 = " << obj.rect.x2 << endl;
+          // cout << "obj.rect.y1 = " << obj.rect.y1 << endl;
+          // cout << "obj.rect.y2 = " << obj.rect.y2 << endl;
+          faceInfo.push_back(obj);
+cond:
+          ++index;
         }
-        vector<float>  regress(4);
-        for (size_t k = 0; k < 4; k++) {
-          regress[k] = bbox_delta[j + count * (k + num * 4)];
-        }
-        anchor_box rect = bbox_pred(anchors[j + count * num], regress);
-        clip_boxes(rect, ws, hs);
-        FacePts pts;
-        for(size_t k = 0; k < 5; k++) {
-          pts.x[k] = landmark_delta[j + count * (num * 10 + k * 2)];
-          pts.y[k] = landmark_delta[j + count * (num * 10 + k * 2 + 1)];
-        }
-        FacePts landmarks = landmark_pred(anchors[j + count * num], pts);
-        FaceDetectInfo tmp;
-        tmp.score = conf;
-        tmp.rect = rect;
-        tmp.pts = landmarks;
-        faceInfo.push_back(tmp);
       }
     }
   }
+  // cout << "faceInfo.size:" << faceInfo.size() << endl;
+  // auto objs = nms_(boxes, nms_threshold);
   faceInfo = nms(faceInfo, nms_threshold);
+  // cout << "faceInfo.size:" << faceInfo.size() << endl;
   int face_num = 
        max_face_count > static_cast<int>(faceInfo.size()) ? static_cast<int>(faceInfo.size()) : max_face_count;
   for (int i = 0; i < face_num; i++) {

@@ -316,7 +316,7 @@ if __name__ == "__main__":
     
     parser.add_argument('--input',
                         type=str,
-                        default="../data/images/face1.jpg",
+                        default="../data/images/face3.jpg",
                         required=False,
                         help='input pic/video file path.')
 
@@ -394,9 +394,8 @@ if __name__ == "__main__":
 
             result_image = retinaface.predict_numpy(frame)
 
-            print(result_image.shape)
-            cv2.imwrite(os.path.join(save_path, save_path +
-                        str(id) + ".jpg"), result_image)
+                        
+            cv2.imwrite(os.path.join(save_path, str(id) + ".jpg"), result_image)
 
             id += 1
 

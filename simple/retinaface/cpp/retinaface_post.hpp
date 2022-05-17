@@ -64,7 +64,7 @@ public:
   ~RetinaFacePostProcess();
 
   void run(const bm_net_info_t& net_info, float** preds, std::vector<stFaceRect>& results,
-   int max_face_count = 20, float threshold = 0.9, float scales = 1.0);
+   int img_h, int img_w, int max_face_count = 20, float threshold = 0.9, float scales = 1.0);
 
 private:
   std::vector<FaceDetectInfo> postProcess(int inputW, int inputH, float threshold);

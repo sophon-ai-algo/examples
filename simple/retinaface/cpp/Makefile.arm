@@ -8,7 +8,6 @@ INC_DIR += -I$(sdk_dir)/include
 INC_DIR += -I$(sdk_dir)/include/bmruntime
 INC_DIR += -I$(sdk_dir)/include/bmlib
 INC_DIR += -I$(sdk_dir)/include/third_party/boost/include
-INC_DIR += -I$(top_dir)/NeuralNetwork/include
 INC_DIR += -I$(sdk_dir)/include/opencv/opencv4
 INC_DIR += -I$(sdk_dir)/include/ffmpeg
 
