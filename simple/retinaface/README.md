@@ -8,9 +8,9 @@ cpp目录，cpp的示例程序
 
 **注意：**
 
-若要使用backbone为resnet50的模型，请通过以下nas网盘链接下载：http://219.142.246.77:65000/sharing/m6cELCAx7
+测试模型请通过以下nas网盘链接下载，并保存在data/models/下：http://219.142.246.77:65000/sharing/m6cELCAx7
 
-若要测试视频，请通过以下nas网盘链接下载，并保存在data/videos/下：http://219.142.246.77:65000/sharing/LXjz85VVU
+测试视频请通过以下nas网盘链接下载，并保存在data/videos/下：http://219.142.246.77:65000/sharing/LXjz85VVU
 
 
 ## 2. python demo usage
