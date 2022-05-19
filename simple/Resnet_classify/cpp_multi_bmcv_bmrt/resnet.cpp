@@ -139,7 +139,8 @@ void RESNET::postForward (vector<bm_image> &input, vector<vector<ObjRect>> &dete
   int count_per_img = output_count/img_size;
   detections.clear();
 
-  int N = 5;
+  //int N = 5;
+  int N = std::min(5, count_per_img);
   float *image_output = output_;
   vector<std::pair<float , int>> pairs;
   for (int i = 0; i < img_size; i++) {
