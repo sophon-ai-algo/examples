@@ -3,6 +3,8 @@ import torch
 import numpy as np
 import cv2
 import argparse
+from utils.utils import xywh2xyxy, nms_np
+from utils.colors import _COLORS
 
 # YOLOV5 1 output
 # input: x.1, [1, 3, 640, 640], float32, scale: 1
@@ -75,65 +77,49 @@ class Detector(object):
         image = np.expand_dims(image, axis=0)
         # Convert the image to row-major order, also known as "C order":
         image = np.ascontiguousarray(image)
-        return image, padded_img, (max(r_w, r_h), tx1, ty1)
+        return image, padded_img, (min(r_w, r_h), tx1, ty1)
 
-    def postprocess(self, frame, outs):
-        # frameHeight = frame.shape[0]
-        # frameWidth = frame.shape[1]
-        # ratioh, ratiow = frameHeight / 640, frameWidth / 640
-        # Scan through all the bounding boxes output from the network and keep only the
-        # ones with high confidence scores. Assign the box's class label as the class with the highest score.
-        classIds = []
-        confidences = []
-        boxes = []
-        for out in outs:
-            for detection in out:
-                scores = detection[5:]
-                classId = np.argmax(scores)
-                confidence = scores[classId]
-                if confidence > self.confThreshold and detection[4] > self.objThreshold:
-                    # center_x = int(detection[0] * ratiow)
-                    # center_y = int(detection[1] * ratioh)
-                    # width = int(detection[2] * ratiow)
-                    # height = int(detection[3] * ratioh)
-                    center_x = int(detection[0])
-                    center_y = int(detection[1])
-                    width = int(detection[2])
-                    height = int(detection[3])
-                    left = int(center_x - width / 2)
-                    top = int(center_y - height / 2)
-                    classIds.append(classId)
-                    # confidences.append(float(confidence)*detection[4])
-                    confidences.append(float(confidence)*float(detection[4]))
-                    boxes.append([left, top, width, height])
+    def postprocess_np(self, outs, max_wh=7680):
+        bs = outs.shape[0]
+        output = [np.zeros((0, 6))] * bs
+        xc = outs[..., 4] > self.confThreshold
+        for xi, x in enumerate(outs):
+            x = x[xc[xi]]
+            if not x.shape[0]:
+                continue
+            # Compute conf
+            x[:, 5:] *= x[:, 4:5]
+            # Box (center x, center y, width, height) to (x1, y1, x2, y2)
+            box = xywh2xyxy(x[:, :4])
+            conf = x[:, 5:].max(1)
+            j = x[:, 5:].argmax(1)
+            x = np.concatenate((box, conf.reshape(-1, 1), j.reshape(-1, 1)), 1)[conf > self.confThreshold]
+            c = x[:, 5:6] * max_wh  # classes
+            boxes = x[:, :4] + c.reshape(-1, 1)
+            scores = x[:, 4]
+            i = nms_np(boxes, scores, self.nmsThreshold)
+            output[xi] = x[i]
 
-        # Perform non maximum suppression to eliminate redundant overlapping boxes with
-        # lower confidences.
-        indices = cv2.dnn.NMSBoxes(boxes, confidences, self.confThreshold, self.nmsThreshold)
-        for i in indices:
-            i = i[0]
-            box = boxes[i]
-            left = box[0]
-            top = box[1]
-            width = box[2]
-            height = box[3]
-            frame = self.drawPred(frame, classIds[i], confidences[i], left, top, left + width, top + height)
-
-        return frame
+        return output
 
     def drawPred(self, frame, classId, conf, left, top, right, bottom):
-        # Draw a bounding box.
-        print("classid=%d, conf=%f, (%d,%d,%d,%d)"%(classId, conf, left, top, right, bottom))
-        cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), thickness=4)
+
+        color = (_COLORS[classId] * 255).astype(np.uint8).tolist()
+
+        print("classid=%d, class=%s, conf=%f, (%d,%d,%d,%d)" %
+              (classId, self.classes[classId], conf, left, top, right, bottom))
+
+        cv2.rectangle(frame, (left, top), (right, bottom),
+                      color, thickness=4)
 
         label = '%.2f' % conf
         label = '%s:%s' % (self.classes[classId], label)
-
         # Display the label at the top of the bounding box
-        labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+        labelSize, baseLine = cv2.getTextSize(
+            label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
         top = max(top, labelSize[1])
-        # cv.rectangle(frame, (left, top - round(1.5 * labelSize[1])), (left + round(1.5 * labelSize[0]), top + baseLine), (255,255,255), cv.FILLED)
-        cv2.putText(frame, label, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), thickness=2)
+        cv2.putText(frame, label, (left, top - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, color, thickness=2)
         return frame
 
     def decode_for_3outputs(self, outputs):
@@ -171,9 +157,24 @@ def main(opt):
         dets = YOLOv5.decode_for_3outputs(dets)
     print(dets.shape)
 
-    plot_img = YOLOv5.postprocess(padded_img, dets)
-    print(plot_img.shape)
-    cv2.imwrite(opt.out_name, plot_img)
+    output = YOLOv5.postprocess_np(dets)
+
+    result_image = src_img
+    for det in output[0]:
+        # label = self.classes[det[5]]
+        box = det[:4]
+
+        # scale to the origin image
+        left = int((box[0] - tx1) / ratio)
+        top = int((box[1] - ty1) / ratio)
+        right = int((box[2] - tx1) / ratio)
+        bottom = int((box[3] - ty1) / ratio)
+
+        result_image = YOLOv5.drawPred(result_image, int(det[5]), det[4], round(
+            left), round(top), round(right), round(bottom))
+    print(result_image.shape)
+    cv2.imwrite(opt.out_name, result_image)
+
 
 def parse_opt():
     parser = argparse.ArgumentParser(prog=__file__)
