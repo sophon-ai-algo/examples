@@ -11,7 +11,6 @@ INC_DIR += -I$(sdk_dir)/include/sail
 INC_DIR += -I$(sdk_dir)/include/bmruntime
 INC_DIR += -I$(sdk_dir)/include/bmlib
 INC_DIR += -I$(sdk_dir)/include/third_party/boost/include
-INC_DIR += -I$(top_dir)/NeuralNetwork/include
 
 DEFS = -DUSE_BMCV -DHAVE_BMCV
 CXXFLAGS := -g -O2 -Wall -std=c++11 ${DEFS} $(INC_DIR)
