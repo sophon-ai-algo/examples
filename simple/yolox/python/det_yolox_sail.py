@@ -193,7 +193,7 @@ class Detector(object):
         self.output_shape = self.engine.get_output_shape(self.graph_name,self.output_name)
         self.output_scale = self.engine.get_output_scale(self.graph_name,self.output_name)
 
-        self.batch_size, self.c, self.width, self.height = self.input_shape
+        self.batch_size, self.c, self.height, self.width = self.input_shape
 
         self.output_tensor = sail.Tensor(self.handle, self.output_shape, self.output_dtype, True, True)
 

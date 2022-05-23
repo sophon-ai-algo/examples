@@ -559,9 +559,9 @@ YoloX_PostForward::YoloX_PostForward(int net_w, int net_h, std::vector<int> stri
     int layer_h = net_h/strides[i];
     for (int m = 0; m < layer_h; ++m)   {
       for (int n = 0; n < layer_w; ++n)    {
-          grids_x_[channel_len+m*layer_h+n] = n;
-          grids_y_[channel_len+m*layer_h+n] = m;
-          expanded_strides_[channel_len+m*layer_h+n] = strides[i];
+          grids_x_[channel_len+m*layer_w+n] = n;
+          grids_y_[channel_len+m*layer_w+n] = m;
+          expanded_strides_[channel_len+m*layer_w+n] = strides[i];
       }
     }
     channel_len += layer_w * layer_h;
