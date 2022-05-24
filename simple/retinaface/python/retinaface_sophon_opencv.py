@@ -401,7 +401,7 @@ if __name__ == "__main__":
 
             ret, frame = cap.read()
 
-        logger.error("stream end or decoder error")
+        #logger.error("stream end or decoder error")
 
         cap.release()
     
