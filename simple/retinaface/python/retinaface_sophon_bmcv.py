@@ -428,7 +428,7 @@ if __name__ == "__main__":
 
                 ret = decoder.read(retinaface.handle, input_bmimg)
                 if ret:
-                    logger.error("decoder error")
+                    #logger.error("decoder error")
                     break
 
                 result_image = retinaface.predict_bmimage(input_bmimg)
