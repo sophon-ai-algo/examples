@@ -36,10 +36,10 @@ LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/ffmpeg/soc
 LDFLAGS += -Wl,-rpath=$(sdk_dir)/lib/decode/soc
 LDFLAGS += $(LIB_DIR)
 
-all: yolox_bmcv_sail.arm
+all: yolox_sail.arm
 
-yolox_bmcv_sail.arm: processor.cpp main.cpp
+yolox_sail.arm:yolox.cpp main.cpp
 	$(CXX) $^ $(CXXFLAGS) $(LDLIBS) $(LDFLAGS) -o $@
 
 clean:
-	rm -f yolox_bmcv_sail.arm
+	rm -f yolox_sail.arm
