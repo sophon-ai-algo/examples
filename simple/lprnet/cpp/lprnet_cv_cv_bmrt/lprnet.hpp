@@ -24,16 +24,16 @@ class LPRNET {
 public:
   LPRNET(const std::string bmodel, int dev_id);
   ~LPRNET();
-  void preForward(const cv::Mat &image);
+  void preForward(const std::vector<cv::Mat> &images);
   void forward();
-  void postForward(const cv::Mat &image, std::vector<std::string> &detections);
+  void postForward(std::vector<std::string> &detections);
   void enableProfile(TimeStamp *ts);
-
+  int batch_size();
 private:
   void setMean(std::vector<float> &values);
-  void wrapInputLayer(std::vector<cv::Mat>* input_channels);
-  void preprocess(const cv::Mat& img, std::vector<cv::Mat>* input_channels);
-
+  void wrapInputLayer(std::vector<cv::Mat>* input_channels,const int batch_id);
+  void preprocess(const cv::Mat &img, std::vector<cv::Mat>* input_channels);
+  
   // handle of low level device 
   bm_handle_t bm_handle_;
   int dev_id_;
@@ -62,6 +62,9 @@ private:
   int8_t *output_int8;
   bool int8_flag_;
   bool int8_output_flag;
+  int count_per_img;
+  int len_char;
+  int clas_char;
   // for profiling
   TimeStamp *ts_;
 };

@@ -71,22 +71,22 @@ LPRNET::LPRNET(const string bmodel, int dev_id){
   /* attach device_memory for inference input data */
   bmrt_tensor(&input_tensor_, p_bmrt_, net_info->input_dtypes[0], input_shape);
   /* malloc input and output system memory for preprocess data */
-  int count = bmrt_shape_count(&input_shape);
-  //cout << "input count:" << count << endl;
+  int input_count = bmrt_shape_count(&input_shape);
+  cout << "input count:" << input_count << endl;
   if (int8_flag_) {
-    input_int8 = new int8_t[count];
+    input_int8 = new int8_t[input_count];
   } else {
-    input_f32 = new float[count];
+    input_f32 = new float[input_count];
   }
 
   bm_shape_t output_shape = net_info->stages[0].output_shapes[0];
   bmrt_tensor(&output_tensor_, p_bmrt_, net_info->output_dtypes[0], output_shape);
-  count = bmrt_shape_count(&output_shape);
+  int output_count = bmrt_shape_count(&output_shape);
   //cout << "** output count:" << count << endl;
   if (int8_output_flag) {
-    output_int8 = new int8_t[count];
+    output_int8 = new int8_t[output_count];
   } else {
-    output_f32 = new float[count];
+    output_f32 = new float[output_count];
   }
   //output_ = new float[count];
 
@@ -96,8 +96,10 @@ LPRNET::LPRNET(const string bmodel, int dev_id){
   net_w_ = input_shape.dims[3];
   batch_size_ = input_shape.dims[0];
   num_channels_ = input_shape.dims[1];
-
+  len_char = net_info->stages[0].output_shapes[0].dims[2];
+  clas_char = net_info->stages[0].output_shapes[0].dims[1];
   output_scale = net_info->output_scales[0];
+  count_per_img = output_count/batch_size_;
 
   input_scale = 0.0078125 * net_info->input_scales[0];
   vector<float> mean_values;
@@ -131,12 +133,15 @@ void LPRNET::enableProfile(TimeStamp *ts) {
   ts_ = ts;
 }
 
-void LPRNET::preForward(const cv::Mat &image) {
+void LPRNET::preForward(const vector<cv::Mat> &images) {
   LOG_TS(ts_, "lprnet pre-process")
   //cout << "input image size:" << image.size() << endl;
-  vector<cv::Mat> input_channels;
-  wrapInputLayer(&input_channels);
-  preprocess(image, &input_channels);
+  for (int i = 0; i < batch_size_; i++){
+    vector<cv::Mat> input_channels;
+    wrapInputLayer(&input_channels, i);
+    //cout << "input_channels.size = " << input_channels.size() << endl;
+    preprocess(images[i], &input_channels);
+  }
   LOG_TS(ts_, "lprnet pre-process")
 }
 
@@ -170,40 +175,35 @@ static bool comp(const std::pair<float, int>& lhs,
   return lhs.first > rhs.first;
 }
 
-void LPRNET::postForward (const cv::Mat &image, vector<string> &detections) {
-  auto net_info = bmrt_get_network_info(p_bmrt_, net_names_[0]);
-  int stage_num = net_info->stage_num;
-  bm_shape_t output_shape;
-  for (int i = 0; i < stage_num; i++) {
-    if (net_info->stages[i].input_shapes[0].dims[0] == 1) {
-      output_shape = net_info->stages[i].output_shapes[0];
-      break;
-    }
-    if ( i == (stage_num - 1)) {
-      cout << "ERROR: output not match stages" << endl;
-      return;
-    }
-  }
+void LPRNET::postForward (vector<string> &detections) {
+  // auto net_info = bmrt_get_network_info(p_bmrt_, net_names_[0]);
+  // int stage_num = net_info->stage_num;
+  // bm_shape_t output_shape;
+  // for (int i = 0; i < stage_num; i++) {
+  //   if (net_info->stages[i].input_shapes[0].dims[0] == 1) {
+  //     output_shape = net_info->stages[i].output_shapes[0];
+  //     break;
+  //   }
+  //   if ( i == (stage_num - 1)) {
+  //     cout << "ERROR: output not match stages" << endl;
+  //     return;
+  //   }
+  // }
 
   LOG_TS(ts_, "lprnet post-process")
-  int output_count = bmrt_shape_count(&output_shape);
-  int img_size = batch_size_;
-  int count_per_img = output_count/img_size;
-  //cout << "img_size = " << img_size << endl;
-  //cout << "count_per_img = " << count_per_img << endl;
+  // int output_count = bmrt_shape_count(&output_shape);
+
   detections.clear();
 
   int N = 1;
-  int len_char = net_info->stages[0].output_shapes[0].dims[2];
-  int clas_char = net_info->stages[0].output_shapes[0].dims[1];
   //cout << "len_char = " << len_char << endl;
   //cout << "output_int8 = " << output_int8 << endl;
   //cout << "output_scales=" << net_info->output_scales[0] << endl;
   
   //cout << image_output[0] <<endl;
-  vector<std::pair<float , int>> pairs;
+  vector<pair<float , int>> pairs;
   //vector<string> res;
-  for (int i = 0; i < img_size; i++) {
+  for (int i = 0; i < batch_size_; i++) {
     //res.clear();
     int pred_num[len_char]={1000};
     for (int j = 0; j < len_char; j++){
@@ -257,13 +257,14 @@ void LPRNET::setMean(vector<float> &values) {
     cv::merge(channels_, mean_);
 }
 
-void LPRNET::wrapInputLayer(std::vector<cv::Mat>* input_channels) {
+void LPRNET::wrapInputLayer(std::vector<cv::Mat>* input_channels, int batch_id) {
   int h = net_h_;
   int w = net_w_;
 
   //init input_channels
   if (int8_flag_) {
     int8_t *channel_base = input_int8;
+    channel_base += h * w * num_channels_ * batch_id;
     for (int i = 0; i < num_channels_; i++) {
       cv::Mat channel(h, w, CV_8SC1, channel_base);
       input_channels->push_back(channel);
@@ -271,6 +272,7 @@ void LPRNET::wrapInputLayer(std::vector<cv::Mat>* input_channels) {
     }
   } else {
     float *channel_base = input_f32;
+    channel_base += h * w * num_channels_ * batch_id;
     for (int i = 0; i < num_channels_; i++) {
       cv::Mat channel(h, w, CV_32FC1, channel_base);
       input_channels->push_back(channel);
@@ -279,12 +281,12 @@ void LPRNET::wrapInputLayer(std::vector<cv::Mat>* input_channels) {
   }
 }
 
-void LPRNET::preprocess (const cv::Mat& img, std::vector<cv::Mat>* input_channels) {
+void LPRNET::preprocess (const cv::Mat& img, vector<cv::Mat>* input_channels) {
    /* Convert the input image to the input image format of the network. */
   cv::Mat sample = img;
   cv::Mat sample_resized(net_h_, net_w_, CV_8UC3, cv::SophonDevice(dev_id_));
   if (sample.size() != cv::Size(net_w_, net_h_)) {
-    cv::resize(sample, sample_resized, cv::Size(net_w_, net_w_));
+    cv::resize(sample, sample_resized, cv::Size(net_w_, net_h_));
   }
   else {
     sample_resized = sample;
@@ -310,6 +312,10 @@ void LPRNET::preprocess (const cv::Mat& img, std::vector<cv::Mat>* input_channel
     cv::split(sample_fp32, *input_channels);
   }
 }
+
+int LPRNET::batch_size() {
+  return batch_size_;
+};
 
 string get_res(int pred_num[], int len_char, int clas_char){
   int no_repeat_blank[20];
