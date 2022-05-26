@@ -31,6 +31,8 @@ LPRNet的优点可以总结为如下三点：
 (2)LPRNet是第一个没使用RNN的实时轻量级算法，能够在包括嵌入式设备在内的各式设备上运行。  
 (3)LPRNet在实际交通监控视频中的应用表明，该算法在视角和摄像畸变、光照条件恶劣、视角变化等复杂的情况下仍表现出很好的识别效果。  
 
+![avatar](docs/1.png)
+
 **论文:** [LNRNet论文](https://arxiv.org/abs/1806.10447v1)
 
 **参考repo:** [LNRNet_Pytorch](https://github.com/sirius-ai/LPRNet_Pytorch)
@@ -299,7 +301,28 @@ device id:用于推理的tpu设备id。
 ./lprnet_cv_cv_bmrt.pcie val ../../data/images/test/ ../../data/models/fp32bmodel/lprnet_fp32_4b.bmodel 0  
 ```
 
-可通过改变模型进行int8及batch_size=4推理。
+可通过改变模型进行int8及batch_size=4推理。执行完成后，会打印预测结果、推理时间、准确率等信息。
+
+```bash
+......
+皖KZ9660.jpg pred:皖KZ9660
+皖AF8381.jpg pred:皖AF8381
+皖AVU208.jpg pred:皖AVU208
+皖AV9G58.jpg pred:皖AV9G58
+皖AC037T.jpg pred:皖AC037T
+皖A226K3.jpg pred:皖A226K3
+===========================
+Acc = 889/1000=0.889000
+############################
+SUMMARY: lprnet detect
+############################
+[      lprnet overall]  loops:    1 avg: 1531500 us
+[          read image]  loops:  100 avg: 524 us
+[           detection]  loops:  100 avg: 3918 us
+[  lprnet pre-process]  loops:  100 avg: 225 us
+[    lprnet inference]  loops:  100 avg: 3453 us
+[ lprnet post-process]  loops:  100 avg: 108 us
+```
 
 #### 5.2.2 arm平台SE5
 对于arm平台SE5，需要在docker开发容器中使用交叉编译工具链编译生成可执行文件，而后拷贝到Soc目标平台运行。
@@ -378,6 +401,21 @@ python3 python/lprnet_cv_cv_sail.py --mode test --img_path data/images/test --bm
 python3 python/lprnet_cv_cv_sail.py --mode val --img_path data/images/test --bmodel data/models/fp32bmodel/lprnet_fp32_1b4b.bmodel --batch_size 4 --tpu_id 0  
 ```
 执行完成后，会打印预测结果、推理时间、准确率等信息。
+
+```bash
+......
+INFO:root:img:皖KZ9660.jpg, res:皖KZ9660
+INFO:root:img:皖AF8381.jpg, res:皖AF8381
+INFO:root:img:皖AVU208.jpg, res:皖AVU208
+INFO:root:img:皖AV9G58.jpg, res:皖AV9G58
+INFO:root:img:皖AC037T.jpg, res:皖AC037T
+INFO:root:img:皖A226K3.jpg, res:皖A226K3
+INFO:root:ACC = 0.8950
+INFO:root:------------------ Inference Time Info ----------------------
+INFO:root:inference_time(ms): 1.48
+INFO:root:total_time(ms): 1716.98, img_num: 1000
+INFO:root:average latency time(ms): 1.72, QPS: 582.417488
+```
 
 
 ### 5.4 精度与性能测试
