@@ -10,18 +10,18 @@ namespace fs = boost::filesystem;
 using namespace std;
 
 static vector<string> detect(LPRNET              &net,
-                             cv::Mat             &image,
+                             vector<cv::Mat>     &images,
                              TimeStamp           *ts) {
 
   vector<string> detections;
 
   ts->save("detection");
-  net.preForward(image);
+  net.preForward(images);
 
   // do inference
   net.forward();
 
-  net.postForward(image, detections);
+  net.postForward(detections);
   ts->save("detection");
 
   return detections;
@@ -86,24 +86,31 @@ int main(int argc, char** argv) {
 
   // for profiling
   net.enableProfile(ts);
-
+  int batch_size = net.batch_size();
   bool val_flag = !strcmp(mode.c_str(), "val");
   int tp = 0;
   int cn = 0;
-
+  vector<cv::Mat> batch_imgs;
+  vector<string> batch_names;
+  
   if (fs::is_regular_file(input_url)){
+    if (batch_size != 1){
+      cout << "ERROR: batch_size of model is  " << batch_size << endl;
+      exit(-1);
+    }
     //fs::path image_file(input_url);
     //string name = image_file.filename().string();
     ts->save("lprnet overall");
     ts->save("read image");
     // decode jpg file to Mat object
     cv::Mat img = cv::imread(input_url);
-    //cout << img << endl;
-    //cout << cv::getBuildInformation() << endl;
-    
     ts->save("read image");
+    size_t index = input_url.rfind("/");
+    string img_name = input_url.substr(index + 1);
+    batch_imgs.push_back(img);
+    batch_names.push_back(img_name);
     // do detect
-    vector<string> results = detect(net, img, ts);
+    vector<string> results = detect(net, batch_imgs, ts);
     ts->save("lprnet overall");
     // output results
     cout << input_url << " pred: " << results[0] <<endl;
@@ -111,23 +118,37 @@ int main(int argc, char** argv) {
   else if (fs::is_directory(input_url)){
     fs::recursive_directory_iterator beg_iter(input_url);
     fs::recursive_directory_iterator end_iter;
+    ts->save("lprnet overall");
     for (; beg_iter != end_iter; ++beg_iter){
       if (fs::is_directory(*beg_iter)) continue;
       else {
         string img_file = beg_iter->path().string();
         //cout << img_file << endl;
+        ts->save("read image");
         cv::Mat img = cv::imread(img_file, cv::IMREAD_COLOR, dev_id);
-        vector<string> results = detect(net, img, ts);
-        cout << img_file << " pred: " << results[0] <<endl;
-        if (val_flag){
-          cn++;
-          fs::path image_file(img_file);
-          string label = image_file.stem().string();
-          if (!strcmp(label.c_str(), results[0].c_str())) tp++;
-          //else cout << "label:" << label << " pred:" << results[0] << endl;
-        }
+        ts->save("read image");
+        size_t index = img_file.rfind("/");
+        string img_name = img_file.substr(index + 1);
+        batch_imgs.push_back(img);
+        batch_names.push_back(img_name);
+        if (batch_imgs.size() == batch_size) {
+          vector<string> results = detect(net, batch_imgs, ts);
+          for(int i = 0; i < batch_size; i++){
+            fs::path image_file(batch_names[i]);
+            cout << image_file.string() << " pred:" << results[i].c_str() << endl;
+            if (val_flag){
+              string label = image_file.stem().string();
+              cn++;
+              if (!strcmp(label.c_str(), results[i].c_str())) tp++;
+            }
+          }
+          batch_imgs.clear();
+          batch_names.clear();
+        }        
       }
     }
+    ts->save("lprnet overall");
+    
     cout << "===========================" << endl;
     if (val_flag) cout << "Acc = " << tp << "/" << cn << "=" \
     << float(tp)/cn << endl;
@@ -135,7 +156,7 @@ int main(int argc, char** argv) {
     cout << "Is not a valid path: " << input_url << endl;
     exit(1);
   }
-
+  
   time_stamp_t base_time = time_point_cast<microseconds>(steady_clock::now());
   lprnet_ts.calbr_basetime(base_time);
   lprnet_ts.build_timeline("lprnet detect");

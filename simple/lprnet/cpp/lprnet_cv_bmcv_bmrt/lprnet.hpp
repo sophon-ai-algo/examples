@@ -29,7 +29,7 @@ public:
   void forward();
   void postForward(std::vector<bm_image> &input, std::vector<std::string> &detections);
   void enableProfile(TimeStamp *ts);
-
+  int batch_size();
 private:
   void preprocess_bmcv (std::vector<bm_image> &input);
 
@@ -56,6 +56,10 @@ private:
 
   float input_scale;
   float output_scale;
+  int count_per_img;
+  int batch_size_;
+  int len_char;
+  int clas_char;
 
   // bm image objects for storing intermediate results
   bm_image resize_bmcv_[MAX_BATCH];

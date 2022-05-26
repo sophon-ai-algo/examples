@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- 
-
+import time
 import os
 import cv2
 import numpy as np
@@ -22,8 +22,9 @@ CHARS = ['京', '沪', '津', '渝', '冀', '晋', '蒙', '辽', '吉', '黑',
 CHARS_DICT = {i:char for i, char in enumerate(CHARS)}
 
 # input: x.1, [1, 3, 24, 96], float32, scale: 1
-class LPR(object):
+class LPRNet(object):
     def __init__(self, opt):
+        self.batch_size = opt.batch_size
         # load bmodel
         model_path = opt.bmodel
         print("using model {}".format(model_path))
@@ -33,9 +34,9 @@ class LPR(object):
         self.input_name = self.net.get_input_names(self.graph_name)[0]
         self.output_name = self.net.get_output_names(self.graph_name)[0]
 
-        self.input_shape = [1, 3, 24, 94]
+        self.input_shape = [self.batch_size, 3, 24, 94]
         self.input_shapes = {self.input_name: self.input_shape}
-        self.output_shape = [1, 1, 68, 18]
+        self.output_shape = [self.batch_size, 68, 18]
         self.input_dtype= self.net.get_input_dtype(self.graph_name, self.input_name)
         self.output_dtype = self.net.get_output_dtype(self.graph_name, self.output_name)
 
@@ -52,7 +53,9 @@ class LPR(object):
         self.img_dtype = self.bmcv.get_bm_image_data_format(self.input_dtype)
 
         self.scale = self.net.get_input_scale(self.graph_name, self.input_name)
-        self.ab = [x * self.scale * 0.0078125 for x in [1, -127.5, 1, -127.5, 1, -127.5]]
+        self.ab = [x * self.scale * 0.0078125  for x in [1, -127.5, 1, -127.5, 1, -127.5]]
+
+        self.dt = 0.0
 
         
     def decode_bmcv(self, img_file):
@@ -60,11 +63,8 @@ class LPR(object):
         img = decoder.read(self.handle)
         return img
 
-    def preprocess_bmcv(self, img):
-        output = sail.BMImage(self.handle, self.input_shape[2], self.input_shape[3], \
-                        sail.Format.FORMAT_BGR_PLANAR, self.img_dtype)
-
-        tmp = self.bmcv.vpp_resize(img, 94, 24)
+    def preprocess_bmcv(self, input, output):
+        tmp = self.bmcv.vpp_resize(input, 94, 24)
         
         self.bmcv.convert_to(tmp, output, ((self.ab[0], self.ab[1]), \
                                        (self.ab[2], self.ab[3]), \
@@ -72,7 +72,9 @@ class LPR(object):
         self.bmcv.bm_image_to_tensor(output, self.input)
 
     def predict(self):
+        t0 = time.time()
         self.net.process(self.graph_name, self.input_tensors, self.input_shapes, self.output_tensors)
+        self.dt += time.time() - t0
         real_output_shape = self.net.get_output_shape(self.graph_name, self.output_name)
         outputs = self.output.asnumpy(real_output_shape)
         return outputs
@@ -97,38 +99,80 @@ class LPR(object):
 
         return res
 
-    def process(self, img_file):
-        img = self.decode_bmcv(img_file)
-        self.preprocess_bmcv(img)
-        outputs = self.predict()
-        res = self.postprocess(outputs)
-        return res
+    def __call__(self, img_file_list):
+        img_num = len(img_file_list)
+        res_list = []
+        for beg_img_no in range(0, img_num, self.batch_size):
+            end_img_no = min(img_num, beg_img_no + self.batch_size)
+            if (beg_img_no + self.batch_size > img_num) or (self.batch_size != 4):
+                for ino in range(beg_img_no, end_img_no):
+                    img0 = sail.BMImage()
+                    img1 = sail.BMImage(self.handle, self.input_shape[2], self.input_shape[3], \
+                        sail.Format.FORMAT_BGR_PLANAR, self.img_dtype)
+                    decoder = sail.Decoder(img_file_list[ino])
+                    ret = decoder.read(self.handle, img0)
+                    self.preprocess_bmcv(img0, img1)
+                    outputs = self.predict()
+                    res = self.postprocess(outputs)
+                    res_list.extend(res)
+            else:
+                imgs_0 = sail.BMImageArray4D()
+                imgs_1 = sail.BMImageArray4D(self.handle, self.input_shape[2], self.input_shape[3], \
+                                 sail.Format.FORMAT_BGR_PLANAR, self.img_dtype)
+                for j in range(4):
+                    decoder = sail.Decoder(img_file_list[beg_img_no + j])
+                    ret = decoder.read_(self.handle, imgs_0[j])
+                self.preprocess_bmcv(imgs_0, imgs_1)
+                outputs = self.predict()
+                res = self.postprocess(outputs)
+                res_list.extend(res)
+
+        return res_list
+
+    def get_time(self):
+        return self.dt
 
 def main(opt):
-    lpr = LPR(opt)
+    lprnet = LPRNet(opt)
     if os.path.isfile(opt.img_path):
-        res = lpr.process(opt.img_path)
-        logging.info("img:{}, res:{}".format(opt.img_path, res[0]))
+        res_list = lprnet([opt.img_path])
+        logging.info("img:{}, res:{}".format(opt.img_path, res_list[0]))
     else:
         Tp = 0
-        for img_name in os.listdir(opt.img_path):
+        img_file_list = [os.path.join(opt.img_path, img_name) for img_name in os.listdir(opt.img_path)]
+        
+        t1 = time.time()
+        res_list = lprnet(img_file_list)
+        t2 = time.time()
+
+        for i, img_name in enumerate(os.listdir(opt.img_path)):
+            logging.info("img:{}, res:{}".format(img_name, res_list[i]))
             if opt.mode == 'val':
                 label = img_name.split('.')[0]
-            img_file = os.path.join(opt.img_path, img_name)
-            res = lpr.process(img_file)
-            logging.info("img:{}, res:{}".format(img_file, res[0]))
-            if opt.mode == 'val' and res[0] == label:
-                Tp += 1
+                if res_list[i] == label:
+                    Tp += 1
+            
         if opt.mode == 'val':
             cn = len(os.listdir(opt.img_path))
             logging.info("ACC = %.4f" % (Tp / cn))
+        
+        logging.info("------------------ Inference Time Info ----------------------")
+        inference_time = lprnet.get_time() / len(img_file_list)
+        logging.info("inference_time(ms): {:.2f}".format(inference_time * 1000))
+        total_time = t2 - t1
+        logging.info("total_time(ms): {:.2f}, img_num: {}".format(total_time * 1000, len(img_file_list)))
+        average_latency = total_time / len(img_file_list)
+        qps = 1 / average_latency
+        logging.info("average latency time(ms): {:.2f}, QPS: {:2f}".format(average_latency * 1000, qps))
+
 
 def parse_opt():
     parser = argparse.ArgumentParser(prog=__file__)
     #parser.add_argument('--img-size', type=int, default=[94, 24], help='inference size (pixels)')
     parser.add_argument('--mode', type=str, default='val')
     parser.add_argument('--img_path', type=str, default='/workspace/projects/LPRNet/data/images/test', help='input image path')
-    parser.add_argument('--bmodel', type=str, default='/workspace/projects/LPRNet/scripts/fp32model/compilation.bmodel', help='input model path')
+    parser.add_argument('--bmodel', type=str, default='/workspace/bmnnsdk2-bm1684_v2.7.0_0317/examples/LPRNet/scripts/int8bmodel/lprnet_int8.bmodel', help='input model path')
+    parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument('--tpu_id', type=int, default=0, help='tpu id')
     #parser.add_argument('--format', type=str, default="fp32", help='model format fp32 or fix8b')
     opt = parser.parse_args()

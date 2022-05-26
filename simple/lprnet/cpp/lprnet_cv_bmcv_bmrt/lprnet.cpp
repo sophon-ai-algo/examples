@@ -104,6 +104,15 @@ LPRNET::LPRNET(bm_handle_t bm_handle, const string bmodel):p_bmrt_(nullptr) {
   linear_trans_param_.beta_1 = -127.5 * input_scale;
   linear_trans_param_.alpha_2 = input_scale;
   linear_trans_param_.beta_2 = -127.5 * input_scale;
+
+  bm_shape_t output_shape = net_info_->stages[0].output_shapes[0];
+  batch_size_ = net_info_->stages[0].output_shapes[0].dims[0];
+  len_char = net_info_->stages[0].output_shapes[0].dims[2];
+  clas_char = net_info_->stages[0].output_shapes[0].dims[1];
+  int output_count = bmrt_shape_count(&output_shape);
+  count_per_img = output_count/batch_size_;
+  
+
 }
 
 LPRNET::~LPRNET() {
@@ -138,9 +147,9 @@ void LPRNET::forward() {
   LOG_TS(ts_, "lprnet inference")
   bool res;
   if (output_is_int8_) {
-    res = bm_inference (p_bmrt_, linear_trans_bmcv_, (int8_t*)output_int8, input_shape_, net_names_[0]);
+    res = bm_inference(p_bmrt_, linear_trans_bmcv_, (int8_t*)output_int8, input_shape_, net_names_[0]);
   }else{
-    res = bm_inference (p_bmrt_, linear_trans_bmcv_, (float*)output_fp32, input_shape_, net_names_[0]);
+    res = bm_inference(p_bmrt_, linear_trans_bmcv_, (float*)output_fp32, input_shape_, net_names_[0]);
   }
 
   LOG_TS(ts_, "lprnet inference")
@@ -150,42 +159,42 @@ void LPRNET::forward() {
   }
 }
 
-static bool comp(const std::pair<float, int>& lhs,
-                        const std::pair<float, int>& rhs) {
+static bool comp(const pair<float, int>& lhs,
+                        const pair<float, int>& rhs) {
   return lhs.first > rhs.first;
 }
 
-void LPRNET::postForward (vector<bm_image> &input, vector<string> &detections) {
-  int stage_num = net_info_->stage_num;
-  bm_shape_t output_shape;
-  for (int i = 0; i < stage_num; i++) {
-    if (net_info_->stages[i].input_shapes[0].dims[0] == (int)input.size()) {
-      output_shape = net_info_->stages[i].output_shapes[0];
-      break;
-    }
-    if ( i == (stage_num - 1)) {
-      cout << "ERROR: output not match stages" << endl;
-      return;
-    }
-  }
+void LPRNET::postForward(vector<bm_image> &input, vector<string> &detections) {
+  // int stage_num = net_info_->stage_num;
+  // bm_shape_t output_shape;
+  // for (int i = 0; i < stage_num; i++) {
+  //   if (net_info_->stages[i].input_shapes[0].dims[0] == (int)input.size()) {
+  //     output_shape = net_info_->stages[i].output_shapes[0];
+  //     break;
+  //   }
+  //   if ( i == (stage_num - 1)) {
+  //     cout << "ERROR: output not match stages" << endl;
+  //     return;
+  //   }
+  // }
 
   LOG_TS(ts_, "lprnet post-process")
-  int output_count = bmrt_shape_count(&output_shape);
-  int img_size = input.size();
-  int count_per_img = output_count/img_size;
+  // int output_count = bmrt_shape_count(&output_shape);
+  // int img_size = input.size();
+  // int count_per_img = output_count/img_size;
   //cout << "img_size = " << img_size << endl;
   //cout << "count_per_img = " << count_per_img << endl;
   detections.clear();
 
   int N = 1;
-  int len_char = net_info_->stages[0].output_shapes[0].dims[2];
-  int clas_char = net_info_->stages[0].output_shapes[0].dims[1];
+  // int len_char = net_info_->stages[0].output_shapes[0].dims[2];
+  // int clas_char = net_info_->stages[0].output_shapes[0].dims[1];
   //cout << "len_char = " << len_char << endl;
   //cout << "clas_char = " << clas_char << endl;
   
-  vector<std::pair<float , int>> pairs;
+  vector<pair<float , int>> pairs;
   //vector<string> res;
-  for (int i = 0; i < img_size; i++) {
+  for (int i = 0; i < batch_size_; i++) {
     //res.clear();
     int pred_num[len_char]={1000};
     for (int j = 0; j < len_char; j++){
@@ -240,6 +249,10 @@ void LPRNET::preprocess_bmcv (vector<bm_image> &input) {
   bmcv_image_convert_to(bm_handle_, input.size(), linear_trans_param_, resize_bmcv_, linear_trans_bmcv_);
   LOG_TS(ts_, "linear transform")
 }
+
+int LPRNET::batch_size() {
+  return batch_size_;
+};
 
 string get_res(int pred_num[], int len_char, int clas_char){
   int no_repeat_blank[20];
