@@ -1,6 +1,5 @@
 import os
 import shutil
-import torch
 import numpy as np
 import cv2
 import argparse
@@ -274,7 +273,6 @@ def main(opt):
                 # yolact.bmcv.imwrite('{}.jpg'.format(save_name), e_img)
             print('the results is saved: {}'.format(os.path.abspath(opt.output_dir)))
 
-
         else:
             raise NotImplementedError
 
@@ -282,7 +280,7 @@ def main(opt):
 def parse_opt():
     parser = argparse.ArgumentParser(prog=__file__)
     parser.add_argument('--cfgfile', type=str, help='model config file')
-    parser.add_argument('--model', type=str, help='torchscript trace model path')
+    parser.add_argument('--model', type=str, help='bmodel path')
     parser.add_argument('--dev_id', type=int, default=0, help='device id')
     image_path = os.path.join(os.path.dirname(__file__),"../data/images")
     parser.add_argument('--thresh', type=float, default=0.5, help='confidence threshold')

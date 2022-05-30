@@ -1,11 +1,9 @@
 #!/bin/bash
-
-model_dir=$(dirname $(readlink -f "$0"))
-echo $model_dir
+root_dir=$(cd `dirname $BASH_SOURCE[0]`/../ && pwd)
+model_dir=$root_dir/data/models
 
 function gen_fp32bmodel()
 {
-	cd ../data/models
 	python3 -m bmnetp --net_name=yolact_base \
 			  --target=BM1684 \
 			  --opt=1 \
