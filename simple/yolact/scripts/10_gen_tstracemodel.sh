@@ -1,16 +1,15 @@
-!/bin/bash
-model_dir=$(dirname $(readlink -f "$0"))
-echo $model_dir
+#!/bin/bash
+root_dir=$(cd `dirname $BASH_SOURCE[0]`/../ && pwd)
+cvt_dir=$root_dir/scripts/converter
  
 function gen_tstracemodel()
 {
-	cd converter
-	python3 convert.py --input ../../data/models/yolact_base_54_800000.pth \
+	python3 convert.py --input $root_dir/data/models/yolact_base_54_800000.pth \
 			   --mode tstrace \
 			   --cfg yolact_base \
-			   --output ../../data/models/
+			   --output $root_dir/data/models/
 }
  
-pushd $model_dir
+pushd $cvt_dir
 gen_tstracemodel
 popd

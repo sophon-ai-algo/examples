@@ -151,13 +151,36 @@ class PostProcess:
         if len(boxes) == 0:
             return [],[],[],[]
 
-        indices = cv2.dnn.NMSBoxes(boxes.tolist(), conf_scores.tolist(),
-                                   self.conf_thresh, self.nms_thres, top_k=self.keep_top_k)
+        # nms per category
+        unique_id = np.unique(classid)
 
-        # opencv return (5,1) or (5, ) in different version
-        if len(indices.shape) == 2:
-            indices = indices.squeeze(1)
-        classid, conf_scores, boxes, masks = classid[indices], conf_scores[indices], boxes[indices], masks[indices]
+        new_classid = []
+        new_conf_scores = []
+        new_boxes = []
+        new_masks = []
+        for i,cls in enumerate(unique_id):
+            cls_loc = (classid == cls)
+            classid_cls = classid[cls_loc]
+            conf_scores_cls = conf_scores[cls_loc]
+            boxes_cls = boxes[cls_loc]
+            masks_cls = masks[cls_loc]
+
+            ind_nms = cv2.dnn.NMSBoxes(boxes_cls.tolist(), conf_scores_cls.tolist(),
+                                   self.conf_thresh, self.nms_thres, top_k=self.keep_top_k)
+            # opencv return (5,1) or (5, ) in different version
+            if len(ind_nms.shape) == 2:
+                ind_nms = ind_nms.squeeze(1)
+
+            classid_cls, conf_scores_cls, boxes_cls, masks_cls = classid_cls[ind_nms], conf_scores_cls[ind_nms], boxes_cls[ind_nms], masks_cls[ind_nms]
+            new_classid += [classid_cls]
+            new_conf_scores += [conf_scores_cls]
+            new_boxes += [boxes_cls]
+            new_masks += [masks_cls]
+
+        classid = np.concatenate(new_classid)
+        conf_scores = np.concatenate(new_conf_scores)
+        boxes = np.concatenate(new_boxes)
+        masks = np.concatenate(new_masks)
 
         masks = np.matmul(proto_data, masks.T)
         masks = 1 / (1 + np.exp(-masks))

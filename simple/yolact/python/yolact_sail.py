@@ -1,6 +1,5 @@
 import os
 import shutil
-import torch
 import numpy as np
 import cv2
 import argparse
@@ -142,7 +141,6 @@ def main(opt):
 
     img_num = len(input_list)
     batch_num = batch_size
-    print('===================================== ', batch_num)
 
     if batch_size not in [1, 4]:
         raise NotImplementedError(
@@ -225,51 +223,14 @@ def main(opt):
                 cv2.imencode('.jpg', e_img)[1].tofile('{}.jpg'.format(save_name))
             print('the results is saved: {}'.format(os.path.abspath(opt.output_dir)))
 
-
         else:
             raise NotImplementedError
-
-
-
-
-
-
-
-    # img_name = opt.img_name
-    # src_img = decode_image_opencv(img_name)
-    # if src_img is None:
-    #     print("Error: reading image '{}'".format(img_name))
-    #     return -1
-    # org_h, org_w = src_img.shape[:2]
-    #
-    # src_img_list = [src_img]
-    # org_size_list = [(org_w, org_h)]
-    #
-    #
-    # preprocessed_img = yolact.preprocess.infer_batch(src_img_list)
-    #
-    # out_infer = yolact.predict(preprocessed_img)
-    #
-    # classid_list, conf_scores_list, boxes_list, masks_list = \
-    #     yolact.postprocess.infer_batch(out_infer, org_size_list)
-    #
-    # for i, (e_img, classid, conf_scores, boxes, masks) in enumerate(zip(src_img_list,
-    #                                                                     classid_list,
-    #                                                                     conf_scores_list,
-    #                                                                     boxes_list,
-    #                                                                     masks_list)):
-    #     draw_numpy(e_img, boxes, masks=masks, classes_ids=classid, conf_scores=conf_scores)
-    #
-    #     cv2.imencode('.jpg', src_img)[1].tofile('{}_{}.jpg'.format(opt.out_name.replace('.jpg', ''), i))
-    #     print('{}_{}.jpg is saved.'.format(opt.out_name.replace('.jpg', ''), i))
-
-
 
 
 def parse_opt():
     parser = argparse.ArgumentParser(prog=__file__)
     parser.add_argument('--cfgfile', type=str, help='model config file')
-    parser.add_argument('--model', type=str, help='torchscript trace model path')
+    parser.add_argument('--model', type=str, help='bmodel path')
     parser.add_argument('--dev_id', type=int, default=0, help='device id')
     image_path = os.path.join(os.path.dirname(__file__),"../data/images/zidane.jpg")
     parser.add_argument('--thresh', type=float, default=0.5, help='confidence threshold')
