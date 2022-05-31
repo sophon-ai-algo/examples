@@ -6,6 +6,8 @@
   * [目录](#目录)
   * [1. 简介](#1-简介)
   * [2. 数据集](#2-数据集)
+    * [2.1 测试数据](#2.1 测试数据)
+    * [2.2 量化数据集](#2.2 量化数据集)
   * [3. 准备环境与数据](#3-准备环境与数据)
     * [3.1 准备环境](#31-准备环境)
     * [3.2 准备模型](#32-准备模型)
@@ -28,8 +30,18 @@ YOLOv5是非常经典的基于anchor的One Stage目标检测算法YOLO的改进�
 
 **实现repo：**[yolov5_demo](https://github.com/xiaotan3664/)
 
-
 ## 2. 数据集
+
+### 2.1 测试数据
+
+使用`scripts/01_prepare_test_data.sh`下载测试数据，下载完成后测试数据(图片和视频)将保存在`data/`目录下：
+
+```bash
+cd scripts
+bash ./01_prepare_test_data.sh
+```
+
+### 2.2 量化数据集
 
 [MS COCO](http://cocodataset.org/#home)，是微软构建的一个包含分类、检测、分割等任务的大型的数据集。使用[yolov5](https://github.com/ultralytics/yolov5)基于COCO Detection 2017预训练好的80类通用目标检测模型。
 
@@ -205,6 +217,8 @@ python export.py --weights ${PATH_TO_YOLOV5S_MODEL}/yolov5s.pt --include torchsc
 
 上述脚本会在原始pt模型所在目录下生成导出的JIT模型，导出后可以修改模型名称以区分不同版本和输出类型，如`yolov5s_640_coco_v6.1_1output.torchscript`表示仅带有1个融合后的输出的JIT模型。
 
+同时，我们已经准备了转换好的JIT模型，也可以直接从[这里](http://219.142.246.77:65000/sharing/lrneolzC3)下载。
+
 ### 3.3 准备量化集
 
 不量化模型可跳过本节。
@@ -222,6 +236,8 @@ cd scripts
 ## 4. 模型转换
 
 模型转换的过程需要在x86下的docker开发环境中完成。以下操作均在x86下的docker开发环境中完成。下面我们以3个output的情况为例，介绍如何完成模型的转换。
+
+同时，我们已经准备了转换好的模型，可以直接从[这里](http://219.142.246.77:65000/sharing/YtGpzqDfP)下载。
 
 ### 4.1 生成FP32 BModel
 
