@@ -122,109 +122,136 @@ def main(opt):
     batch_size = yolact.net.inputs_shapes[0][0]
     input_path = opt.input_path
 
-    # imgage directory
-    input_list = []
-    if os.path.isdir(input_path):
-        for img_name in os.listdir(input_path):
-            if is_img(img_name):
-                input_list.append(os.path.join(input_path, img_name))
-                # imgage file
-    elif is_img(input_path):
-        input_list.append(input_path)
-    # imgage list saved in file
-    else:
-        with open(input_path, 'r', encoding='utf-8') as fin:
-            for line in fin.readlines():
-                line_head = line.strip("\n").split(' ')[0]
-                if is_img(line_head):
-                    input_list.append(line_head)
+    if opt.is_video:
+        if batch_size != 1:
+            raise ValueError(
+                'bmodel batch size must be 1 in video inference, but got {}'.format(
+                    batch_size)
+            )
 
-    img_num = len(input_list)
-    batch_num = batch_size
-
-    if batch_size not in [1, 4]:
-        raise NotImplementedError(
-            'This example is for batch-1 or batch-4 model. Please transfer bmodel with batch size 1 or 4.')
-
-    # combine into batch
-    for beg_img_no in range(0, img_num, batch_num):
-        end_img_no = min(img_num, beg_img_no + batch_num)
-        inp_batch = []
-        cur_bs = end_img_no - beg_img_no
-        padding_bs = batch_num - cur_bs
-
-        for ino in range(beg_img_no, end_img_no):
-            inp_batch.append(input_list[ino])
-            # padding batch for last batch
-            if ino == end_img_no - 1:
-                for pbs in range(padding_bs):
-                    inp_batch.append(input_list[0])
-
-        # decode
-        if len(inp_batch) == 1:
-            image = decode_image_opencv(inp_batch[0])
-            if image is None:
-                # decode failed.
-                print("Error: reading image '{}'".format(inp_batch[0]))
-                continue
-
-            org_h, org_w = image.shape[:2]
-
-            # end-to-end inference
-            preprocessed_img = yolact.preprocess(image)
-
+        cap = cv2.VideoCapture(input_path)
+        ret, frame = cap.read()
+        id = 0
+        while ret and frame is not None:
+            org_h, org_w = frame.shape[:2]
+            preprocessed_img = yolact.preprocess(frame)
             out_infer = yolact.predict(preprocessed_img)
-
-            loc_data, conf_preds, mask_data, proto_data = out_infer
             classid, conf_scores, boxes, masks = \
-                yolact.postprocess(loc_data, conf_preds, mask_data, proto_data, (org_w, org_h))
+                yolact.postprocess(*out_infer, (org_w, org_h))
 
-            draw_numpy(image, boxes, masks=masks, classes_ids=classid, conf_scores=conf_scores)
-
-            save_basename = 'res_cv_{}'.format(os.path.basename(inp_batch[0]))
+            result_image = frame.copy()
+            draw_numpy(result_image, boxes, masks=masks, classes_ids=classid, conf_scores=conf_scores)
+            save_basename = 'res_pt_{}'.format(id)
             save_name = os.path.join(opt.output_dir, save_basename.replace('.jpg', ''))
-            cv2.imencode('.jpg', image)[1].tofile('{}.jpg'.format(save_name))
-            print('{}.jpg is saved.'.format(save_name))
+            cv2.imencode('.jpg', result_image)[1].tofile('{}.jpg'.format(save_name))
+            id += 1
+            ret, frame = cap.read()
+        cap.release()
 
-        elif len(inp_batch) == 4:
-            images = []
-            batch_ret = True
-            for i in range(len(inp_batch)):
-                image = decode_image_opencv(inp_batch[i])
-                if image is None:
-                    batch_ret = False
-                    break
-                images.append(image)
-            # if one decode failed, pass this batch
-            if not batch_ret:
-                continue
+    else:
 
-            org_size_list = []
-            for i in range(len(inp_batch)):
-                org_h, org_w = images[i].shape[:2]
-                org_size_list.append((org_w, org_h))
-
-            # batch end-to-end inference
-            preprocessed_img = yolact.preprocess.infer_batch(images)
-
-            out_infer = yolact.predict(preprocessed_img)
-
-            classid_list, conf_scores_list, boxes_list, masks_list = \
-                    yolact.postprocess.infer_batch(out_infer, org_size_list)
-
-            for i, (e_img, classid, conf_scores, boxes, masks) in enumerate(zip(images,
-                                                                                classid_list,
-                                                                                conf_scores_list,
-                                                                                boxes_list,
-                                                                                masks_list)):
-                draw_numpy(e_img, boxes, masks=masks, classes_ids=classid, conf_scores=conf_scores)
-                save_basename = 'res_cv_{}'.format(os.path.basename(inp_batch[i]))
-                save_name = os.path.join(opt.output_dir, save_basename.replace('.jpg', ''))
-                cv2.imencode('.jpg', e_img)[1].tofile('{}.jpg'.format(save_name))
-            print('the results is saved: {}'.format(os.path.abspath(opt.output_dir)))
-
+        # imgage directory
+        input_list = []
+        if os.path.isdir(input_path):
+            for img_name in os.listdir(input_path):
+                if is_img(img_name):
+                    input_list.append(os.path.join(input_path, img_name))
+                    # imgage file
+        elif is_img(input_path):
+            input_list.append(input_path)
+        # imgage list saved in file
         else:
-            raise NotImplementedError
+            with open(input_path, 'r', encoding='utf-8') as fin:
+                for line in fin.readlines():
+                    line_head = line.strip("\n").split(' ')[0]
+                    if is_img(line_head):
+                        input_list.append(line_head)
+
+        img_num = len(input_list)
+        batch_num = batch_size
+
+        if batch_size not in [1, 4]:
+            raise NotImplementedError(
+                'This example is for batch-1 or batch-4 model. Please transfer bmodel with batch size 1 or 4.')
+
+        # combine into batch
+        for beg_img_no in range(0, img_num, batch_num):
+            end_img_no = min(img_num, beg_img_no + batch_num)
+            inp_batch = []
+            cur_bs = end_img_no - beg_img_no
+            padding_bs = batch_num - cur_bs
+
+            for ino in range(beg_img_no, end_img_no):
+                inp_batch.append(input_list[ino])
+                # padding batch for last batch
+                if ino == end_img_no - 1:
+                    for pbs in range(padding_bs):
+                        inp_batch.append(input_list[0])
+
+            # decode
+            if len(inp_batch) == 1:
+                image = decode_image_opencv(inp_batch[0])
+                if image is None:
+                    # decode failed.
+                    print("Error: reading image '{}'".format(inp_batch[0]))
+                    continue
+
+                org_h, org_w = image.shape[:2]
+
+                # end-to-end inference
+                preprocessed_img = yolact.preprocess(image)
+
+                out_infer = yolact.predict(preprocessed_img)
+
+                classid, conf_scores, boxes, masks = \
+                    yolact.postprocess(*out_infer, (org_w, org_h))
+
+                draw_numpy(image, boxes, masks=masks, classes_ids=classid, conf_scores=conf_scores)
+
+                save_basename = 'res_cv_{}'.format(os.path.basename(inp_batch[0]))
+                save_name = os.path.join(opt.output_dir, save_basename.replace('.jpg', ''))
+                cv2.imencode('.jpg', image)[1].tofile('{}.jpg'.format(save_name))
+                print('{}.jpg is saved.'.format(save_name))
+
+            elif len(inp_batch) == 4:
+                images = []
+                batch_ret = True
+                for i in range(len(inp_batch)):
+                    image = decode_image_opencv(inp_batch[i])
+                    if image is None:
+                        batch_ret = False
+                        break
+                    images.append(image)
+                # if one decode failed, pass this batch
+                if not batch_ret:
+                    continue
+
+                org_size_list = []
+                for i in range(len(inp_batch)):
+                    org_h, org_w = images[i].shape[:2]
+                    org_size_list.append((org_w, org_h))
+
+                # batch end-to-end inference
+                preprocessed_img = yolact.preprocess.infer_batch(images)
+
+                out_infer = yolact.predict(preprocessed_img)
+
+                classid_list, conf_scores_list, boxes_list, masks_list = \
+                        yolact.postprocess.infer_batch(out_infer, org_size_list)
+
+                for i, (e_img, classid, conf_scores, boxes, masks) in enumerate(zip(images,
+                                                                                    classid_list,
+                                                                                    conf_scores_list,
+                                                                                    boxes_list,
+                                                                                    masks_list)):
+                    draw_numpy(e_img, boxes, masks=masks, classes_ids=classid, conf_scores=conf_scores)
+                    save_basename = 'res_cv_{}'.format(os.path.basename(inp_batch[i]))
+                    save_name = os.path.join(opt.output_dir, save_basename.replace('.jpg', ''))
+                    cv2.imencode('.jpg', e_img)[1].tofile('{}.jpg'.format(save_name))
+                print('the results is saved: {}'.format(os.path.abspath(opt.output_dir)))
+
+            else:
+                raise NotImplementedError
 
 
 def parse_opt():
@@ -236,6 +263,7 @@ def parse_opt():
     parser.add_argument('--thresh', type=float, default=0.5, help='confidence threshold')
     parser.add_argument('--nms', type=float, default=0.5, help='nms threshold')
     parser.add_argument('--keep', type=int, default=100, help='keep top-k')
+    parser.add_argument('--is_video', default=0, type=int, help="input is video?")
     parser.add_argument('--input_path', type=str, default=image_path, help='input image path')
     parser.add_argument('--output_dir', type=str, default="results_cv", help='output image directory')
     opt = parser.parse_args()

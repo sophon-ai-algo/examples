@@ -143,7 +143,7 @@ class SophonInference:
         outputs_dict = OrderedDict()
         for name in self.output_names:
             outputs_dict[name] = outputs[name]
-        logger.debug(outputs.keys())
+        # logger.debug(outputs.keys())
         return outputs_dict
         # return self.outputToList_numpy(outputs)
 
@@ -165,6 +165,6 @@ class SophonInference:
         outputs_dict = OrderedDict()
         for name in self.output_names:
             outputs_dict[name] = self.output_tensors[name].asnumpy() * self.output_scales[name]
-        logger.debug(self.output_tensors.keys())
+        # logger.debug(self.output_tensors.keys())
         return outputs_dict
         # return self.outputToList(self.output_tensors)
