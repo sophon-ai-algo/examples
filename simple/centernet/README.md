@@ -156,7 +156,7 @@ virtualenv env-ctdet
 source ./env-ctdet/bin/activate
 
 # 安装依赖
-pip3 install torch==1.7.0 -i https://mirrors.aliyun.com/pypi/simple/
+pip3 install torch==1.8.0 -i https://mirrors.aliyun.com/pypi/simple/
 
 ```
 
