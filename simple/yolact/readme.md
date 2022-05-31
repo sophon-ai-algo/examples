@@ -96,7 +96,7 @@ source envsetup_cmodel.sh
 
 ### 3.2 准备模型
 
-从[yolact](https://github.com/dbolya/yolact#evaluation)下载所需的pt模型或者从我们准备好的相同来源的[pt模型](http://219.142.246.77:65000/sharing/70LdQ2ABQ)。
+从[yolact](https://github.com/dbolya/yolact#evaluation)下载所需的pt模型或者从我们准备好的相同来源的[pt模型](http://219.142.246.77:65000/sharing/Ib5nkB32t)。
 
 **注意：**由于[yolact](https://github.com/dbolya/yolact#evaluation)源码包含了训练部分代码和切片操作，需要将训练部分和切片操作代码去掉，提前返回features。我们提供了修改好的代码可以直接转换。**在[模型转换](#4-模型转换)章节，我们提供了从pt模型下载，转换bmodel模型步骤。详细模型转换可参考[模型转换](#4-模型转换)。**
 
@@ -231,9 +231,14 @@ Python代码无需编译，无论是x86 SC平台还是arm SE5平台配置好环�
 
 ```bash
 cd ${YOLACT}/python
+# yolact_sail.py使用方法与yolact_bmcv.py一致
 # 如果使用yolact_pytorch.py测试，<model>为JIT模型路径
 # yoloact base
-python3 yolact_xxx.py --cfgfile configs/yolact_base.cfg --model ../data/models/yolact_base_54_800000_b1.bmodel --input_path ../data/images/
+# image
+python3 yolact_bmcv.py --cfgfile configs/yolact_base.cfg --model ../data/models/yolact_base_54_800000_fp32_b1/yolact_base_54_800000_b1.bmodel --input_path ../data/images/
+
+# video
+python3 yolact_bmcv.py --cfgfile configs/yolact_base.cfg --model ../data/models/yolact_base_54_800000_fp32_b1/yolact_base_54_800000_b1.bmodel --is_video 1 --input_path ../data/videos/road.mp4
 ```
 
 > **使用SAIL模块的注意事项：**对于INT8 BModel来说，当输入输出为int8时，含有scale，需要在处理时将输入输出乘以相应的scale。使用SAIL接口推理时，当sail.Engine.process()接口输入为numpy时，SAIL内部会自动乘以scale，用户无需操作；而输入为Tensor时，需要手动在数据送入推理接口前乘以scale。
