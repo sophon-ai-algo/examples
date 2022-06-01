@@ -6,8 +6,8 @@
   * [目录](#目录)
   * [1. 简介](#1-简介)
   * [2. 数据集](#2-数据集)
-    * [2.1 测试数据](#2.1 测试数据)
-    * [2.2 量化数据集](#2.2 量化数据集)
+    * [2.1 测试数据](#2.1-测试数据)
+    * [2.2 量化数据集](#2.2-量化数据集)
   * [3. 准备环境与数据](#3-准备环境与数据)
     * [3.1 准备环境](#31-准备环境)
     * [3.2 准备模型](#32-准备模型)
@@ -34,7 +34,7 @@ YOLOv5是非常经典的基于anchor的One Stage目标检测算法YOLO的改进�
 
 ### 2.1 测试数据
 
-使用`scripts/01_prepare_test_data.sh`下载测试数据，下载完成后测试数据(图片和视频)将保存在`data/`目录下：
+使用`scripts/01_prepare_test_data.sh`下载测试数据，下载完成后测试数据(图片和视频)将保存在`data`目录下：
 
 ```bash
 cd scripts
@@ -82,16 +82,16 @@ bash ./01_prepare_test_data.sh
 
 #### 3.1.2 SDK软件包下载：
 
-- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://sophon.cn/drive/44.html)，Ubuntu 16.04 with Python 3.5
+- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://sophon.cn/drive/44.html)，Ubuntu 16.04 with Python 3.7
 
   ```bash
-  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/01/18/10/bmnnsdk2-bm1684-ubuntu-docker-py35.zip
+  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
   ```
 
-- SDK软件包：[点击前往官网下载SDK软件包](https://sophon.cn/drive/45.html)，BMNNSDK 2.6.0_20220130_042200
+- SDK软件包：[点击前往官网下载SDK软件包](https://sophon.cn/drive/45.html)，BMNNSDK 2.7.0 patched
 
   ```bash
-  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/02/10/18/bmnnsdk2_bm1684_v2.6.0.zip
+  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/05/31/11/bmnnsdk2_bm1684_v2.7.0_20220531patched.zip
   ```
 
 #### 3.1.3 创建docker开发环境：
@@ -105,13 +105,13 @@ bash ./01_prepare_test_data.sh
 - 解压缩SDK：
 
   ```bash
-  tar zxvf bmnnsdk2-bm1684_v2.6.0.tar.gz
+  tar zxvf bmnnsdk2-bm1684_v2.7.0.tar.gz
   ```
 
 - 创建docker容器，SDK将被挂载映射到容器内部供使用：
 
   ```bash
-  cd bmnnsdk2-bm1684_v2.6.0
+  cd bmnnsdk2-bm1684_v2.7.0
   # 若您没有执行前述关于docker命令免root执行的配置操作，需在命令前添加sudo
   ./docker_run_bmnnsdk.sh
   ```
@@ -163,11 +163,16 @@ git clone https://github.com/ultralytics/yolov5.git
 cd yolov5
 # 使用tag从远程创建本地v6.1 分支
 git branch v6.1 v6.1
-# 使用anaconda创建1个Python==3.8.12的虚拟环境并激活这个环境
-conda create -n py38yolov5 python==3.8.12
-conda activate py38yolov5
+
+# 创建python虚拟环境virtualenv
+sudo apt update
+pip3 install virtualenv
+# 切换到虚拟环境
+virtualenv -p python3 --system-site-packages env_yolov5
+source env_yolov5/bin/activate
+
 # 安装依赖
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 #### 3.2.2 修改model/yolo.py
@@ -212,7 +217,7 @@ BMNNSDK2中的PyTorch模型编译工具BMNETP只接受PyTorch的JIT模型（Torc
 JIT（Just-In-Time）是一组编译工具，用于弥合PyTorch研究与生产之间的差距。它允许创建可以在不依赖Python解释器的情况下运行的模型，并且可以更积极地进行优化。在已有PyTorch的Python模型（基类为torch.nn.Module）的情况下，通过torch.jit.trace就可以得到JIT模型，如`torch.jit.trace(python_model, torch.rand(input_shape)).save('jit_model')`。BMNETP暂时不支持带有控制流操作（如if语句或循环）的JIT模型，因此不能使用torch.jit.script，而要使用torch.jit.trace，它仅跟踪和记录张量上的操作，不会记录任何控制流操作。这部分操作yolov5已经为我们写好，只需运行如下命令即可导出符合要求的JIT模型：
 
 ```bash
-python export.py --weights ${PATH_TO_YOLOV5S_MODEL}/yolov5s.pt --include torchscript
+python3 export.py --weights ${PATH_TO_YOLOV5S_MODEL}/yolov5s.pt --include torchscript
 ```
 
 上述脚本会在原始pt模型所在目录下生成导出的JIT模型，导出后可以修改模型名称以区分不同版本和输出类型，如`yolov5s_640_coco_v6.1_1output.torchscript`表示仅带有1个融合后的输出的JIT模型。
@@ -236,8 +241,6 @@ cd scripts
 ## 4. 模型转换
 
 模型转换的过程需要在x86下的docker开发环境中完成。以下操作均在x86下的docker开发环境中完成。下面我们以3个output的情况为例，介绍如何完成模型的转换。
-
-同时，我们已经准备了转换好的模型，可以直接从[这里](http://219.142.246.77:65000/sharing/YtGpzqDfP)下载。
 
 ### 4.1 生成FP32 BModel
 
@@ -384,13 +387,12 @@ output: 174, [1, 3, 20, 20, 85], int8, scale: 0.106422
 
 ## 5. 部署测试
 
-请注意根据您使用的模型，修改`cpp/yolov5.cpp`或者`python/yolov5_***.py`中的anchors信息以及使用的`coco.names`文件；类别数量是根据模型输出Tensor的形状自动计算得到的，无需修改。
+请注意根据您使用的模型，修改`cpp/yolov5.cpp`或者`python/yolov5_your_script.py`中的anchors信息以及使用的`coco.names`文件；类别数量是根据模型输出Tensor的形状自动计算得到的，无需修改。
 
-测试图片见`data/images`，测试视频见`data/videos`，转换好的bmodel文件可以放置于`data/models`。
+2.1节下载测试数据后，测试图片见`data/images`，测试视频见`data/videos`，转换好的bmodel文件可以放置于`data/models`。
 
-> 已经转换好的bmodel文件可从以下百度网盘下载：
+> 已经转换好的bmodel文件可从[这里](http://219.142.246.77:65000/sharing/YtGpzqDfP)下载
 >
-> 链接: https://pan.baidu.com/s/1d3f8CjzC3BF2-2I2OF0q1g 提取码: lt59 
 
 ### 5.1 环境配置
 
