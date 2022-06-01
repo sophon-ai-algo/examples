@@ -2,17 +2,47 @@
 
 ## 目录
 
+* [YOLACT](#YOLACT)
+  * [目录](#目录)
+  * [1. 简介](#1-简介)
+  * [2. 数据集](#2-数据集)
+    * [2.1 测试数据](#21-测试数据)
+    * [2.2 量化数据集](#22-量化数据集)
+  * [3. 准备环境与数据](#3-准备环境与数据)
+    * [3.1 准备开发环境](#31-准备开发环境)
+    * [3.2 准备模型](#32-准备模型)
+    * [3.3 准备量化集](#33-准备量化集)
+  * [4. 模型转换](#4-模型转换)
+    * [4.1 生成JIT模型](#41-生成JIT模型)
+    * [4.2 生成FP32 BModel](#42-生成fp32-bmodel)
+    * [4.3 生成INT8 BModel](#43-生成int8-bmodel)
+  * [5. 部署测试](#5-部署测试)
+    * [5.1 环境配置](#51-环境配置)
+    * [5.2 C++例程部署测试](#52-C++例程部署测试)
+    * [5.3 Python例程部署测试](#53-Python例程部署测试)
+
 ## 1. 简介
 
 ## 2. 数据集
+
+### 2.1 测试数据
+
+使用`scripts/01_prepare_test_data.sh`下载测试数据，下载完成后测试数据(图片和视频)将保存在`data`目录下：
+
+```bash
+cd scripts
+bash ./01_prepare_test_data.sh
+```
+
+### 2.2 量化数据集
 
 [MS COCO](http://cocodataset.org/#home)，是微软构建的一个包含分类、检测、分割等任务的大型的数据集。使用[yolact](https://github.com/dbolya/yolact)基于COCO Detection 2017预训练好的80类通用目标检测模型。
 
 > MS COCO提供了一些[API](https://github.com/cocodataset/cocoapi)，方便对数据集的使用和模型评估，您可以使用pip安装` pip3 install pycocotools`，并使用COCO提供的API进行下载。
 
-## 准备环境与数据
+## 3 准备环境与数据
 
-### 3.1准备开发环境
+### 3.1 准备开发环境
 
 开发环境是指用于模型转换或验证以及程序编译等开发过程的环境，目前只支持x86，需要使用我们提供的基于Ubuntu16.04的docker镜像。
 
@@ -113,7 +143,7 @@ python3 ./convert.py --input ${MODEL_DIR}/yolact_base_54_800000.pth --mode tstra
 
 上述脚本会在scripts/converter文件夹下生成`yolact_base_54_800000.trace.pt`的JIT模型。
 
-### 3.3准备量化集
+### 3.3 准备量化集
 
 coming soon.
 
@@ -185,7 +215,7 @@ coming soon.
 
 链接: http://219.142.246.77:65000/sharing/1EDAWPfqh
 
-### 环境配置
+### 5.1 环境配置
 
 #### x86 SC5
 
@@ -211,11 +241,11 @@ sudo apt-get install python3-pip
 sudo pip3 install numpy==1.17.2
 ```
 
-### C++例程部署测试
+### 5.2 C++例程部署测试
 
 coming soon.
 
-### Python例程部署测试
+### 5.3 Python例程部署测试
 
 Python代码无需编译，无论是x86 SC平台还是arm SE5平台配置好环境之后就可直接运行。
 
