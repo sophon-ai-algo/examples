@@ -2,7 +2,7 @@
 ## usage:
 * x86 pcie
 
-> make on x86 docker, but run on x86/x86 docker.
+> make on x86 docker, and run on x86 docker.
 
 ```shell
 make -f Makefile.pcie
