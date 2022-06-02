@@ -47,9 +47,9 @@ if __name__=='__main__':
     cfg = SUPPORT_CONFIG[args.cfg]
 
     hw = (550, 550)
-    if args.cfg == 'resnet101_im400':
+    if args.cfg == 'yolact_im400':
         hw = (400, 400)
-    elif args.cfg == 'resnet101_im700':
+    elif args.cfg == 'yolact_im700':
         hw = (700, 700)
     elif args.cfg in list(SUPPORT_CONFIG.keys()):
         hw = (550, 550)
