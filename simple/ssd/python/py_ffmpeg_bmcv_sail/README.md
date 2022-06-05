@@ -1,4 +1,4 @@
-## Example of SSD300 decoded by bm-ffmpeg, preprocessed by bm-ffmpeg, inference by sail.
+## Example of SSD300 decoded by bm-ffmpeg, preprocessed by bmcv, inference by sail.
 
 ## Usage:
 
@@ -6,11 +6,10 @@
 
 ```shell
 # set LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/workspace/lib/ffmpeg/x86: \
-       /workspace/lib/decode/x86
+# export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$REL_TOP/lib/ffmpeg/pcie:$REL_TOP/lib/decode/pcie
 
 # install sophon python whl
-cd /workspace/lib/sail/python3/pcie/py35
+cd $REL_TOP/lib/sail/python3/pcie/py37
 pip3 install sophon-x.x.x-py3-none-any.whl --user
 ```
 
@@ -18,7 +17,7 @@ pip3 install sophon-x.x.x-py3-none-any.whl --user
 
 ```shell
 # set PYTHONPATH
-export PYTHONPATH=/workspace/lib/sail/python3/soc/py35/sophon:$PYTHONPATH
+# export PYTHONPATH=/workspace/lib/sail/python3/soc/py35/sophon:$PYTHONPATH
 ```
 
 * A SSD example using bm-ffmpeg to decode and using bmcv to preprocess, with batch size is 1.
