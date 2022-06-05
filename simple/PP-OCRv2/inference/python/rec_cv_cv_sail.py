@@ -65,7 +65,7 @@ class PPOCRv2Rec(object):
     def predict(self, tensor):
         input_data = {self.input_name: np.array(tensor, dtype=np.float32)}
         outputs = self.net.process(self.graph_name, input_data)
-        return list(outputs.values())[0]
+        return list(outputs.values())[-1]
 
     def postprocess(self, outputs):
         result_list = []

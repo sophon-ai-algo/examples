@@ -44,70 +44,21 @@ PP-OCRv2，是百度飞桨团队开源的超轻量OCR系列模型，包含文本
 
 ### 3.1 准备开发环境
 
-开发环境是指用于模型转换或验证以及程序编译等开发过程的环境，目前只支持x86，建议使用我们提供的基于Ubuntu16.04的docker镜像。
+模型转换验证和程序编译必须在开发环境中完成，我们需要一台x86主机作为开发环境，并且在我们提供的基于Ubuntu18.04的docker镜像中，使用我们的BMNNSDK3进行模型转换和量化。如果我们的x86主机插有PCIe加速卡可使用PCIe模式，如果没有可使用CModel模式。
 
-运行环境是具备Sophon设备的平台上实际使用设备进行算法应用部署的环境，有PCIe加速卡、SM5模组、SE5边缘计算盒子等，所有运行环境上的BModel都是一样的，SDK中各模块的接口也是一致的。
-
-开发环境与运行环境可能是统一的（如插有SC5加速卡的x86主机，既是开发环境又是运行环境），也可能是分离的（如使用x86主机作为开发环境转换模型和编译程序，使用SE5盒子部署运行最终的算法应用）。
-
-但是，无论使用的产品是SoC模式还是PCIe模式，都需要一台x86主机作为开发环境，模型的转换工作必须在开发环境中完成。
-
-#### 3.1.1 开发主机准备：
-
-- 开发主机：一台安装了Ubuntu16.04/18.04/20.04的x86主机，运行内存建议12GB以上
-
-- 安装docker：参考《[官方教程](https://docs.docker.com/engine/install/)》，若已经安装请跳过
-
-#### 3.1.2 SDK软件包下载：
-
-- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/all.html)，Ubuntu 16.04 with Python 3.7
-
-```bash  
-wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
+- 从宿主机SDK根目录下执行脚本进入docker环境  
 ```
-
-- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/17/all.html)，bmnnsdk2_bm1684 2022.03.27
-
-```bash
-wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/04/14/10/bmnnsdk2_bm1684_v2.7.0_20220316_patched_0413.zip
-```
-
-#### 3.1.3 创建docker开发环境：
-
-- 加载docker镜像:
-
-```bash
-docker load -i bmnnsdk2-bm1684-ubuntu.docker
-```
-
-- 解压缩SDK：
-
-```bash
-tar zxvf bmnnsdk2-bm1684_v2.7.0.tar.gz
-```
-
-- 创建docker容器，SDK将被挂载映射到容器内部供使用：
-
-```bash
-cd bmnnsdk2-bm1684_v2.7.0
-# 若您没有执行前述关于docker命令免root执行的配置操作，需在命令前添加sudo
 ./docker_run_bmnnsdk.sh
 ```
-
-- 进入docker容器中安装库：
-
-```bash
-# 进入容器中执行
-cd  /workspace/scripts/
-./install_lib.sh nntc
+- 在docker容器内安装依赖库及和设置环境变量
 ```
-
-- 设置环境变量：
-
-```bash
-# 配置环境变量，这一步会安装一些依赖库，并导出环境变量到当前终端
-# 导出的环境变量只对当前终端有效，每次进入容器都需要重新执行一遍，或者可以将这些环境变量写入~/.bashrc，这样每次登录将会自动设置环境变量
-source envsetup_pcie.sh
+# 在docker容器内执行
+cd $REL_TOP/scripts
+# 安装库
+./install_lib.sh nntc
+# 设置环境变量，注意此命令只对当前终端有效，重新进入需要重新执行
+source envsetup_pcie.sh    # for PCIE MODE
+source envsetup_cmodel.sh  # for CMODEL MODE
 ```
 
 ### 3.2 准备模型与数据
@@ -115,9 +66,6 @@ source envsetup_pcie.sh
 进入本例程的工作目录后，可通过运行`scripts/download.sh`将相关模型下载至`data/models`，将数据集下载并解压至`data/images/`。
 
 ```bash
-# 视情况安装相关工具
-apt update
-apt install curl
 # 下载相关模型与数据
 ./scripts/download.sh
 ```
@@ -232,7 +180,7 @@ sudo pip3 install numpy==1.17.2
 ```bash
 # 确认平台及python版本，然后进入相应目录，比如x86平台，python3.7
 cd $REL_TOP/lib/sail/python3/pcie/py37
-pip3 install sophon-x.x.x-py3-none-any.whl
+pip3 install sophon-*-py3-none-any.whl
 ```
 
 还需安装其他第三方库：
@@ -287,6 +235,8 @@ usage:det_cv_cv_sail.py [--tpu_id] [--img_path] [--det_model] [--det_batch_size]
 python3 inference/python/det_cv_cv_sail.py --tpu_id 0  --img_path data/images/ppocr_img/test --det_model data/models/fp32bmodel/ch_PP-OCRv2_det_fp32_b1b4.bmodel --det_batch_size 4
 ```
 执行完成后，会将预测的可视化结果保存在`./inference_results`文件夹下。
+
+![avatar](docs/det_res_11.jpg)
 
 - 文本方向分类
 
@@ -364,6 +314,8 @@ usage:system_cv_cv_sail.py [--drop_score] [--use_angle_cls]
 python3 inference/python/system_cv_cv_sail.py --use_angle_cls True --drop_score  0.5 
 ```
 执行完成后，会打印预测的字段，同时会将预测的可视化结果保存在`./inference_results`文件夹下。
+
+![avatar](docs/ocr_res_11.jpg)
 
 ### 5.4 精度与性能测试
 #### 5.4.1 精度测试
