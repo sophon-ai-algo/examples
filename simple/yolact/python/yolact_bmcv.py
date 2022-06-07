@@ -130,6 +130,9 @@ def main(opt):
     batch_size = yolact.net.inputs_shapes[0][0]
     input_path = opt.input_path
 
+    if not os.path.exists(input_path):
+        raise FileNotFoundError('{} is not existed.'.format(input_path))
+
     if opt.is_video:
         if batch_size != 1:
             raise ValueError(
@@ -145,7 +148,7 @@ def main(opt):
             while True:
                 ret = decoder.read(yolact.handle, frame)
                 if ret:
-                    print("decoder error\n")
+                    print("stream end or decoder error")
                     break
 
                 org_h, org_w = frame.height(), frame.width()
@@ -176,7 +179,6 @@ def main(opt):
                 # yolact.bmcv.imwrite('{}.jpg'.format(save_name), image)
                 id += 1
 
-            print("stream end or decoder error")
         else:
             print("failed to create decoder")
 
@@ -200,38 +202,31 @@ def main(opt):
                         input_list.append(line_head)
 
         img_num = len(input_list)
-        batch_num = batch_size
 
         if batch_size not in [1, 4]:
             raise NotImplementedError(
                 'This example is for batch-1 or batch-4 model. Please transfer bmodel with batch size 1 or 4.')
 
-        # combine into batch
-        for beg_img_no in range(0, img_num, batch_num):
-            end_img_no = min(img_num, beg_img_no + batch_num)
-            inp_batch = []
-            cur_bs = end_img_no - beg_img_no
-            padding_bs = batch_num - cur_bs
+        inp_batch = []
+        images = []
+        for ino in range(img_num):
+            image = sail.BMImage()
+            ret = decode_image_bmcv(input_list[ino], yolact.handle, image)
+            if not ret:
+                # decode failed.
+                print('skip: decode failed: {}'.format(input_list[ino]))
+                continue
+            images.append(image)
+            inp_batch.append(input_list[ino])
 
-            for ino in range(beg_img_no, end_img_no):
-                inp_batch.append(input_list[ino])
-                # padding batch for last batch
-                if ino == end_img_no - 1:
-                    for pbs in range(padding_bs):
-                        inp_batch.append(input_list[0])
+            if len(images) != batch_size and ino != (img_num - 1):
+                continue
 
-            if len(inp_batch) == 1:
-
-                image = sail.BMImage()
-                ret = decode_image_bmcv(inp_batch[0], yolact.handle, image)
-                if not ret:
-                    # decode failed.
-                    print('decode failed: {}'.format(inp_batch[0]))
-                    continue
-                org_h, org_w = image.height(), image.width()
-
+            if batch_size == 1:
+                single_image = images[0]
+                org_h, org_w = single_image.height(), single_image.width()
                 # end-to-end inference
-                preprocessed_img = yolact.preprocess(image,
+                preprocessed_img = yolact.preprocess(single_image,
                                                      yolact.handle,
                                                      yolact.bmcv,
                                                      )
@@ -242,9 +237,9 @@ def main(opt):
                     yolact.postprocess(*out_infer, (org_w, org_h))
 
                 # bmcv cannot draw with instance masks, so we convert BMImage to numpy to draw
-                image_bgr_planar = sail.BMImage(yolact.handle, image.height(), image.width(),
-                                                sail.Format.FORMAT_BGR_PLANAR, image.dtype())
-                yolact.bmcv.convert_format(image, image_bgr_planar)
+                image_bgr_planar = sail.BMImage(yolact.handle, single_image.height(), single_image.width(),
+                                                sail.Format.FORMAT_BGR_PLANAR, single_image.dtype())
+                yolact.bmcv.convert_format(single_image, image_bgr_planar)
                 image_tensor = yolact.bmcv.bm_image_to_tensor(image_bgr_planar)
                 image_chw_numpy = image_tensor.asnumpy()[0]
                 image_numpy = np.transpose(image_chw_numpy, [1, 2, 0]).copy()
@@ -257,35 +252,27 @@ def main(opt):
                 cv2.imencode('.jpg', image_numpy)[1].tofile('{}.jpg'.format(save_name))
                 # yolact.bmcv.imwrite('{}.jpg'.format(save_name), image)
                 print('{}.jpg is saved.'.format(save_name))
+            else:
+                suppoort_batch_size = [2, 3, 4, 8, 16, 32, 64, 128, 256]
+                if batch_size not in suppoort_batch_size:
+                    raise ValueError('batch_size must be {}, but got {}'.format(suppoort_batch_size, batch_size))
 
-            elif len(inp_batch) == 4:
+                bm_array = eval('sail.BMImageArray{}D'.format(batch_size))
 
-                image_list = []
-                preprocessed_imgs = sail.BMImageArray4D(yolact.handle,
-                                                  yolact.preprocess.height,
-                                                  yolact.preprocess.width,
-                                                  sail.FORMAT_RGB_PLANAR,
-                                                  sail.DATA_TYPE_EXT_FLOAT32)
-                batch_ret = True
-                for i in range(len(inp_batch)):
-                    image = sail.BMImage()
-                    ret = decode_image_bmcv(inp_batch[i], yolact.handle, image)
-                    if not ret:
-                        batch_ret = False
-                        break
-                    image_list.append(image)
-                # if one decode failed, pass this batch
-                if not batch_ret:
-                    continue
+                preprocessed_imgs = bm_array(yolact.handle,
+                                             yolact.preprocess.height,
+                                             yolact.preprocess.width,
+                                             sail.FORMAT_RGB_PLANAR,
+                                             sail.DATA_TYPE_EXT_FLOAT32)
 
                 org_size_list = []
                 for i in range(len(inp_batch)):
-                    org_h, org_w = image_list[i].height(), image_list[i].width()
+                    org_h, org_w = images[i].height(), images[i].width()
                     org_size_list.append((org_w, org_h))
 
                 # batch end-to-end inference
                 preprocessed_img_list = yolact.preprocess.infer_batch(
-                    image_list,
+                    images,
                     yolact.handle,
                     yolact.bmcv,
                 )
@@ -293,16 +280,22 @@ def main(opt):
                 for i in range(len(inp_batch)):
                     preprocessed_imgs.copy_from(i, preprocessed_img_list[i])
 
+                # padding
+                cur_bs = len(images)
+                padding_bs = batch_size - cur_bs
+                for i in range(cur_bs, batch_size):
+                    preprocessed_imgs.copy_from(i, preprocessed_img_list[0])
+
                 out_infer = yolact.predict([preprocessed_imgs])
+
+                # cancel padding data
+                if padding_bs != 0:
+                    out_infer = [e_data[:cur_bs] for e_data in out_infer]
 
                 classid_list, conf_scores_list, boxes_list, masks_list = \
                     yolact.postprocess.infer_batch(out_infer, org_size_list)
 
-                # cancel padding batch for last batch
-                classid_list, conf_scores_list, boxes_list, masks_list = \
-                    classid_list[:cur_bs], conf_scores_list[:cur_bs], boxes_list[:cur_bs], masks_list[:cur_bs]
-
-                for i, (e_img, classid, conf_scores, boxes, masks) in enumerate(zip(image_list,
+                for i, (e_img, classid, conf_scores, boxes, masks) in enumerate(zip(images,
                                                                                     classid_list,
                                                                                     conf_scores_list,
                                                                                     boxes_list,
@@ -322,10 +315,11 @@ def main(opt):
                     save_name = os.path.join(opt.output_dir, save_basename.replace('.jpg', ''))
                     cv2.imencode('.jpg', image_numpy)[1].tofile('{}.jpg'.format(save_name))
                     # yolact.bmcv.imwrite('{}.jpg'.format(save_name), e_img)
-                print('the results is saved: {}'.format(os.path.abspath(opt.output_dir)))
 
-            else:
-                raise NotImplementedError
+            images.clear()
+            inp_batch.clear()
+
+        print('the results is saved: {}'.format(os.path.abspath(opt.output_dir)))
 
 
 def parse_opt():
