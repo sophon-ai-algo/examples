@@ -15,7 +15,7 @@ tf_resnet50 = [
     '-s', '(1, 299, 299, 3)',
     '-d', 'compilation',
     '-n', 'resnet50_v2',
-    '-D', '../classify_demo/lmdb/imagenet_s/ilsvrc12_val_lmdb_with_preprocess',
+    '-D', './dummy_lmdb',
     '--cmp',
     '--no-transform'
 ]

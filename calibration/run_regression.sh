@@ -101,6 +101,7 @@ function test_pt_to_fp32umodel_demo()
 function test_tf_to_fp32umodel_demo()
 {
     pushd ./tf_to_fp32umodel_demo
+    python3 create_dummy_quant_lmdb.py
     python3 resnet50_v2_to_umodel.py 
     popd
 }

@@ -10,6 +10,7 @@ source ./envsetup_cmodel.sh  #配置不同平台的运行环境
 ##运行脚本
 ```bash
 cd ../examples/calibration/tf_to_fp32umodel_demo
+python3 create_dummy_quant_lmdb.py #创建一个dummy数据组成的lmdb作为数据源，仅作为演示，不能用来真正量化此网络
 python3 resnet50_v2_to_umodel.py  #指定当前虚拟环境的python解释器来运行脚本
 ```
 ##执行结果
@@ -17,3 +18,5 @@ python3 resnet50_v2_to_umodel.py  #指定当前虚拟环境的python解释器来
 - io_info.dat
 - *.fp32umodel
 - *.prototxt
+在当前目录生成一个dummy_lmdb文件夹，内容包括:
+- *.mdb
