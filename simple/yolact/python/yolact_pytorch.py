@@ -106,6 +106,9 @@ def main(opt):
     batch_size = opt.batch_size
     input_path = opt.input_path
 
+    if not os.path.exists(input_path):
+        raise FileNotFoundError('{} is not existed.'.format(input_path))
+
     if opt.is_video:
         cap = cv2.VideoCapture(input_path)
         ret, frame = cap.read()
@@ -146,33 +149,18 @@ def main(opt):
                         input_list.append(line_head)
 
         img_num = len(input_list)
-        batch_num = batch_size
 
-        # combine into batch
-        for beg_img_no in range(0, img_num, batch_num):
-            end_img_no = min(img_num, beg_img_no + batch_num)
-            inp_batch = []
-            cur_bs = end_img_no - beg_img_no
-            padding_bs = batch_num - cur_bs
+        inp_batch = []
+        images = []
+        for ino in range(img_num):
+            image = decode_image_opencv(input_list[ino])
+            if image is None:
+                print('skip: image data is none: {}'.format(input_list[ino]))
+                continue
+            images.append(image)
+            inp_batch.append(input_list[ino])
 
-            for ino in range(beg_img_no, end_img_no):
-                inp_batch.append(input_list[ino])
-                # padding batch for last batch
-                if ino == end_img_no - 1:
-                    for pbs in range(padding_bs):
-                        inp_batch.append(input_list[0])
-
-            # decode
-            images = []
-            batch_ret = True
-            for i in range(len(inp_batch)):
-                image = decode_image_opencv(inp_batch[i])
-                if image is None:
-                    batch_ret = False
-                    break
-                images.append(image)
-            # if one decode failed, pass this batch
-            if not batch_ret:
+            if len(images) != batch_size and ino != (img_num - 1):
                 continue
 
             org_size_list = []
@@ -183,7 +171,18 @@ def main(opt):
             # batch end-to-end inference
             preprocessed_img = yolact.preprocess.infer_batch(images)
 
+            cur_bs = len(images)
+            padding_bs = batch_size - cur_bs
+
+            # padding a batch
+            for i in range(padding_bs):
+                preprocessed_img = np.concatenate([preprocessed_img, preprocessed_img[:1, :, :]], axis=0)
+
             out_infer = yolact.predict(preprocessed_img)
+
+            # cancel padding data
+            if padding_bs != 0:
+                out_infer = [e_data[:cur_bs] for e_data in out_infer]
 
             classid_list, conf_scores_list, boxes_list, masks_list = \
                 yolact.postprocess.infer_batch(out_infer, org_size_list)
@@ -197,6 +196,9 @@ def main(opt):
                 save_basename = 'res_pt_{}'.format(os.path.basename(inp_batch[i]))
                 save_name = os.path.join(opt.output_dir, save_basename.replace('.jpg', ''))
                 cv2.imencode('.jpg', e_img)[1].tofile('{}.jpg'.format(save_name))
+
+            images.clear()
+            inp_batch.clear()
         print('the results is saved: {}'.format(os.path.abspath(opt.output_dir)))
 
 
