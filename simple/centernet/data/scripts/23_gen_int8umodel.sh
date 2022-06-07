@@ -12,8 +12,7 @@ function calibration()
       -winograd=true \
       -save_test_proto=false \
       -bitwidth=TO_INT8 \
-      -graph_transform=true \
-      -accuracy_opt=true
+      -graph_transform=true
 }
 
 pushd $build_dir

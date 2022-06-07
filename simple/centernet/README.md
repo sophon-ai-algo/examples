@@ -147,17 +147,8 @@ cd ../examples/centernet/data/scripts/
 ./download_pt.sh
 # 下载成功后，文件位于../build/ctdet_coco_dlav0_1x.pth
 
-# 创建python虚拟环境
+# 切换目录
 cd ../build
-pip3 install virtualenv
-virtualenv env-ctdet
-
-# 切换到虚拟环境
-source ./env-ctdet/bin/activate
-
-# 安装依赖
-pip3 install torch==1.8.0 -i https://mirrors.aliyun.com/pypi/simple/
-
 ```
 
 #### dlav0.py网络修改说明
@@ -172,8 +163,6 @@ return torch.cat((ret['hm'], ret['wh'], ret['reg']), 1)
 直接运行export.py即可
 ```bash
 python3 export.py
-# 退出虚拟环境
-deactivate
 cp ctdet_coco_dlav0_1x.torchscript.pt ../models
 ```
 当前目录下生成了一份ctdet_coco_dlav0_1x.torchscript.pt文件
