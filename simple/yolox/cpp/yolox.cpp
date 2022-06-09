@@ -185,7 +185,11 @@ bm_image_data_format_ext YoloXDete::get_img_dtype()
 
 void YoloXDete::Inference()
 {
+    double start_time = sail::get_current_time_us();
     engie->process(graph_name,input_tensormap,output_tensormap);
+    double end_time = sail::get_current_time_us();
+    printf("Inference time use:%.2f ms, Batch size:%d, avg fps:%.1f\n",
+        (end_time-start_time)/1000, batch_size,batch_size*1000*1000/(end_time-start_time));
 }
 
 void* YoloXDete::get_output_data_prt()

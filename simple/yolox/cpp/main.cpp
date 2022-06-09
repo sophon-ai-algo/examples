@@ -172,7 +172,7 @@ int main(int argc, char** argv)
                 int idx_start = name_list.at(0).find_last_of('/')+1;
                 std::string image_name_temp = name_list.at(0).substr(idx_start,name_list.at(0).size());
                 string save_name = save_path + "/" + image_name_temp;
-                printf("Save: %s\n",save_name.c_str());
+                // printf("Save: %s\n",save_name.c_str());
 
                 auto temp_iter = dete_result.find(image_name_temp);
                 if(temp_iter == dete_result.end()){
@@ -194,7 +194,7 @@ int main(int argc, char** argv)
                     int idx_start = name_list.at(j).find_last_of('/')+1;
                     std::string image_name_temp = name_list.at(j).substr(idx_start,name_list.at(j).size());
                     string save_name = save_path + "/" + image_name_temp;
-                    printf("Save: %s\n",save_name.c_str());
+                    // printf("Save: %s\n",save_name.c_str());
 
                     auto temp_iter = dete_result.find(image_name_temp);
                     if(temp_iter == dete_result.end()){

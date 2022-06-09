@@ -147,9 +147,9 @@ function build_cpp(){
 }
 
 function run_example_cpp(){
-    ./cpp/yolox_sail.pcie pic ./data/test_data ./data/yolox_s_int8_bs4.bmodel 0 0.25 0.45 save_result $1
+    ./cpp/yolox_sail.pcie pic ./data/test_data ./data/yolox_s_int8_bs4.bmodel 0 0.25 0.45 save_result/sail_cpp $1
     judge_ret $? "run_example_cpp [yolox_s_int8_bs4.bmodel]"
-    ./cpp/yolox_sail.pcie pic ./data/test_data ./data/yolox_s_fp32_bs1.bmodel 0 0.25 0.45 save_result $1
+    ./cpp/yolox_sail.pcie pic ./data/test_data ./data/yolox_s_fp32_bs1.bmodel 0 0.25 0.45 save_result/sail_cpp $1
     judge_ret $? "run_example_cpp [yolox_s_fp32_bs1.bmodel]"
 }
 
@@ -161,9 +161,10 @@ function run_example_py(){
         --bmodel_path=./data/yolox_s_int8_bs4.bmodel \
         --detect_threshold=0.25 \
         --nms_threshold=0.45 \
-        --save_path=save_result \
+        --save_path=save_result/tensor_engine \
         --device_id=$1
-    judge_ret $? "run_example_py [yolox_s_int8_bs4.bmodel]"
+    judge_ret $? "det_yolox_sail.py [yolox_s_int8_bs4.bmodel]"
+    
     python3 python/det_yolox_sail.py \
         --is_video=0 \
         --loops=0 \
@@ -171,9 +172,53 @@ function run_example_py(){
         --bmodel_path=./data/yolox_s_fp32_bs1.bmodel \
         --detect_threshold=0.25 \
         --nms_threshold=0.45 \
-        --save_path=save_result \
+        --save_path=save_result/tensor_engine \
         --device_id=$1
-    judge_ret $? "run_example_py [yolox_s_fp32_bs1.bmodel]"
+    judge_ret $? "det_yolox_sail.py [yolox_s_fp32_bs1.bmodel]"
+    
+    python3 python/numpy_yolox_engine.py \
+        --is_video=0 \
+        --loops=0 \
+        --file_name=./data/test_data/ \
+        --bmodel_path=./data/yolox_s_int8_bs4.bmodel \
+        --detect_threshold=0.25 \
+        --nms_threshold=0.45 \
+        --save_path=save_result/numpy_engine \
+        --device_id=$1
+    judge_ret $? "numpy_yolox_engine.py [yolox_s_int8_bs4.bmodel]"
+
+    python3 python/numpy_yolox_engine.py \
+        --is_video=0 \
+        --loops=0 \
+        --file_name=./data/test_data/ \
+        --bmodel_path=./data/yolox_s_fp32_bs1.bmodel \
+        --detect_threshold=0.25 \
+        --nms_threshold=0.45 \
+        --save_path=save_result/numpy_engine \
+        --device_id=$1
+    judge_ret $? "numpy_yolox_engine.py [yolox_s_fp32_bs1.bmodel]"
+
+    python3 python/numpy_yolox_multiengine.py \
+        --is_video=0 \
+        --loops=0 \
+        --file_name=./data/test_data/ \
+        --bmodel_path=./data/yolox_s_fp32_bs1.bmodel \
+        --detect_threshold=0.25 \
+        --nms_threshold=0.45 \
+        --save_path=save_result/numpy_multiengine \
+        --device_id=$1$1
+    judge_ret $? "numpy_yolox_multiengine.py [yolox_s_fp32_bs1.bmodel]"
+
+    python3 python/numpy_yolox_multiengine.py \
+        --is_video=0 \
+        --loops=0 \
+        --file_name=./data/test_data/ \
+        --bmodel_path=./data/yolox_s_int8_bs4.bmodel \
+        --detect_threshold=0.25 \
+        --nms_threshold=0.45 \
+        --save_path=save_result/numpy_multiengine \
+        --device_id=$1
+    judge_ret $? "numpy_yolox_multiengine.py [yolox_s_int8_bs4.bmodel]"
 }
 
 function get_tpu_num() {
@@ -200,29 +245,55 @@ function get_tpu_ids() {
 function verify_result(){
     python3 python/calc_recall_accuracy.py \
         --ground_truths=./data/test_data/ground_truths.txt \
-        --detections=./save_result/test_data_yolox_s_int8_bs4_py.txt \
-        --iou_threshold=0.6
-    judge_ret $? "Verify [python] [yolox_s_int8_bs4.bmodel]"
-
-    python3 python/calc_recall_accuracy.py \
-        --ground_truths=./data/test_data/ground_truths.txt \
-        --detections=./save_result/test_data_yolox_s_int8_bs4_cpp.txt \
+        --detections=./save_result/sail_cpp/test_data_yolox_s_int8_bs4_cpp.txt \
         --iou_threshold=0.6
     judge_ret $? "Verify [cpp] [yolox_s_int8_bs4.bmodel]"
 
     python3 python/calc_recall_accuracy.py \
         --ground_truths=./data/test_data/ground_truths.txt \
-        --detections=./save_result/test_data_yolox_s_fp32_bs1_py.txt \
+        --detections=./save_result/sail_cpp/test_data_yolox_s_fp32_bs1_cpp.txt \
         --iou_threshold=0.6
-    judge_ret $? "Verify [python] [yolox_s_fp32_bs1.bmodel]"
+    judge_ret $? "Verify [cpp] [yolox_s_fp32_bs1.bmodel]"
 
     python3 python/calc_recall_accuracy.py \
         --ground_truths=./data/test_data/ground_truths.txt \
-        --detections=./save_result/test_data_yolox_s_fp32_bs1_cpp.txt \
+        --detections=./save_result/tensor_engine/test_data_yolox_s_int8_bs4_py.txt \
         --iou_threshold=0.6
-    judge_ret $? "Verify [cpp] [yolox_s_fp32_bs1.bmodel]"
-    
+    judge_ret $? "Verify [python-tensor] [yolox_s_int8_bs4.bmodel]"
+
+    python3 python/calc_recall_accuracy.py \
+        --ground_truths=./data/test_data/ground_truths.txt \
+        --detections=./save_result/tensor_engine/test_data_yolox_s_fp32_bs1_py.txt \
+        --iou_threshold=0.6
+    judge_ret $? "Verify [python-tensor] [yolox_s_fp32_bs1.bmodel]"
+
+    python3 python/calc_recall_accuracy.py \
+        --ground_truths=./data/test_data/ground_truths.txt \
+        --detections=./save_result/numpy_engine/test_data_yolox_s_int8_bs4_py.txt \
+        --iou_threshold=0.6
+    judge_ret $? "Verify [python-numpy-engine] [yolox_s_int8_bs4.bmodel]"
+
+    python3 python/calc_recall_accuracy.py \
+        --ground_truths=./data/test_data/ground_truths.txt \
+        --detections=./save_result/numpy_engine/test_data_yolox_s_fp32_bs1_py.txt \
+        --iou_threshold=0.6
+    judge_ret $? "Verify [python-numpy-engine] [yolox_s_fp32_bs1.bmodel]"
+
+    python3 python/calc_recall_accuracy.py \
+        --ground_truths=./data/test_data/ground_truths.txt \
+        --detections=./save_result/numpy_multiengine/test_data_yolox_s_int8_bs4_py.txt \
+        --iou_threshold=0.6
+    judge_ret $? "Verify [python-numpy-MultiEngine] [yolox_s_int8_bs4.bmodel]"
+
+    python3 python/calc_recall_accuracy.py \
+        --ground_truths=./data/test_data/ground_truths.txt \
+        --detections=./save_result/numpy_multiengine/test_data_yolox_s_fp32_bs1_py.txt \
+        --iou_threshold=0.6
+    judge_ret $? "Verify [python-numpy-MultiEngine] [yolox_s_fp32_bs1.bmodel]"
 }
+
+shell_dir=$(dirname $(readlink -f "$0"))
+pushd $shell_dir
 
 download_files
 if [ $# -eq 1 ];then
@@ -244,3 +315,4 @@ do
   run_example_py $tpu_id
   verify_result
 done
+popd

@@ -277,20 +277,21 @@ if __name__ == "__main__":
     output_result = {}
 
     if opt.is_video:
-        save_result_name = opt.file_name.split('/')[-1].split('.')[0]+'_'+opt.bmodel_path.split('/')[-1].split('.')[0]+'.txt'
+        save_result_name = opt.file_name.split('/')[-1].split('.')[0]+'_'+opt.bmodel_path.split('/')[-1].split('.')[0]+'_py.txt'
         save_result_name = os.path.join(save_path,save_result_name)
         decoder = sail.Decoder(opt.file_name, True, opt.device_id)
         _,_,ost_h,ost_w = decoder.get_frame_shape()
 
         for i in range(opt.loops):
-            start_time = time.time()
             ost_image,resize_image,input_tensor,min_ratio= getTensors(decoder, handle, bmcv, batch_size,
                 ost_w,ost_h, net_w, net_h, alpha_beta, yolox.dtype)
             
+            start_time = time.time()
             output_npy = yolox.inference(input_tensor)
-            predictions = yolox.yolox_postprocess(output_npy, net_w, net_h)
             end_time = time.time()
-            print("Decoder and Inference time use:{:.2f} ms, Batch size : {}".format((end_time-start_time)*1000, batch_size))
+            predictions = yolox.yolox_postprocess(output_npy, net_w, net_h)
+            print("Inference time use:{:.2f} ms, Batch size:{}, avg fps:{:.1f}".format((end_time-start_time)*1000,\
+                    batch_size,batch_size/(end_time-start_time)))
             if batch_size == 1:
                 dete_boxs = yolox.get_detectresult(predictions[0],opt.detect_threshold, opt.nms_threshold)
                 if dete_boxs is not None:
@@ -343,7 +344,6 @@ if __name__ == "__main__":
         if batch_size == 1:
             for image_name in image_list:
                 decoder = sail.Decoder(image_name)
-                start_time = time.time()
                 img = decoder.read(handle)
                 img_bgr = sail.BMImage(handle, img.height(), img.width(),sail.FORMAT_BGR_PLANAR, sail.DATA_TYPE_EXT_1N_BYTE)
                 bmcv.convert_format(img,img_bgr)
@@ -351,12 +351,13 @@ if __name__ == "__main__":
                 output_temp = sail.BMImage(handle, net_h, net_w,sail.FORMAT_BGR_PLANAR, yolox.dtype)
                 bmcv.convert_to(output_image, output_temp, alpha_beta)
                 input_tensor = bmcv.bm_image_to_tensor(output_temp)
+                start_time = time.time()
                 output_npy = yolox.inference(input_tensor)
+                end_time = time.time()
                 predictions = yolox.yolox_postprocess(output_npy, net_w, net_h)
                 dete_boxs = yolox.get_detectresult(predictions[0],opt.detect_threshold, opt.nms_threshold)
-                end_time = time.time()
-                print("Decoder and Inference time use:{:.2f} ms, Batch size : 1".format((end_time-start_time)*1000))
-
+                print("Inference time use:{:.2f} ms, Batch size:{}, avg fps:{:.1f}".format((end_time-start_time)*1000,\
+                    batch_size,batch_size/(end_time-start_time)))
                 if dete_boxs is not None:
                     dete_boxs[:,0] /= min_ratio
                     dete_boxs[:,1] /= min_ratio
@@ -396,7 +397,8 @@ if __name__ == "__main__":
                 start_time = time.time()
                 output_npy = yolox.inference(input_tensor)
                 end_time = time.time()
-                print("Inference time use:{:.2f} ms, Batch size : 4".format((end_time-start_time)*1000))
+                print("Inference time use:{:.2f} ms, Batch size:{}, avg fps:{:.1f}".format((end_time-start_time)*1000,\
+                    batch_size,batch_size/(end_time-start_time)))
                 predictions = yolox.yolox_postprocess(output_npy, net_w, net_h)
 
                 for image_idx in range(4):

@@ -25,8 +25,10 @@ python3 -V
 # for x86
 pip3 install ../lib/sail/python3/pcie/py3x/sophon-?.?.?-py3-none-any.whl --user
 ```
+### det_yolox_sail.py
+ decoder use sail.Decoder, perprocess use sail.bmcv, inference use sail.Engine.process(graph_name,input_tensors_dict, output_tensors_dict)
 
-### run example
+- Run example
 
 ``` shell
     python3 det_yolox_sail.py \
@@ -39,14 +41,61 @@ pip3 install ../lib/sail/python3/pcie/py3x/sophon-?.?.?-py3-none-any.whl --user
         --nms_threshold=nms-threshold \         # default 0.45
         --save_path=result-save-path
 ```
+- Result
 
-### Result
 result in your save path
 
-for picture,  picture save name is same as original name, save txt name is [ost picture name]_[bmodel name].txt
+for picture,  picture save name is same as original name, save txt name is [ost picture name]_[bmodel name]_py.txt
 
-for video, save picture count is batch_size*loops, name is frame_[frame idx]_device_[device id].jpg, save txt name is [video name]_[bmodel name].txt
+for video, save picture count is batch_size*loops, name is frame_[frame idx]_device_[device id].jpg, save txt name is [video name]_[bmodel name]_py.txt
 
+### numpy_yolox_engine.py
+ decoder use cv2, perprocess use cv2 and numpy, inference use sail.Engine.process(graph_name,input_numpys_dict)
+
+- Run example
+
+``` shell
+    python3 numpy_yolox_engine.py \
+        --bmodel_path=your-path-to-bmodel \
+        --is_video=test-file-is-video-or-not \
+        --file_name=your-video-name-or-picture-path \
+        --loops=video-inference-count \
+        --device_id=use-tpu-id \                # defaule 0
+        --detect_threshold=detect-threshold \   # default 0.25
+        --nms_threshold=nms-threshold \         # default 0.45
+        --save_path=result-save-path
+```
+- Result
+
+result in your save path
+
+for picture,  picture save name is same as original name, save txt name is [ost picture name]_[bmodel name]_py.txt
+
+for video, save picture count is batch_size*loops, name is frame_[frame idx]_device_[device id].jpg, save txt name is [video name]_[bmodel name]_py.txt
+
+### numpy_yolox_multiengine.py
+ decoder use cv2, perprocess use cv2 and numpy, inference use sail.MultiEngine.process(input_numpys_dict)
+
+- Run example
+
+``` shell
+    python3 numpy_yolox_multiengine.py \
+        --bmodel_path=your-path-to-bmodel \
+        --is_video=test-file-is-video-or-not \
+        --file_name=your-video-name-or-picture-path \
+        --loops=video-inference-count \
+        --device_id=use-tpu-id-list \           # defaule [0,0]
+        --detect_threshold=detect-threshold \   # default 0.25
+        --nms_threshold=nms-threshold \         # default 0.45
+        --save_path=result-save-path
+```
+- Result
+
+result in your save path
+
+for picture,  picture save name is same as original name, save txt name is [ost picture name]_[bmodel name]_py.txt
+
+for video, save picture count is batch_size*loops, name is frame_[frame idx]_device_[device id].jpg, save txt name is [video name]_[bmodel name]_py.txt
 
 ## For soc
 ### Environment configuration 
@@ -63,7 +112,10 @@ for video, save picture count is batch_size*loops, name is frame_[frame idx]_dev
     sudo pip3 install numpy==1.17.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
-### Run example
+### det_yolox_sail.py
+ decoder use sail.Decoder, perprocess use sail.bmcv, inference use sail.Engine.process(graph_name,input_tensors_dict, output_tensors_dict)
+
+- Run example
 
 ``` shell
     python3 det_yolox_sail.py \
@@ -71,18 +123,40 @@ for video, save picture count is batch_size*loops, name is frame_[frame idx]_dev
         --is_video=test-file-is-video-or-not \
         --file_name=your-video-name-or-picture-path \
         --loops=video-inference-count \
-        --device_id=use-tpu-id \                # defaule 0
         --detect_threshold=detect-threshold \   # default 0.25
         --nms_threshold=nms-threshold \         # default 0.45
         --save_path=result-save-path
 ```
+- Result
 
-### Result
 result in your save path
 
 for picture,  picture save name is same as original name, save txt name is [ost picture name]_[bmodel name]_py.txt
 
 for video, save picture count is batch_size*loops, name is frame_[frame idx]_device_[device id].jpg, save txt name is [video name]_[bmodel name]_py.txt
+
+### numpy_yolox_engine.py
+ decoder use cv2, perprocess use cv2 and numpy, inference use sail.Engine.process(graph_name,input_numpys_dict)
+
+- Run example
+
+``` shell
+    python3 numpy_yolox_engine.py \
+        --bmodel_path=your-path-to-bmodel \
+        --is_video=test-file-is-video-or-not \
+        --file_name=your-video-name-or-picture-path \
+        --loops=video-inference-count \
+        --detect_threshold=detect-threshold \   # default 0.25
+        --nms_threshold=nms-threshold \         # default 0.45
+        --save_path=result-save-path
+```
+- Result
+
+result in your save path
+
+for picture,  picture save name is same as original name, save txt name is [ost picture name]_[bmodel name]_py.txt
+
+for video, save picture count is batch_size*loops, name is frame_[frame idx]_device_0.jpg, save txt name is [video name]_[bmodel name]_py.txt
 
 
 ## calculate recall and accuracy
