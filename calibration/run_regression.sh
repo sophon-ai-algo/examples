@@ -112,7 +112,7 @@ function test_yolov5s_demo()
     pushd ./yolov5s_demo/auto_cali_demo
     bash ./auto_cali.sh
     pip3 install pycocotools
-    bash ./download_from_nas.sh http://219.142.246.77:65000/sharing/ivVtP2yIg
+    python3 -m dfn --url http://219.142.246.77:65000/sharing/ivVtP2yIg
     bash ./regression.sh
     popd
 }

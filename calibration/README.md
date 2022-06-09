@@ -11,7 +11,7 @@
 - pt_to_fp32umodel_demo, 使用ufw将 pytorch 编译为fp32umodel的demo
 - tf_to_fp32umodel_demo, 使用ufw将 tensorflow 编译为fp32umodel的demo
 - create_lmdb_demo, 使用ufwio制作lmdb数据集的demo
-- classify_demo, 
+- classify_demo, 分类的demo
 - face_demo, 人脸检测网络量化，量化网络后可以把图片上人脸框出
 - object_detection_python_demo, python物体检测demo
 

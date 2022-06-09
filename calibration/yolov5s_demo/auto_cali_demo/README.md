@@ -15,6 +15,6 @@ bash download_coco128.sh
 cd ../yolov5s_demo/auto_cali_demo
 bash ./auto_cali.sh
 pip3 install pycocotools
-bash ./download_from_nas.sh https://disk.sophgo.vip/sharing/ivVtP2yIg
+python3 -m dfn --url https://disk.sophgo.vip/sharing/ivVtP2yIg
 bash ./regression.sh
 ```
