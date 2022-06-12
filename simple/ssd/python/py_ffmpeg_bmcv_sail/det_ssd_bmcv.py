@@ -217,9 +217,9 @@ if __name__ == '__main__':
   PARSER.add_argument('--tpu_id', default=0, type=int, required=False)
   PARSER.add_argument('--compare', default='', required=False)
   ARGS = PARSER.parse_args()
-  if not os.path.exists(ARGS.input):
-    print("Error: {} not exists!".format(ARGS.input))
-    sys.exit(-2)
+  # if not os.path.exists(ARGS.input):
+  #   print("Error: {} not exists!".format(ARGS.input))
+  #   sys.exit(-2)
   status = inference(ARGS.bmodel, ARGS.input, \
                      ARGS.loops, ARGS.tpu_id, ARGS.compare)
   sys.exit(0 if status else -1)
