@@ -1,8 +1,8 @@
-# LPRNet
+# RetinaFace
 
 ## 目录
 
-* [LPRNet](#LPRNet)
+* [RetinaFace](#RetinaFace)
   * [目录](#目录)
   * [1. 简介](#1-简介)
   * [2. 数据集](#2-数据集)
