@@ -1,6 +1,6 @@
 #!/bin/bash
-apt update
-apt install curl
+#apt update
+#apt install curl
 
 scripts_dir=$(dirname $(readlink -f "$0"))
 echo $scripts_dir
