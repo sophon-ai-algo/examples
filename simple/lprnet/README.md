@@ -28,8 +28,8 @@
 LPRNet(License Plate Recognition via Deep Neural Networks)，是一种轻量级卷积神经网络，可实现无需进行字符分割的端到端车牌识别。  
 LPRNet的优点可以总结为如下三点：  
 (1)LPRNet不需要字符预先分割，车牌识别的准确率高、算法实时性强、支持可变长字符车牌识别。对于字符差异比较大的各国不同车牌均能够端到端进行训练。  
-(2)LPRNet是第一个没使用RNN的实时轻量级算法，能够在包括嵌入式设备在内的各式设备上运行。  
-(3)LPRNet在实际交通监控视频中的应用表明，该算法在视角和摄像畸变、光照条件恶劣、视角变化等复杂的情况下仍表现出很好的识别效果。  
+(2)LPRNet是第一个没有使用RNN的实时轻量级OCR算法，能够在各种设备上运行，包括嵌入式设备。  
+(3)LPRNet具有足够好的鲁棒性，在视角和摄像畸变、光照条件恶劣、视角变化等复杂的情况下，仍表现出较好的识别效果。 
 
 ![avatar](docs/1.png)
 
@@ -52,72 +52,21 @@ LPRNet的优点可以总结为如下三点：
 
 ### 3.1 准备开发环境
 
-开发环境是指用于模型转换或验证以及程序编译等开发过程的环境，目前只支持x86，建议使用我们提供的基于Ubuntu16.04的docker镜像。
+模型转换验证和程序编译必须在开发环境中完成，我们需要一台x86主机作为开发环境，并且在我们提供的基于Ubuntu18.04的docker镜像中，使用我们的BMNNSDK3进行模型转换和量化。如果我们的x86主机插有PCIe加速卡可使用PCIe模式，如果没有可使用CModel模式。
 
-运行环境是具备Sophon设备的平台上实际使用设备进行算法应用部署的环境，有PCIe加速卡、SM5模组、SE5边缘计算盒子等，所有运行环境上的BModel都是一样的，SDK中各模块的接口也是一致的。
-
-开发环境与运行环境可能是统一的（如插有SC5加速卡的x86主机，既是开发环境又是运行环境），也可能是分离的（如使用x86主机作为开发环境转换模型和编译程序，使用SE5盒子部署运行最终的算法应用）。
-
-但是，无论使用的产品是SoC模式还是PCIe模式，都需要一台x86主机作为开发环境，模型的转换工作必须在开发环境中完成。
-
-#### 3.1.1 开发主机准备：
-
-- 开发主机：一台安装了Ubuntu16.04/18.04/20.04的x86主机，运行内存建议12GB以上
-
-- 安装docker：参考《[官方教程](https://docs.docker.com/engine/install/)》，若已经安装请跳过
-
-#### 3.1.2 SDK软件包下载：
-
-- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/all.html)，Ubuntu 16.04 with Python 3.7
-
-```bash  
-wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
+- 从宿主机SDK根目录下执行脚本进入docker环境  
 ```
-
-- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/all/all.html)，BMNNSDK 2.7.0
-
-```bash
-wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/05/19/12/bmnnsdk2_bm1684_v2.7.0.zip
-```
-
-> **注意：** LPRNet模型量化需在20220317之后版本的SDK中进行！
-
-#### 3.1.3 创建docker开发环境：
-
-- 加载docker镜像:
-
-```bash
-docker load -i bmnnsdk2-bm1684-ubuntu.docker
-```
-
-- 解压缩SDK：
-
-```bash
-tar zxvf bmnnsdk2-bm1684_v2.6.0.tar.gz
-```
-
-- 创建docker容器，SDK将被挂载映射到容器内部供使用：
-
-```bash
-cd bmnnsdk2-bm1684_v2.7.0
-# 若您没有执行前述关于docker命令免root执行的配置操作，需在命令前添加sudo
 ./docker_run_bmnnsdk.sh
 ```
-
-- 进入docker容器中安装库：
-
-```bash
-# 进入容器中执行
-cd  /workspace/scripts/
-./install_lib.sh nntc
+- 在docker容器内安装依赖库及和设置环境变量
 ```
-
-- 设置环境变量：
-
-```bash
-# 配置环境变量，这一步会安装一些依赖库，并导出环境变量到当前终端
-# 导出的环境变量只对当前终端有效，每次进入容器都需要重新执行一遍，或者可以将这些环境变量写入~/.bashrc，这样每次登录将会自动设置环境变量
-source envsetup_pcie.sh
+# 在docker容器内执行
+cd $REL_TOP/scripts
+# 安装库
+./install_lib.sh nntc
+# 设置环境变量，注意此命令只对当前终端有效，重新进入需要重新执行
+source envsetup_pcie.sh    # for PCIE MODE
+source envsetup_cmodel.sh  # for CMODEL MODE
 ```
 
 ### 3.2 准备模型与数据
@@ -163,19 +112,6 @@ model = torch.jit.trace(lprnet, torch.rand(1, 3, 24, 94))
 # 保存JIT模型
 torch.jit.save(model, "{PATH_TO_JIT_MODEL}/LPRNet_model.torchscript")
 ....
-```
-#### 3.2.1 准备量化集
-
-模型量化前需准备用于量化的数据集，并使用`tools/convert_imageset.py`生成LMDB数据，并在convert_imageset.py中定义相关的数据预处理流程。本工程可通过[4.2 生成INT8 BModel](#42-生成int8-bmodel)的`scripts/gen_int8bmodel.sh`生成LMDB数据，也可通过以下示例命令生成：
-```bash
-python3 tools/convert_imageset.py \
-        --imageset_rootfolder=data/images/test_md5 \
-        --imageset_lmdbfolder=data/images/test_md5_lmdb/ \
-        --resize_height=24 \
-        --resize_width=94 \
-        --shuffle=True \
-        --bgr2rgb=True \
-        --gray=False
 ```
 
 ## 4. 模型转换
@@ -358,7 +294,7 @@ Python代码无需编译，无论是x86 SC5平台还是arm SE5平台配置好环
 > **使用bm_opencv解码的注意事项：** lprnet_cv_cv_sail.py所使用的opencv为原生opencv，若使用bm_opencv解码可能会导致推理结果的差异。若要使用bm_opencv可在运行lprnet_cv_cv_sail.py前添加环境变量如下：
 
 ```bash
-export PYTHONPATH=$PYTHONPATH:$REL_TOP/lib/opencv/x86/opencv-python/
+export PYTHONPATH=$PYTHONPATH:$REL_TOP/lib/opencv/pcie/opencv-python/
 ```
 
 > **出现中文无法正常显示的解决办法**：Python例程在打印车牌时若出现中文无法正常显示，可参考以下操作进行解决：

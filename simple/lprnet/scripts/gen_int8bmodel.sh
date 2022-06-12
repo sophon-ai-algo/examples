@@ -37,14 +37,15 @@ function gen_int8bmodel()
     bmnetu -model=compilation/LPRNet_model.torchscript_bmnetp_deploy_int8_unique_top.prototxt \
            -weight=compilation/LPRNet_model.torchscript_bmnetp.int8umodel \
            -outdir=$outdir \
-           -shapes=[$1,3,24,94]
+           -shapes=[$1,3,24,94] \
+           -cmp false
 
     cp $outdir/compilation.bmodel $outdir/lprnet_int8_$1b.bmodel
 }
 
 pushd $model_dir
 #在制作lmdb过程中使用bm_opencv
-export PYTHONPATH=$PYTHONPATH:$REL_TOP/lib/opencv/x86/opencv-python/
+export PYTHONPATH=$PYTHONPATH:$REL_TOP/lib/opencv/pcie/opencv-python/
 create_lmdb
 gen_fp32umodel
 gen_int8umodel
