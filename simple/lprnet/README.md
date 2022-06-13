@@ -52,11 +52,11 @@ LPRNet的优点可以总结为如下三点：
 
 ### 3.1 准备开发环境
 
-模型转换验证和程序编译必须在开发环境中完成，我们需要一台x86主机作为开发环境，并且在我们提供的基于Ubuntu18.04的docker镜像中，使用我们的BMNNSDK3进行模型转换和量化。如果我们的x86主机插有PCIe加速卡可使用PCIe模式，如果没有可使用CModel模式。
+模型转换验证和程序编译必须在开发环境中完成，我们需要一台x86主机作为开发环境，并且在我们提供的基于Ubuntu18.04的docker镜像中，使用我们的SophonSDK进行模型转换和量化。如果我们的x86主机插有PCIe加速卡可使用PCIe模式，如果没有可使用CModel模式。
 
 - 从宿主机SDK根目录下执行脚本进入docker环境  
-```
-./docker_run_bmnnsdk.sh
+```bash
+./docker_run_<***>sdk.sh
 ```
 - 在docker容器内安装依赖库及和设置环境变量
 ```
@@ -66,7 +66,7 @@ cd $REL_TOP/scripts
 ./install_lib.sh nntc
 # 设置环境变量，注意此命令只对当前终端有效，重新进入需要重新执行
 source envsetup_pcie.sh    # for PCIE MODE
-source envsetup_cmodel.sh  # for CMODEL MODE
+# source envsetup_cmodel.sh  # for CMODEL MODE
 ```
 
 ### 3.2 准备模型与数据
@@ -101,7 +101,7 @@ test_md5: 用于量化的数据集
 
 -  导出JIT模型
 
-BMNNSDK2中的PyTorch模型编译工具BMNETP只接受PyTorch的JIT模型（TorchScript模型）。本工程可以直接使用下载好的`LPRNet_model.torchscript`进行编译，也可以自己在源码上通过以下方法导出JIT模型。
+SophonSDK中的PyTorch模型编译工具BMNETP只接受PyTorch的JIT模型（TorchScript模型）。本工程可以直接使用下载好的`LPRNet_model.torchscript`进行编译，也可以自己在源码上通过以下方法导出JIT模型。
 
 ```python
 ....
@@ -174,12 +174,12 @@ output: 237, [4, 68, 18], float32, scale: 1
 
 ### 5.1 环境配置
 
-#### 5.1.1 x86 SC5
+#### 5.1.1 x86 PCIe
 
-对于x86 SC5平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成。
+对于x86 with PCIe平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成。
 
-#### 5.1.2 arm SE5
-对于arm SE5平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
+#### 5.1.2 arm SoC
+对于arm SoC平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
 
 ```bash
 # 设置环境变量
@@ -188,17 +188,20 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/lib/:/system/usr/lib/aarch64-lin
 export PYTHONPATH=$PYTHONPATH:/system/lib
 ```
 
-您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
+如果您使用的设备是Debian系统，您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
 
 ```bash
-# 请指定numpy版本为1.17.2
+# 对于Debian9，请指定numpy版本为1.17.2
 sudo apt update
 sudo apt-get install python3-pip
-sudo pip3 install numpy==1.17.2
+sudo pip3 install numpy==1.17.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
+如果您使用的设备是Ubuntu20.04系统，系统内已经集成了numpy环境，不需要进行额外的安装。
+
 ### 5.2 C++例程推理
-#### 5.2.1 x86平台SC5
+
+#### 5.2.1 x86平台 PCIe加速卡
 工程目录下的cpp目录提供了一系列C++例程以供参考使用，具体情况如下：
 | #    | 样例文件夹            | 说明                                 |
 | ---- | -------------------- | -----------------------------------  |
@@ -260,8 +263,8 @@ SUMMARY: lprnet detect
 [ lprnet post-process]  loops:  100 avg: 108 us
 ```
 
-#### 5.2.2 arm平台SE5
-对于arm平台SE5，需要在docker开发容器中使用交叉编译工具链编译生成可执行文件，而后拷贝到Soc目标平台运行。
+#### 5.2.2 arm平台 SoC
+对于arm平台SoC，需要在docker开发容器中使用交叉编译工具链编译生成可执行文件，而后拷贝到Soc目标平台运行。
 
 - 在docker开发容器中交叉编译
 
@@ -269,7 +272,7 @@ SUMMARY: lprnet detect
 cd cpp/lprnet_cv_cv_bmrt
 make -f Makefile.arm  # 生成lprnet_cv_cv_bmrt.arm
 ```
-- 将生成的可执行文件及所需的模型和测试图片拷贝到盒子中测试，测试方法与SC5相同。
+- 将生成的可执行文件及所需的模型和测试图片拷贝到盒子中测试，测试方法与x86 PCIe平台相同。
 
 
 ### 5.3 Python例程推理
@@ -282,7 +285,7 @@ cd $REL_TOP/lib/sail/python3/pcie/py37
 pip3 install sophon-x.x.x-py3-none-any.whl
 ```
 
-Python代码无需编译，无论是x86 SC5平台还是arm SE5平台配置好环境之后就可直接运行。
+Python代码无需编译，无论是x86 PCIe平台还是arm SoC平台配置好环境之后就可直接运行。
 
 工程目录下的inference/python目录提供了一系列python例程以供参考使用，具体情况如下：
 

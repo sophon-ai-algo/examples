@@ -29,7 +29,7 @@ VOC0712
 转换模型前需要进入docker环境，切换到sdk根目录，启动docker容器：  
 - 从宿主机SDK根目录下执行脚本进入docker环境  
 ```
-./docker_run_bmnnsdk.sh
+./docker_run_<***>sdk.sh
 ```
 - 在docker容器内安装SDK及设置环境变量
 ```
@@ -39,7 +39,7 @@ cd $REL_TOP/scripts
 ./install_lib.sh nntc
 # 设置环境变量，注意此命令只对当前终端有效，重新进入需要重新执行
 source envsetup_pcie.sh    # for PCIE MODE
-source envsetup_cmodel.sh  # for CMODEL MODE
+# source envsetup_cmodel.sh  # for CMODEL MODE
 ```
 
 ### 3.2 准备模型与数据
@@ -68,12 +68,12 @@ source envsetup_cmodel.sh  # for CMODEL MODE
 
 ## 5. 推理测试
 ### 5.1 环境配置
-#### 5.1.1 x86 SC5
+#### 5.1.1 x86 PCIe
 
-对于x86 SC5平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成。
+对于x86 PCIe平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成。
 
-#### 5.1.2 arm SE5
-对于arm SE5平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
+#### 5.1.2 arm SoC
+对于arm SoC平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
 
 ```bash
 # 设置环境变量
@@ -82,15 +82,19 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/lib/:/system/usr/lib/aarch64-lin
 export PYTHONPATH=$PYTHONPATH:/system/lib
 ```
 
-您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
+如果您使用的设备是Debian系统，您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
 
 ```bash
-# 请指定numpy版本为1.17.2
+# 对于Debian9，请指定numpy版本为1.17.2
 sudo apt update
 sudo apt-get install python3-pip
-sudo pip3 install numpy==1.17.2
+sudo pip3 install numpy==1.17.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
+
+如果您使用的设备是Ubuntu20.04系统，系统内已经集成了numpy环境，不需要进行额外的安装。
+
 ### 5.2 C++例程推理
+
 具体查看cpp目录下各例程的README.md
 
 ### 5.3 Python例程推理

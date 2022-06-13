@@ -37,7 +37,7 @@ CenterNet 是一种 anchor-free 的目标检测网络，不仅可以用于目标
 
 ### 3.1 准备开发环境
 
-开发环境是指用于模型转换或验证以及程序编译等开发过程的环境，目前只支持x86，需要使用我们提供的基于Ubuntu16.04的docker镜像。
+开发环境是指用于模型转换或验证以及程序编译等开发过程的环境，目前只支持x86，需要使用我们提供的基于Ubuntu18.04的docker镜像。
 
 运行环境是具备Sophon设备的平台上实际使用设备进行算法应用部署的环境，有PCIe加速卡、SM5模组、SE5边缘计算盒子等，所有运行环境上的BModel都是一样的，SDK中各模块的接口也是一致的。
 
@@ -67,17 +67,10 @@ CenterNet 是一种 anchor-free 的目标检测网络，不仅可以用于目标
 
 #### 3.1.2 SDK软件包下载：
 
-- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/all.html)，Ubuntu 16.04 with Python 3.7
+- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/all.html)，请选择与SDK版本适配的docker镜像
 
-  ```bash
-  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
-  ```
+- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/17/all.html)，请选择与仓库代码分支对应的SDK版本
 
-- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/17/all.html)，BMNNSDK 2.7.0
-
-  ```bash
-  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/04/14/10/bmnnsdk2_bm1684_v2.7.0_20220316_patched_0413.zip
-  ```
 
 #### 3.1.3 创建docker开发环境：
 - 安装工具
@@ -89,25 +82,25 @@ CenterNet 是一种 anchor-free 的目标检测网络，不仅可以用于目标
 - 加载docker镜像:
 
   ```bash
-  unzip bmnnsdk2-bm1684-ubuntu-docker-py37.zip
-  cd bmnnsdk2-bm1684-ubuntu-docker-py37
-  docker load -i bmnnsdk2-bm1684-ubuntu.docker
+  unzip <docker_image_file>.zip
+  cd <docker_image_file>
+  docker load -i <docker_image>
   ```
 
 - 解压缩SDK：
 
   ```bash
-  unzip bmnnsdk2_bm1684_v2.7.0_20220316_patched_0413.zip
-  cd bmnnsdk2_bm1684_v2.7.0_20220316_patched/
-  tar zxvf bmnnsdk2-bm1684_v2.7.0.tar.gz
+  unzip <sdk_zip_file>.zip
+  cd <sdk_zip_file>/
+  tar zxvf <sdk_file>.tar.gz
   ```
 
 - 创建docker容器，SDK将被挂载映射到容器内部供使用：
 
   ```bash
-  cd bmnnsdk2-bm1684_v2.7.0/
+  cd <sdk_path>/
   # 若您没有执行前述关于docker命令免root执行的配置操作，需在命令前添加sudo
-  ./docker_run_bmnnsdk.sh
+  ./docker_run_<***>sdk.sh
   ```
 
 - 进入docker容器中安装库：
@@ -118,12 +111,33 @@ CenterNet 是一种 anchor-free 的目标检测网络，不仅可以用于目标
   ./install_lib.sh nntc
   ```
 
-- 设置环境变量：
+- 设置环境变量-[无PCIe加速卡]：
 
   ```bash
-  # 配置环境变量，这一步会安装一些依赖库，并导出环境变量到当前终端
+  # 配置环境变量,这一步会安装一些依赖库，并导出环境变量到当前终端
+  # 导出的环境变量只对当前终端有效，每次进入容器都需要重新执行一遍，或者可以将这些环境变量写入~/.bashrc，这样每次登录将会自动设置环境变量
+  source envsetup_cmodel.sh
+  ```
+  
+- 设置环境变量-[有PCIe加速卡]：
+
+  ```bash
+  # 配置环境变量,这一步会安装一些依赖库,并导出环境变量到当前终端
   # 导出的环境变量只对当前终端有效，每次进入容器都需要重新执行一遍，或者可以将这些环境变量写入~/.bashrc，这样每次登录将会自动设置环境变量
   source envsetup_pcie.sh
+  ```
+
+- 安装python对应版本的sail包
+
+  ```bash
+  # the wheel package is in the SophonSDK:
+  pip3 uninstall -y sophon
+  # get your python version
+  python3 -V
+  # choose the same verion of sophon wheel to install
+  # the following py3x maybe py35, py36, py37 or py38
+  # for x86
+  pip3 install ../lib/sail/python3/pcie/py3x/sophon-?.?.?-py3-none-any.whl --user
   ```
 
 ### 3.2 准备模型
@@ -135,7 +149,7 @@ CenterNet 是一种 anchor-free 的目标检测网络，不仅可以用于目标
 
 
 #### 3.2.1 JIT环境准备
-BMNNSDK2中的PyTorch模型编译工具BMNETP只接受PyTorch的JIT模型（TorchScript模型）。
+SophonSDK中的PyTorch模型编译工具BMNETP只接受PyTorch的JIT模型（TorchScript模型）。
 
 JIT（Just-In-Time）是一组编译工具，用于弥合PyTorch研究与生产之间的差距。它允许创建可以在不依赖Python解释器的情况下运行的模型，并且可以更积极地进行优化。在已有PyTorch的Python模型（基类为torch.nn.Module）的情况下，通过torch.jit.trace就可以得到JIT模型，如`torch.jit.trace(python_model, torch.rand(input_shape)).save('jit_model')`。BMNETP暂时不支持带有控制流操作（如if语句或循环）的JIT模型，因此不能使用torch.jit.script，而要使用torch.jit.trace，它仅跟踪和记录张量上的操作，不会记录任何控制流操作。可在源码导入CPU模型后通过添加以下代码导出符合要求的JIT模型：
 
@@ -143,7 +157,7 @@ JIT（Just-In-Time）是一组编译工具，用于弥合PyTorch研究与生产�
 # 下载dlav0作为主干网的预训练模型
 sudo apt update
 sudo apt install curl
-cd ../examples/centernet/data/scripts/
+cd data/scripts/
 ./download_pt.sh
 # 下载成功后，文件位于../build/ctdet_coco_dlav0_1x.pth
 
@@ -190,8 +204,8 @@ cd ../scripts
 ### 4.1 生成FP32 BModel
 
 ```bash
-# SDKBMNNSDK_PATH改为您SDK的根路径，如果您在docker内，则默认为/workspace
-pushd $SDKBMNNSDK_PATH/scripts
+# SDK_PATH改为您SDK的根路径，如果您在docker内，则默认为/workspace
+pushd $SDK_PATH/scripts
 ./install_lib.sh nntc
 source envsetup_pcie.sh
 popd
@@ -305,13 +319,13 @@ host mem size: 0 (coeff: 0, runtime: 0
 
 ### 5.1 环境配置
 
-#### 5.1.1 x86 SC5
+#### 5.1.1 x86 PCIe
 
-对于x86 SC5平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成
+对于x86 with PCIe加速卡平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成。
 
-#### 5.1.2 arm SE5
+#### 5.1.2 arm SoC
 
-对于arm SE5平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
+对于arm SoC平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
 
 ```bash
 # 设置环境变量
@@ -320,18 +334,20 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/lib/:/system/usr/lib/aarch64-lin
 export PYTHONPATH=$PYTHONPATH:/system/lib
 ```
 
-您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
+如果您使用的设备是Debian系统，您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
 
 ```bash
-# 请指定numpy版本为1.17.2
+# 对于Debian9，请指定numpy版本为1.17.2
 sudo apt update
 sudo apt-get install python3-pip
-sudo pip3 install numpy==1.17.2
+sudo pip3 install numpy==1.17.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
+
+如果您使用的设备是Ubuntu20.04系统，系统内已经集成了numpy环境，不需要进行额外的安装。
 
 ### 5.2 C++例程部署测试
 
-#### 5.2.1 x86平台SC5
+#### 5.2.1 x86平台 PCIe加速卡
 
 - 编译
 
@@ -389,7 +405,7 @@ $ ./centernet_bmcv_sail.arm --bmodel=ctdet_coco_dlav0_1output_512_int8_4batch.bm
 
 Python代码无需编译，无论是x86 SC平台还是arm SE5平台配置好环境之后就可直接运行。
 > 运行之前需要安装sail包
- 
+
 #### 5.3.1 x86平台PCIe模式
 ```bash
 # 在容器里, 以python3.7的docker为例
@@ -422,5 +438,5 @@ cd py_bmcv_sail
 python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --input=../ctdet_test.jpg --class_path=../coco_classes.txt
 # 4batch
 python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel --input=../ctdet_test.jpg --class_path=../coco_classes.txt
- ```
+```
 成功后，在当前目录下生成和`5.3.1`相同的`ctdet_result_20xx-xx-xx-xx-xx-xx_b_x.jpg`图片

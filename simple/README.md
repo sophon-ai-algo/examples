@@ -7,12 +7,13 @@
 
 | 样例名称 | 语言 | 适配BMNNSDK版本 | 简介 |
 |---|---|---|---|
-|[bit](./bit) | TODO | TODO | TODO |
 |[centernet](./simple/centernet) | c++/python | >=2.6.0 | CenterNet 推理示例，采用BMCV做前后处理。 |
 |[LPRNet](./lprnet) | c++/python | >=2.6.0 | CenterNet 推理示例，采用BMCV做前后处理。 |
 |[PP-OCRv2](./PP-OCRv2) | python | >=2.6.0 | PP-OCRv2 推理示例，采用OpenCV做前后处理。 |
+|[Resnet_classify](./Resnet_classify) | c++ | >=2.6.0 | Resnet_classify 推理示例。 |
 |[retinaface](./retinaface) | c++/python | >=2.6.0 | RetinaFace 推理示例，采用BMCV或OpenCV做前后处理。 |
-|[Vit](./vit) | TODO | TODO | TODO |
+|[ssd](./ssd) | c++/python | >=2.6.0 | ssd 推理示例，采用BMCV或OpenCV做前后处理。 |
+|[yolact](./ssd) | python | >=2.6.0 | yolact 推理示例，采用BMCV或OpenCV做前后处理。 |
 | [YOLOV5](./yolov5) |  c++/python | >=2.6.0 | 使用bmcv/opencv做前处理，BMRT推理的示例程序 |
 |[YOLOv34](./yolov34) | c++/python | >=2.6.0 | YOLOV3/YOLOV4 推理示例，采用BMCV做前后处理。 |
 |[YOLOX](./yolox) | c++/python | >=2.6.0 | YOLOX 推理示例，采用BMCV做前后处理。 |

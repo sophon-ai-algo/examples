@@ -44,9 +44,9 @@ bash ./01_prepare_test_data.sh
 
 ### 3.1 准备开发环境
 
-开发环境是指用于模型转换或验证以及程序编译等开发过程的环境，目前只支持x86，需要使用我们提供的基于Ubuntu16.04的docker镜像。
+开发环境是指用于模型转换或验证以及程序编译等开发过程的环境，目前只支持x86，需要使用我们提供的基于Ubuntu18.04的docker镜像。
 
-运行环境是具备Sophon设备的平台上实际使用设备进行算法应用部署的环境，有PCIe加速卡、SM5模组、SE5边缘计算盒子等，所有运行环境上的BModel都是一样的，SDK中各模块的接口也是一致的。
+运行环境是具备Sophon设备的平台上实际使用设备进行算法应用部署的环境，有PCIe加速卡、SM模组、SE边缘计算盒子等，所有运行环境上的BModel都是一样的，SDK中各模块的接口也是一致的。
 
 开发环境与运行环境可能是统一的（如插有SC5加速卡的x86主机，既是开发环境又是运行环境），也可能是分离的（如使用x86主机作为开发环境转换模型和编译程序，使用SE5盒子部署运行最终的算法应用）。
 
@@ -74,55 +74,58 @@ bash ./01_prepare_test_data.sh
 
 #### 3.1.2 SDK软件包下载
 
-- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/all.html)，Ubuntu 18.04 with Python 3.7
+- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/all.html)，请选择与SDK版本适配的docker镜像
 
-```bash
-wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
-```
-
-- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/17/all.html)，BMNNSDK 2.7.0_20220316_022200
-
-```bash
-wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/04/14/10/bmnnsdk2_bm1684_v2.7.0_20220316_patched_0413.zip
-```
+- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/17/all.html)，请选择与仓库代码分支对应的SDK版本
 
 #### 3.1.3 创建docker开发环境
 
+- 安装工具
+
+  ```bash
+  sudo apt update
+  sudo apt install unzip
+  ```
+
 - 加载docker镜像:
 
-```bash
-docker load -i bmnnsdk2-bm1684-ubuntu.docker
-```
+  ```bash
+  unzip <docker_image_file>.zip
+  cd <docker_image_file>
+  docker load -i <docker_image>
+  ```
 
 - 解压缩SDK：
 
-```bash
-tar zxvf bmnnsdk2-bm1684_v2.7.0.tar.gz
-```
+  ```bash
+  unzip <sdk_zip_file>.zip
+  cd <sdk_zip_file>/
+  tar zxvf <sdk_file>.tar.gz
+  ```
 
 - 创建docker容器，SDK将被挂载映射到容器内部供使用：
 
-```bash
-cd bmnnsdk2-bm1684_v2.7.0
-# 若您没有执行前述关于docker命令免root执行的配置操作，需在命令前添加sudo
-./docker_run_bmnnsdk.sh
-```
+  ```bash
+  cd <sdk_path>/
+  # 若您没有执行前述关于docker命令免root执行的配置操作，需在命令前添加sudo
+  ./docker_run_<***>sdk.sh
+  ```
 
 - 进入docker容器中安装库：
 
-```bash
-# 进入容器中执行
-cd  /workspace/scripts/
-./install_lib.sh nntc
-```
+  ```bash
+  # 进入容器中执行
+  cd  /workspace/scripts/
+  ./install_lib.sh nntc
+  ```
 
 - 设置环境变量：
 
-```bash
-# 配置环境变量，这一步会安装一些依赖库，并导出环境变量到当前终端
-# 导出的环境变量只对当前终端有效，每次进入容器都需要重新执行一遍，或者可以将这些环境变量写入~/.bashrc，这样每次登录将会自动设置环境变量
-source envsetup_cmodel.sh
-```
+  ```bash
+  # 配置环境变量，这一步会安装一些依赖库，并导出环境变量到当前终端
+  # 导出的环境变量只对当前终端有效，每次进入容器都需要重新执行一遍，或者可以将这些环境变量写入~/.bashrc，这样每次登录将会自动设置环境变量
+  source envsetup_pcie.sh
+  ```
 
 ### 3.2 准备模型
 
@@ -132,7 +135,7 @@ source envsetup_cmodel.sh
 
 #### 3.2.1导出JIT模型
 
-BMNNSDK2中的PyTorch模型编译工具BMNETP只接受PyTorch的JIT模型（TorchScript模型）。
+SophonSDK中的PyTorch模型编译工具BMNETP只接受PyTorch的JIT模型（TorchScript模型）。
 
 JIT（Just-In-Time）是一组编译工具，用于弥合PyTorch研究与生产之间的差距。它允许创建可以在不依赖Python解释器的情况下运行的模型，并且可以更积极地进行优化。在已有PyTorch的Python模型（基类为torch.nn.Module）的情况下，通过torch.jit.trace就可以得到JIT模型，如`torch.jit.trace(python_model, torch.rand(input_shape)).save('jit_model')`。BMNETP暂时不支持带有控制流操作（如if语句或循环）的JIT模型，因此不能使用torch.jit.script，而要使用torch.jit.trace，它仅跟踪和记录张量上的操作，不会记录任何控制流操作。以yolact_base_54_800000模型为例，只需运行如下命令即可导出符合要求的JIT模型：
 
@@ -145,7 +148,7 @@ python3 ./convert.py --input ${MODEL_DIR}/yolact_base_54_800000.pth --mode tstra
 
 ### 3.3 准备量化集
 
-coming soon.
+TODO
 
 ## 4. 模型转换
 
@@ -203,7 +206,7 @@ host mem size: 0 (coeff: 0, runtime: 0)
 
 不量化模型可跳过本节。
 
-coming soon.
+TODO
 
 ## 5. 部署测试
 
@@ -217,13 +220,13 @@ coming soon.
 
 ### 5.1 环境配置
 
-#### x86 SC5
+#### x86 PCIe
 
-对于x86 SC5平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成
+对于安装有PCIe加速卡的x86平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成
 
-#### arm SE5
+#### arm SoC
 
-对于arm SE5平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
+对于SM/SE等arm SoC平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
 
 ```bash
 # 设置环境变量
@@ -235,7 +238,7 @@ export PYTHONPATH=$PYTHONPATH:/system/lib
 您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
 
 ```bash
-# 请指定numpy版本为1.17.2
+# 对于Debian 9，请指定numpy版本为1.17.2
 sudo apt update
 sudo apt-get install python3-pip
 sudo pip3 install numpy==1.17.2
@@ -243,7 +246,7 @@ sudo pip3 install numpy==1.17.2
 
 ### 5.2 C++例程部署测试
 
-coming soon.
+TODO
 
 ### 5.3 Python例程部署测试
 
@@ -257,7 +260,7 @@ Python代码无需编译，无论是x86 SC平台还是arm SE5平台配置好环�
 | 2    | yolact_sail.py    | 使用OpenCV解码、OpenCV前处理、SAIL推理、OpenCV后处理  |
 | 3    | yolact_pytorch.py | 使用OpenCV读取图片和前处理、pytorch推理、OpenCV后处理 |
 
-测试
+测试步骤如下：
 
 ```bash
 cd ${YOLACT}/python

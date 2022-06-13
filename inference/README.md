@@ -31,10 +31,10 @@ Inference的主要结构设计如下图：
 
 # 编译方法
 ## 依赖安装
-Inference framework 依赖 BMNNSDK2. 请到算能官网（www.sophgo.com) 进行下载，解压、安装。  bmnnsdk2的安装方法可以参考如下链接： 
-> https://sophgo-doc.gitbook.io/bmnnsdk2-bm1684/
+Inference framework 依赖 SophonSDK. 请到算能官网（www.sophgo.com) 进行下载，解压、安装。  SDK的安装方法可以参考如下链接： 
+> https://sophgo-doc.gitbook.io/sophonsdk/
 
-> Ubuntu 16.04 安装QT依赖：
+> Ubuntu 安装QT依赖：
 ````
 sudo apt install qtbase5-dev
 ````
@@ -50,7 +50,7 @@ sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
 ```
 ## 编译指令
 ---
-1. export REL_TOP=$bmnnsdk_dir 根据实际位置修改为BMNNSDK跟路径
+1. export REL_TOP=$sdk_dir 根据实际位置修改为BMNNSDK跟路径
 2. 各个平台编译
    ---
    > **NOTE**  

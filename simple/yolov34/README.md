@@ -1,12 +1,12 @@
 # 1. Introduction
 
-This is a simple demo to run yolov3/yolov4 with BMNNSDK2.
+This is a simple demo to run yolov3/yolov4 with SophonSDK.
 
 # 2. Usage
 
-- init bmnnsdk2 first: please refer to [BMNNSDK2 Introduction Notes](https://sophgo-doc.gitbook.io/bmnnsdk2-bm1684/bmnnsdk2/setup)
+- init SophonSDK first: please refer to [SophonSDK Tutorial](https://sophgo-doc.gitbook.io/sophonsdk3/sophonsdk/setup)
 - Remember to use your own anchors, mask and classes number config values in `cpp/yolov3.hpp` and `python/configs/*.yml`
-- Deploy on SE5, remember to [set the environmental variables](https://sophgo-doc.gitbook.io/bmnnsdk2-bm1684/bmnnsdk2/setup/on-soc#1.5.3.3-yun-hang-huan-jing-pei-zhi)
+- Deploy on arm SoC SE/SM, remember to [set the environmental variables](https://sophgo-doc.gitbook.io/sophonsdk3/sophonsdk/setup/on-soc#1.5.3.2-yun-hang-huan-jing-pei-zhi)
 - For INT8 BModel, do not forget the scale factors for input and output tensors
 
 ## 2.1 prepare test data
@@ -29,7 +29,7 @@ cd scripts
 bash ./gen_fp32bmodel.sh
 ```
 
-use `bmnetd` in BMNNSDK dev docker to generate other fp32 bmodels.
+use `bmnetd` in SophonSDK dev docker to generate other fp32 bmodels.
 
 ### 2.2.2 int8 bmodel
 
@@ -62,9 +62,9 @@ Several bmodels converted from [darknet](https://github.com/AlexeyAB/darknet) yo
 
 For more detailed instructions, refer to [yolov3.v4-HowTO.pdf](docs/yolov3.v4-HowTO.pdf) .
 
-### 2.3.1 for x86 with SC5
+### 2.3.1 for x86 with PCIe cards
 
-- compile the application in bmnnsdk2 dev docker
+- compile the application in SophonSDK dev docker
 
 ```shell
 $ cd cpp/cpp_cv_bmcv_bmrt_postprocess
@@ -82,15 +82,15 @@ $ ./yolo_test.pcie image imagelist.txt ../../data/models/yolov4_608_coco_fp32.bm
 #  ./yolo_test.pcie video <video list>  <bmodel file>
 ```
 
-### 2.3.2 for arm SE5/SM5
-- compile the application in bmnnsdk2 dev docker
+### 2.3.2 for arm SoC
+- compile the application in SophonSDK dev docker
 
 
 ```shell 
 $ cd cpp/cpp_cv_bmcv_bmrt_postprocess
 $ make -f Makefile.arm # will generate yolo_test.arm
 ```
-- then put yolo_test.arm and data dir on SE5
+- then put yolo_test.arm and data dir on SoC
 
 ```shell
 $ realpath ../../data/images/* > imagelist.txt
@@ -105,19 +105,19 @@ $ ./yolo_test.arm image imagelist.txt ../../data/models/yolov4_608_coco_fp32.bmo
 
 > Notes：For Python codes,  create your own config file *.yml in `configs` based on the values of `ENGINE_FILE`, `LABEL_FILE `, `YOLO_MASKS`, `YOLO_ANCHORS`, `OUTPUT_TENSOR_CHANNELS` for your model.
 
-### 2.4.1 for x86 with SC5 & arm SE5/SM5
+### 2.4.1 for x86 with PCIe cards & arm SoC
 
 #### Installations
 
-- for x86 SC5, the environment variable is set when `source envsetup_pcie.sh`, you need to install SAIL
+- for x86 with PCIe cards, the environment variable is set when `source envsetup_pcie.sh`, you need to install SAIL
 
 ```bash
 # for example, python3.7 in docker
 cd /workspace/lib/sail/python3/pcie/py37
-pip3 install sophon-2.7.0-py3-none-any.whl
+pip3 install sophon-<x.y.z>-py3-none-any.whl
 ```
 
-- for arm SE5, you need to set the environment variable:
+- for arm SoC, you need to set the environment variable:
 
 ```bash
 # set the environment variable
@@ -129,7 +129,7 @@ export PYTHONPATH=$PYTHONPATH:/system/lib
 you probably need to install NumPy, then you could use OpenCV and SAIL:
 
 ```bash
-# please specify numpy version 1.17.2
+# for Debian 9, please specify numpy version 1.17.2
 sudo apt update
 sudo apt-get install python3-pip
 sudo pip3 install numpy==1.17.2
