@@ -10,6 +10,6 @@ source ./envsetup_cmodel.sh  #配置不同平台的运行环境
 ##运行脚本
 ```bash
 cd ../examples/calibration/object_detection_python_demo
-python3 ssd_vgg300_fp32_test.py #生成person_fp32_detected.jpg
-python3 ssd_vgg300_int8_test.py #生成person_int8_detected.jpg
+python3 ssd_vgg300_fp32_test.py #生成person_fp32_detected.jpg，其中人物，狗，马被正确标出
+python3 ssd_vgg300_int8_test.py #生成person_int8_detected.jpg，其中人物，狗，马被正确标出
 ```
