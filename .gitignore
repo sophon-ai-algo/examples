@@ -3,4 +3,7 @@
 .DS_Store
 cmake-build-debug/
 build/
-
+nntc/__script*.sh
+nntc/**/output
+nntc/**/python-output
+nntc/**/tmp*
