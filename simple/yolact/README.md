@@ -23,6 +23,12 @@
 
 ## 1. 简介
 
+YOLACT是一种实时的实例分割的方法。
+
+论文地址: [YOLACT: Real-time Instance Segmentation](https://arxiv.org/abs/1904.02689)
+
+官方源码: https://github.com/dbolya/yolact
+
 ## 2. 数据集
 
 ### 2.1 测试数据
@@ -214,7 +220,7 @@ TODO
 
 测试图片见`data/images`，测试视频见`data/videos`，转换好的bmodel文件可以放置于`data/models`
 
-已经转换好的bmodel文件可从以下百度网盘下载：
+已经转换好的bmodel文件可从以下链接下载：
 
 链接: http://219.142.246.77:65000/sharing/1EDAWPfqh
 
