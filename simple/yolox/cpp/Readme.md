@@ -7,8 +7,9 @@
 ### Environment configuration 
 
 ```shell
-# bmnnsdk2 should be download and uncompressed
-cd bmnnsdk2-bm1684_vx.x.x/scripts
+# bmnnsdk2 or sophonsdk3 should be download and uncompressed
+# Use SDK_PATH to indicate the path of the SDK
+cd $SDK_PATH/scripts
 ./install_lib.sh nntc
 source envsetup_pcie.sh
 ```
@@ -45,15 +46,17 @@ for video, save picture count is batch_size*loops, name is frame_[frame idx]_dev
 ### Environment configuration (in docker with pcie)
 
 ```shell [with SC5]
-# bmnnsdk2 should be download and uncompressed
-cd bmnnsdk2-bm1684_vx.x.x/scripts
+# bmnnsdk2 or sophonsdk3 should be download and uncompressed
+# Use SDK_PATH to indicate the path of the SDK
+cd $SDK_PATH/scripts
 ./install_lib.sh nntc
 source envsetup_pcie.sh 
 ```
 
 ```shell [not SC5]
-# bmnnsdk2 should be download and uncompressed
-cd bmnnsdk2-bm1684_vx.x.x/scripts
+# bmnnsdk2 or sophonsdk3 should be download and uncompressed
+# Use SDK_PATH to indicate the path of the SDK
+cd $SDK_PATH/scripts
 ./install_lib.sh nntc
 source envsetup_cmodel.sh 
 ```
