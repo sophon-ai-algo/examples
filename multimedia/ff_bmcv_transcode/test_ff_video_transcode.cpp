@@ -98,12 +98,12 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    if(thread_arg->height < 0 ){
+    if(thread_arg->height < 0 || thread_arg->width > 4096){
         usage(argv[0]);
         return -1;
     }
 
-    if(thread_arg->width < 0 ){
+    if(thread_arg->width < 0 || thread_arg->width > 4096){
         usage(argv[0]);
         return -1;
     }
@@ -305,8 +305,8 @@ static void usage(char *program_name)
     av_log(NULL, AV_LOG_ERROR, "\t[output_filename]         encode output file name x.mp4,x.ts...\n");
     av_log(NULL, AV_LOG_ERROR, "\t[encode_pixel_format]     encode format I420.\n");
     av_log(NULL, AV_LOG_ERROR, "\t[encoder_name]            encode h264_bm,h265_bm.\n");
-    av_log(NULL, AV_LOG_ERROR, "\t[width]                   encode width.\n");
-    av_log(NULL, AV_LOG_ERROR, "\t[height]                  encode height.\n");
+    av_log(NULL, AV_LOG_ERROR, "\t[width]                   encode 32<width<=4096.\n");
+    av_log(NULL, AV_LOG_ERROR, "\t[height]                  encode 32<height<=4096.\n");
     av_log(NULL, AV_LOG_ERROR, "\t[frame_rate]              encode frame_rate.\n");
     av_log(NULL, AV_LOG_ERROR, "\t[bitrate]                 encode bitrate 500 < bitrate < 10000\n");
     av_log(NULL, AV_LOG_ERROR, "\t[thread_num]              thread num.\n");
@@ -320,8 +320,8 @@ static void usage(char *program_name)
     av_log(NULL, AV_LOG_ERROR, "\t[output_filename]         encode output file name x.mp4,x.ts...\n");
     av_log(NULL, AV_LOG_ERROR, "\t[encode_pixel_format]     encode format I420,NV12\n");
     av_log(NULL, AV_LOG_ERROR, "\t[encoder_name]            h264_bm,h265_bm\n");
-    av_log(NULL, AV_LOG_ERROR, "\t[width]                   encode width.\n");
-    av_log(NULL, AV_LOG_ERROR, "\t[height]                  encode height.\n");
+    av_log(NULL, AV_LOG_ERROR, "\t[width]                   encode 32<width<=4096.\n");
+    av_log(NULL, AV_LOG_ERROR, "\t[height]                  encode 32<height<=4096.\n");
     av_log(NULL, AV_LOG_ERROR, "\t[frame_rate]              encode frame_rate.\n");
     av_log(NULL, AV_LOG_ERROR, "\t[bitrate]                 encode bitrate 500 < bitrate < 10000\n");
     av_log(NULL, AV_LOG_ERROR, "\t[thread_num]              thread num.\n");

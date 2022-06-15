@@ -335,7 +335,16 @@ int avframeToAvframeConvertPixSize(bm_handle_t &bmHandle,AVFrame *inPic,AVFrame 
     }
 
     bm_image_format_ext bmOutFormat = (bm_image_format_ext)map_avformat_to_bmformat(enc_pix_format);
-    bm_image_create(bmHandle,enc_frame_height,enc_frame_width,bmOutFormat,DATA_TYPE_EXT_1N_BYTE, bmImageout);
+    int stride_yuv = ((enc_frame_width +31) >> 5) << 5;
+    int stride_bmi[3] = {0};
+    if(FORMAT_NV12 == bmOutFormat){
+        stride_bmi[0] = stride_bmi[1] = stride_yuv;
+        stride_bmi[2] = 0;
+    }else{
+        stride_bmi[0] = stride_yuv;
+        stride_bmi[1] = stride_bmi[2] = stride_yuv / 2;
+    }
+    bm_image_create(bmHandle,enc_frame_height,enc_frame_width,bmOutFormat,DATA_TYPE_EXT_1N_BYTE, bmImageout,stride_bmi);
     //vpu cannot use other heap memory(soc and pcie)
 
     if(mem_flags == USEING_MEM_HEAP2 && bm_image_alloc_dev_mem_heap_mask(*bmImageout,USEING_MEM_HEAP2) != BM_SUCCESS){

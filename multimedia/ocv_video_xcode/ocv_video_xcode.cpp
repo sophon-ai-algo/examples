@@ -185,6 +185,8 @@ DWORD WINAPI videoWriteThread(void* arg){
                                 // roiinfo.field[pos].H264.mb_qp = roi_frame_nums%51;
                                 if ((i >= (BM_ALIGN16(threadPara->imageRows) >> 4)/2) && (j >= (BM_ALIGN16(threadPara->imageCols) >> 4)/2)) {
                                     roiinfo.field[pos].H264.mb_qp = 10;
+                                }else{
+                                    roiinfo.field[pos].H264.mb_qp = 40;
                                 }
                             }
                         }
@@ -201,17 +203,26 @@ DWORD WINAPI videoWriteThread(void* arg){
                             for (int j=0;j < (BM_ALIGN64(threadPara->imageCols) >> 6);j++) {
                                 int pos = i*(BM_ALIGN64(threadPara->imageCols) >> 6) + j;
                                 if ((i >= (BM_ALIGN64(threadPara->imageRows) >> 6)/2) && (j >= (BM_ALIGN64(threadPara->imageCols) >> 6)/2)) {
-                                    roiinfo.field[pos].HEVC.ctu_force_mode = 0;
-                                    roiinfo.field[pos].HEVC.ctu_coeff_drop = 0;
                                     roiinfo.field[pos].HEVC.sub_ctu_qp_0 = 10;
                                     roiinfo.field[pos].HEVC.sub_ctu_qp_1 = 10;
                                     roiinfo.field[pos].HEVC.sub_ctu_qp_2 = 10;
                                     roiinfo.field[pos].HEVC.sub_ctu_qp_3 = 10;
-                                    roiinfo.field[pos].HEVC.lambda_sad_0 = 0;
-                                    roiinfo.field[pos].HEVC.lambda_sad_1 = 0;
-                                    roiinfo.field[pos].HEVC.lambda_sad_2 = 0;
-                                    roiinfo.field[pos].HEVC.lambda_sad_3 = 0;
+                                } else {
+                                    roiinfo.field[pos].HEVC.sub_ctu_qp_0 = 40;
+                                    roiinfo.field[pos].HEVC.sub_ctu_qp_1 = 40;
+                                    roiinfo.field[pos].HEVC.sub_ctu_qp_2 = 40;
+                                    roiinfo.field[pos].HEVC.sub_ctu_qp_3 = 40;
+
                                 }
+                                roiinfo.field[pos].HEVC.ctu_force_mode = 0;
+                                roiinfo.field[pos].HEVC.ctu_coeff_drop = 0;
+                                roiinfo.field[pos].HEVC.lambda_sad_0 = 0;
+                                roiinfo.field[pos].HEVC.lambda_sad_1 = 0;
+                                roiinfo.field[pos].HEVC.lambda_sad_2 = 0;
+                                roiinfo.field[pos].HEVC.lambda_sad_3 = 0;
+
+
+
                             }
                         }
                     }
@@ -280,6 +291,27 @@ DWORD WINAPI videoWriteThread(void* arg){
 #endif
 }
 
+void usage(char *argv_0){
+    cout << "usage:  test encoder by HW(h.264/h.265) with different container !!" << endl;
+#ifdef USING_SOC
+    cout << "\t" << argv_0 << " input code_type frame_num outputname yuv_enable roi_enable [encodeparams]" <<endl;
+    cout << "\t" << "eg: " << argv_0 << " rtsp://admin:bitmain.com@192.168.1.14:554  H265enc  30 encoder_test265.ts 1 0 bitrate=1000" <<endl;
+#else
+    cout << "\t" << argv_0 << " input code_type frame_num outputname yuv_enable roi_enable [device_id] [encodeparams]" <<endl;
+    cout << "\t" << "eg: " << argv_0 << " rtsp://admin:bitmain.com@192.168.1.14:554  H265enc  30 encoder_test265.ts 1 0 0 bitrate=1000" <<endl;
+#endif
+    cout << "params:" << endl;
+    cout << "\t" << "<code_type>: H264enc is h264; H265enc is h265." << endl;
+    cout << "\t" << "<outputname>: null or NULL output pkt.dump." << endl;
+    cout << "\t" << "<yuv_enable>: 0 decode output bgr; 1 decode output yuv420." << endl;
+    cout << "\t" << "<roi_enable>: 0 disable roi encoder; 1 enable roi encoder." << endl;
+    cout << "\t" << "              if roi_enable is 1, you should set null/Null in outputname and set roi_eanble=1 in encodeparams." << endl;
+    cout << "\t" << "<encodeparams>: gop=30:bitrate=800:gop_preset=2:mb_rc=1:delta_qp=3:min_qp=20:max_qp=40:roi_enable=1:push_stream=rtmp/rtsp." << endl;
+
+    return ;
+
+}
+
 int main(int argc, char* argv[])
 {
     //--- INITIALIZE VIDEOCAPTURE
@@ -297,22 +329,7 @@ int main(int argc, char* argv[])
 #endif
 
     if (argc < 7){
-        cout << "usage:  test encoder by HW(h.264/h.265) with different container !!" << endl;
-#ifdef USING_SOC
-        cout << "\t" << argv[0] << " input code_type frame_num outputname yuv_enable roi_enable [encodeparams]" <<endl;
-        cout << "\t" << "eg: " << argv[0] << " rtsp://admin:bitmain.com@192.168.1.14:554  H265enc  30 encoder_test265.ts 1 0 bitrate=1000" <<endl;
-#else
-        cout << "\t" << argv[0] << " input code_type frame_num outputname yuv_enable roi_enable [device_id] [encodeparams]" <<endl;
-        cout << "\t" << "eg: " << argv[0] << " rtsp://admin:bitmain.com@192.168.1.14:554  H265enc  30 encoder_test265.ts 1 0 0 bitrate=1000" <<endl;
-#endif
-        cout << "params:" << endl;
-        cout << "\t" << "<code_type>: H264enc is h264; H265enc is h265." << endl;
-        cout << "\t" << "<outputname>: null or NULL output pkt.dump." << endl;
-        cout << "\t" << "<yuv_enable>: 0 decode output bgr; 1 decode output yuv420." << endl;
-        cout << "\t" << "<roi_enable>: 0 disable roi encoder; 1 enable roi encoder." << endl;
-        cout << "\t" << "              if roi_enable is 1, you should set null/Null in outputname." << endl;
-        cout << "\t" << "<encodeparams>: gop=30:bitrate=800:gop_preset=2:mb_rc=1:delta_qp=3:min_qp=20:max_qp=40:push_stream=rtmp/rtsp." << endl;
-        return -1;
+        usage(argv[0]);
     }
     THREAD_ARG *threadPara = (THREAD_ARG *)malloc(sizeof(THREAD_ARG));
     memset(threadPara,0,sizeof(THREAD_ARG));
@@ -346,6 +363,10 @@ int main(int argc, char* argv[])
     }
 #ifdef USING_SOC
     if (argc == 8) {threadPara->encodeParams = argv[7];}
+    if (argc > 8) {
+        usage(argv[0]);
+        return -1;
+    }
 #else
     if (argc >= 8) {threadPara->deviceId = atoi(argv[7]);}
     if (argc == 9) {threadPara->encodeParams = argv[8];}

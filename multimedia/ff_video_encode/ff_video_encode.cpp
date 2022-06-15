@@ -214,10 +214,10 @@ int VideoEnc_FFMPEG::writeFrame(const uint8_t* data, int step, int width, int he
                     for (int j=0;j < (BM_ALIGN16(width) >> 4);j++) {
                         int pos = i*(BM_ALIGN16(width) >> 4) + j;
                         // test_1
-                        if ( (j >= 9) && (i >= 11) ) {
+                        if ( (j >= (BM_ALIGN16(width) >> 4)/2) && (i >= (BM_ALIGN16(height) >> 4)/2) ) {
                             roiinfo->field[pos].H264.mb_qp = 10;
                         }else{
-                            roiinfo->field[pos].H264.mb_qp = 20;
+                            roiinfo->field[pos].H264.mb_qp = 40;
                         }
 
                         // test_2
@@ -243,16 +243,16 @@ int VideoEnc_FFMPEG::writeFrame(const uint8_t* data, int step, int width, int he
                     int pos = i*(BM_ALIGN64(width) >> 6) + j;
 
                     // test_1
-                    if ( (j>2) && (i>2) ) {
+                    if ( (j > (BM_ALIGN64(width) >> 6)/2) && (i > (BM_ALIGN64(height) >> 6)/2) ) {
                         roiinfo->field[pos].HEVC.sub_ctu_qp_0 = 10;
                         roiinfo->field[pos].HEVC.sub_ctu_qp_1 = 10;
                         roiinfo->field[pos].HEVC.sub_ctu_qp_2 = 10;
                         roiinfo->field[pos].HEVC.sub_ctu_qp_3 = 10;
                     } else {
-                        roiinfo->field[pos].HEVC.sub_ctu_qp_0 = 20;
-                        roiinfo->field[pos].HEVC.sub_ctu_qp_1 = 20;
-                        roiinfo->field[pos].HEVC.sub_ctu_qp_2 = 20;
-                        roiinfo->field[pos].HEVC.sub_ctu_qp_3 = 20;
+                        roiinfo->field[pos].HEVC.sub_ctu_qp_0 = 40;
+                        roiinfo->field[pos].HEVC.sub_ctu_qp_1 = 40;
+                        roiinfo->field[pos].HEVC.sub_ctu_qp_2 = 40;
+                        roiinfo->field[pos].HEVC.sub_ctu_qp_3 = 40;
                     }
 
                     // test_2
