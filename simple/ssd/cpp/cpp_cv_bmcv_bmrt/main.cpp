@@ -75,6 +75,11 @@ int main(int argc, char **argv) {
     cout << "Cannot find valid model file." << endl;
     exit(1);
   }
+  
+  if (strcmp(argv[1], "video") != 0 && strcmp(argv[1], "image") != 0){
+    cout << "mode must be image or video" << endl;
+    exit(1);
+  }
 
   bool is_video = false;
   if (strcmp(argv[1], "video") == 0)

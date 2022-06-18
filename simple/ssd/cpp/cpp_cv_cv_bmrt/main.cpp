@@ -69,6 +69,11 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
+  if (strcmp(argv[1], "video") != 0 && strcmp(argv[1], "image") != 0){
+    cout << "mode must be image or video" << endl;
+    exit(1);
+  }
+
   is_video = false;
   if (strcmp(argv[1], "video") == 0)
     is_video = true;
