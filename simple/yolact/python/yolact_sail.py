@@ -114,6 +114,7 @@ def main(opt):
     yolact = Detector(
         opt.cfgfile,
         opt.model,
+        device_id=opt.dev_id,
         conf_thresh=opt.thresh,
         nms_thresh=opt.nms,
         keep_top_k=opt.keep,

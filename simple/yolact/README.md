@@ -274,10 +274,10 @@ cd ${YOLACT}/python
 # 如果使用yolact_pytorch.py测试，<model>为JIT模型路径
 # yoloact base
 # image
-python3 yolact_bmcv.py --cfgfile configs/yolact_base.cfg --model ../data/models/yolact_base_54_800000_fp32_b1/yolact_base_54_800000_b1.bmodel --input_path ../data/images/
+python3 yolact_bmcv.py --cfgfile configs/yolact_base.cfg --model ../data/models/yolact_base_54_800000_fp32_b1/yolact_base_54_800000_fp32_b1.bmodel --input_path ../data/images/
 
 # video
-python3 yolact_bmcv.py --cfgfile configs/yolact_base.cfg --model ../data/models/yolact_base_54_800000_fp32_b1/yolact_base_54_800000_b1.bmodel --is_video 1 --input_path ../data/videos/road.mp4
+python3 yolact_bmcv.py --cfgfile configs/yolact_base.cfg --model ../data/models/yolact_base_54_800000_fp32_b1/yolact_base_54_800000_fp32_b1.bmodel --is_video 1 --input_path ../data/videos/road.mp4
 ```
 
 > **使用SAIL模块的注意事项：**对于INT8 BModel来说，当输入输出为int8时，含有scale，需要在处理时将输入输出乘以相应的scale。使用SAIL接口推理时，当sail.Engine.process()接口输入为numpy时，SAIL内部会自动乘以scale，用户无需操作；而输入为Tensor时，需要手动在数据送入推理接口前乘以scale。
