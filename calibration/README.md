@@ -2,11 +2,11 @@
 
 本examples包含如下子模块：
 
-- auto_cali_demo, auto_cali的demo
-- yolov5s_demo，使用auto_cali量化yolov5s和使用可视化工具的demo
+- yolov5s_demo，包含使用auto_cali量化yolov5s和使用可视化工具查看yolov5s量化结果两个demo
 - caffemodel_to_fp32model_demo, 使用ufw将 caffe 网络编译为fp32umodel的demo
 - dn_to_fp32umodel_demo, 使用ufw将 darknet 网络编译为fp32umodel的demo
 - mx_to_fp32umodel_demo, 使用ufw将 mxnet 网络编译为fp32umodel的demo
+- on_to_fp32umodel_demo, 使用ufw将 onnx 网络编译为fp32umodel的demo
 - pp_to_fp32umodel_demo, 使用ufw将 paddlepaddle 网络编译为fp32umodel的demo
 - pt_to_fp32umodel_demo, 使用ufw将 pytorch 网络编译为fp32umodel的demo
 - tf_to_fp32umodel_demo, 使用ufw将 tensorflow 网络编译为fp32umodel的demo
@@ -17,7 +17,7 @@
 
 ## 说明
 本目录下的demo都设计在docker容器中的sophonsdk3中工作，关于如何选择正确的docker image和sophonsdk版本
-请参考sophonsdk3的发布说明和安装说明。
+请参考sophonsdk3的在线入门文档：[https://sophgo-doc.gitbook.io/sophonsdk3/](https://sophgo-doc.gitbook.io/sophonsdk3/)
 
 ## 准备工作
 启动和配置sophonsdk3的docker容器以sophonsdk3文档为准，如果运行本目录中的demo需要在启动容器进入sophonsdk3

@@ -1,7 +1,7 @@
 # yolov5s_view_demo
 -----
-请先进入docker环境，启动docker脚本中增加-p 8080:8080 的端口映射配置，再执行下述操作。
-docker启动脚本示例：
+请先进入sdk所目录，在启动docker脚本中增加-p 8080:8080 的端口映射配置，再执行下述操作。
+##docker启动脚本示例
 ```bash
   CMD="docker run \
       --network=host \
@@ -25,9 +25,6 @@ docker启动脚本示例：
 
   [[ ! -z "$container_id" ]] && eval $CMD
 ```
-  
-
-
 
 ## 配置运行环境
 ```bash
@@ -35,9 +32,11 @@ cd <sdk_path>/scripts  #进入对应版本的sdk脚本文件夹
 ./install_lib.sh nntc #安装nntoolchain
 source ./envsetup_cmodel.sh  #配置不同平台的运行环境
 ```
+## 首先参照 {EXAMPLES_TOP}/examples/calibration/yolov5s_demo/auto_cali_demo/README.md描述将网络进行量化。
+
 ## 进入量化网络所在目录
 ```bash
-cd {SDK_TOP}/examples/calibration/yolov5s_demo/auto_cali_demo
+cd {EXAMPLES_TOP}/examples/calibration/yolov5s_demo/view_demo
 ```
 ## 运行脚本
 ```bash
