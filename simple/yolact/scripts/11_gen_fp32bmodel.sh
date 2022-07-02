@@ -12,7 +12,7 @@ function gen_fp32bmodel()
 			  --model=yolact_base_54_800000.trace.pt \
 			  --outdir=./yolact_base_54_800000_fp32_b1 \
 			  --dyn=false
-	cp yolact_base_54_800000_fp32_b1/compilation.bmodel yolact_base_54_800000_fp32_b1/yolact_base_54_800000_fp32_b1.bmodel
+	cp yolact_base_54_800000_fp32_b1/compilation.bmodel ./yolact_base_54_800000_fp32_b1.bmodel
 }
 
 pushd $model_dir
