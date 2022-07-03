@@ -13,6 +13,7 @@ class SophonInference:
     def __init__(self, **kwargs):
         self.device_id = kwargs.get("device_id", 0)
         self.model_path = kwargs.get("model_path", None)
+        self.input_mode = kwargs.get("input_mode", 0) # numpy: 0, bm_iamge: other
         self.io_mode = sail.IOMode.SYSIO
         # self.data_format = kwargs.get("INIT_data_format", 'NCHW')
 
@@ -41,7 +42,10 @@ class SophonInference:
             input_scale = self.engine.get_input_scale(self.graph_name, input_name)
 
             # logger.debug("[{}] create sail.Tensor for input: {} ".format(input_name, input_shape))
-            input = sail.Tensor(self.handle, input_shape, input_dtype, False, False)
+            if self.input_mode:
+                input = sail.Tensor(self.handle, input_shape, input_dtype, True, True)
+            else:
+                input = None
 
             inputs.append(input)
             inputs_shapes.append(input_shape)
@@ -65,7 +69,10 @@ class SophonInference:
 
             # create sail.Tensor for output
             # logger.debug("[{}] create sail.Tensor for output: {} ".format(output_name, output_shape))
-            output = sail.Tensor(self.handle, output_shape, output_dtype, True, True)
+            if self.input_mode:
+                output = sail.Tensor(self.handle, output_shape, output_dtype, True, True)
+            else:
+                output = None
 
             outputs.append(output)
             output_tensors[output_name] = output

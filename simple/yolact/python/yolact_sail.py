@@ -21,7 +21,8 @@ class Detector(object):
         if not os.path.exists(bmodel_path):
             raise FileNotFoundError('{} is not existed.'.format(bmodel_path))
         self.net = SophonInference(model_path=bmodel_path,
-                                   device_id=device_id)
+                                   device_id=device_id,
+                                   input_mode=0)
         print('{} is loaded.'.format(bmodel_path))
 
         self.conf_thresh = conf_thresh
