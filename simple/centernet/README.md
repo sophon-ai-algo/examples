@@ -139,6 +139,10 @@ CenterNet 是一种 anchor-free 的目标检测网络，不仅可以用于目标
   # for x86
   pip3 install ../lib/sail/python3/pcie/py3x/sophon-?.?.?-py3-none-any.whl --user
   ```
+#### 3.1.4 拷贝examples_test到容器
+从[github](https://github.com/sophon-ai-algo/examples)或者FAE处获取3.0.0版本的examples_test压缩包。
+解压后，通过`docker cp -r examples_test <container-id>:/workspace`的方式，拷贝到上一步的docker容器中
+> 下面操作，默认examples_test在docker容器中路径为/workspace/examples_test
 
 ### 3.2 准备模型
 
@@ -157,7 +161,7 @@ JIT（Just-In-Time）是一组编译工具，用于弥合PyTorch研究与生产�
 # 下载dlav0作为主干网的预训练模型
 sudo apt update
 sudo apt install curl
-cd data/scripts/
+cd /workspace/examples_test/simple/centernet/data/scripts/
 ./download_pt.sh
 # 下载成功后，文件位于../build/ctdet_coco_dlav0_1x.pth
 
@@ -234,64 +238,14 @@ host mem size: 0 (coeff: 0, runtime: 0)
 
 不量化模型可跳过本节。
 
-INT8 BModel的生成需要经历中间格式UModel，即：原始模型→FP32 UModel→INT8 UModel→INT8 BModel。
 
-执行以下命令，将依次调用以下步骤中的脚本，生成INT8 BModel：
+执行以下命令，使用一键量化工具cali_model，生成INT8 BModel：
 
 ```shell
 ./2_gen_int8bmodel.sh
-# 转换成功后，模型位于../models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel
 ```
+上述脚本会在`../models/`下生成`ctdet_coco_dlav0_1output_512_int8_4batch.bmodel`，即转换好的INT8 BModel，使用`bm_model.bin --info`查看的模型具体信息如下
 
-### 4.2.1 生成LMDB
-
-需要将原始量化数据集转换成lmdb格式，供后续校准量化工具Quantization-tools 使用。更详细信息请参考：[准备LMDB数据集](https://doc.sophgo.com/docs/docs_latest_release/calibration-tools/html/module/chapter4.html#lmdb)。
-
-在docker开发容器中使用`ufw.io ` 工具从数据集图片生成LMDB文件，具体操作参见`convert_imageset.py`, 相关操作已被封装在 `scripts/20_create_lmdb.sh`中，执行如下命令即可：
-
-```
-./20_create_lmdb.sh
-```
-
-上述脚本会在`../images/`中生成`data.mdb`的文件
-请注意根据模型输入要求修改脚本中`convert_imageset`命令中的`resize_width`和`resize_height`等参数。
-
-#### 4.2.2 生成FP32 UModel
-
-执行以下命令，使用`ufw.pt_to_umodel`生成FP32 UModel，若不指定-D参数，可以在生成prototxt文件以后修改：
-
-```bash
-./21_gen_fp32umodel.sh
-```
-上述脚本会在`../build/int8model/`下生成`*_bmnetp_test_fp32.prototxt`、`*_bmnetp.fp32umodel`文件，即转换好的FP32 UModel。
-
-#### 4.2.3 修改FP32 UModel
-
-执行以下命令，修改FP32 UModel的prototxt文件即`ctdet_coco_dlav0_1x.torchscript_bmnetp_test_fp32.prototxt`，将输入层替换为Data层指向LMDB文件位置（若上一步已经指定-D参数，则无需操作），并使用`transform_op`完成需要进行的预处理；对于CenterNet来说，需要设置scale；如果`transform_op`无法完成要求的预处理，那么可以使用Python程序来生成LMDB文件：
-
-```bash
-./22_modify_fp32umodel.sh
-```
-
-#### 4.2.4 生成INT8 UModel
-
-执行以下命令，使用修改后的FP32 UModel文件生成INT8 UModel：
-
-```
-./23_gen_int8umodel.sh
-```
-
-上述脚本会在`../build/int8model/`下生成`*_bmnetp_deploy_fp32_unique_top.prototxt`、`*_bmnetp_deploy_int8_unique_top.prototxt`和`*_bmnetp.int8umodel`文件，即转换好的INT8 UModel。
-
-#### 4.2.5 生成INT8 BModel
-
-执行以下命令，使用生成的INT8 UModel文件生成INT8 BModel：
-
-```
-./24_gen_int8bmodel.sh
-```
-
-上述脚本会在`../models/`下生成`ctdet_coco_dlav0_1output_512_int8_4batch.bmodel`，即转换好的INT8 BModel，使用`bm_model.bin --info`查看的模型具体信息如下：
 
 ```bash
 bmodel version: B.2.2
@@ -309,12 +263,9 @@ device mem size: 78307080 (coeff: 18616328, instruct: 147200, runtime: 59543552)
 host mem size: 0 (coeff: 0, runtime: 0
 ```
 
-由于量化模型通常存在精度损失，当使用默认脚本生成的量化模型精度不能满足需求时，可能需要修改量化策略并借助自动量化工具auto-calib寻找最优结果，甚至在必要时需要将某些量化精度损失较大的层单独设置为使用fp32推理，相关调试方法请参考[《量化工具用户开发手册》](https://doc.sophgo.com/docs/docs_latest_release/calibration-tools/html/index.html)。
-
-
 ## 5. 部署测试
 
-测试图片见`data/`，转换好的bmodel文件可以放置于`data/models`。
+测试图片见`/workspace/examples_test/simple/centernet/data/`，转换好的bmodel文件可以放置于`/workspace/examples_test/simple/centernet/data/models`。
 
 
 ### 5.1 环境配置
@@ -352,7 +303,7 @@ sudo pip3 install numpy==1.17.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
 - 编译
 
 ```bash
-$ cd ../../cpp_bmcv_sail
+$ cd /workspace/examples_test/simple/centernet/cpp_bmcv_sail
 # 先手动修改Makefile.pcie里的top_dir地址，指向实际SDK的根路径
 # docker容器中，默认为/workspace
 $ make -f Makefile.pcie # 生成centernet_bmcv_sail.pcie
@@ -385,10 +336,10 @@ $ make -f Makefile.arm # 生成centernet_bmcv_sail.arm
 
 - 将以下文件拷贝到盒子中同一个目录中，进行测试
 1. `centernet_bmcv_sail.arm`
-2. `../data/models/ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel`
-3. `../data/models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel`
-4. `../data/ctdet_test.jpg`
-5. `../data/coco_classes.txt`
+2. `/workspace/examples_test/simple/centernet/data/models/ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel`
+3. `/workspace/examples_test/simple/centernet/data/models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel`
+4. `/workspace/examples_test/simple/centernet/data/ctdet_test.jpg`
+5. `/workspace/examples_test/simple/centernet/data/coco_classes.txt`
 ```bash
 # 1batch
 $ ./centernet_bmcv_sail.arm --bmodel=ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel --image=ctdet_test.jpg
@@ -412,7 +363,7 @@ Python代码无需编译，无论是x86 SC平台还是arm SE5平台配置好环�
 cd /workspace/lib/sail/python3/pcie/py37
 pip3 install sophon-2.7.0-py3-none-any.whl
 
-cd /workspace/examples/centernet/py_bmcv_sail
+cd /workspace/examples_test/simple/centernet/py_bmcv_sail
 
 # 1batch
 python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../data/models/ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel --input=../data/ctdet_test.jpg
