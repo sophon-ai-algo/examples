@@ -77,7 +77,7 @@ struct layer {
 
 class YOLO {
 public:
-  YOLO(const std::string bmodel);
+  YOLO(const std::string bmodel, int dev_id);
   ~YOLO();
   void preForward(std::vector<cv::Mat>& images);
   void forward();

@@ -23,9 +23,9 @@ You may obtain a copy of the License at
 #include "utils.hpp"
 using namespace std;
 
-YOLO::YOLO(const std::string bmodel) {
+YOLO::YOLO(const std::string bmodel, int dev_id) {
    /* create device handler */
-  bm_dev_request(&bm_handle_, 0);
+  bm_dev_request(&bm_handle_, dev_id);
 
   /* create inference runtime handler */
   p_bmrt_ = bmrt_create(bm_handle_);

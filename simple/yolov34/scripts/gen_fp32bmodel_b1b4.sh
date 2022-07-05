@@ -12,7 +12,7 @@ bmnetd --model=${model_dir}/${src_model_name}.cfg \
        --shapes=[1,3,416,416] \
        --outdir=./out/${dst_model_name} \
        --target=BM1684
-cp out/${dst_model_name}/compilation.bmodel out/${dst_model_name}/f32_1b.bmodel
+cp out/${dst_model_name}/compilation.bmodel out/${dst_model_name}/fp32_1b.bmodel
 
 #generate 4 batch bmodel
 mkdir -p out/${dst_model_name}_4batch
@@ -22,7 +22,7 @@ bmnetd --model=${model_dir}/${src_model_name}.cfg \
        --outdir=./out/${dst_model_name}_4batch \
        --target=BM1684 \
        --v=4
-cp out/${dst_model_name}_4batch/compilation.bmodel out/${dst_model_name}_4batch/f32_4b.bmodel
+cp out/${dst_model_name}_4batch/compilation.bmodel out/${dst_model_name}_4batch/fp32_4b.bmodel
 
 # combine bmodel
-bm_model.bin --combine out/${dst_model_name}/f32_1b.bmodel out/${dst_model_name}_4batch/f32_4b.bmodel -o out/${dst_model_name}_fp32_1b_4b.bmodel
+bm_model.bin --combine out/${dst_model_name}/fp32_1b.bmodel out/${dst_model_name}_4batch/fp32_4b.bmodel -o out/${dst_model_name}_fp32_1b_4b.bmodel

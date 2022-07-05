@@ -22,10 +22,11 @@ bash ./0_prepare_test_data.sh
 
 ### 2.2.1 fp32 bmodel
 
-use `scripts/gen_fp32bmodel.sh` to generate fp32 bmodel from `.cfg` and `.weights`, and `.bmodel` will be saved in `../data/models/`:
+use `scripts/download.sh` to download the yolov4.weights and yolov4.cfg, then use `scripts/gen_fp32bmodel.sh` to generate fp32 bmodel from `.cfg` and `.weights`, and `.bmodel` will be saved in `../data/models/`:
 
 ```bash
 cd scripts
+bash ./download.sh
 bash ./gen_fp32bmodel.sh
 ```
 
@@ -33,7 +34,7 @@ use `bmnetd` in SophonSDK dev docker to generate other fp32 bmodels.
 
 ### 2.2.2 int8 bmodel
 
-Follow the instructions in [Quantization-Tools User Guide](https://doc.sophgo.com/docs/docs_latest_release/calibration-tools/html/index.html) to generate int8 bmodel, the typical steps are:
+Follow the instructions in [Quantization-Tools User Guide](https://doc.sophgo.com/docs/3.0.0/docs_latest_release/nntc/NNToolChain_zh.pdf) to generate int8 bmodel, the typical steps are:
 
 - use `ufwio.io` to generate LMDB from images
 - use `bmnetd --mode=GenUmodel` to generate fp32 umodel from `.cfg` and `.weights`
@@ -50,7 +51,6 @@ Several bmodels converted from [darknet](https://github.com/AlexeyAB/darknet) yo
 | 模型文件                       | 输入                                                | 输出                                                         | anchors and masks                                            |
 | ------------------------------ | --------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | yolov3_416_coco_fp32_1b.bmodel | input: data, [1, 3, 416, 416], float32, scale: 1    | output: Yolo0, [1, 255, 13, 13], float32, scale: 1<br/>output: Yolo1, [1, 255, 26, 26], float32, scale: 1<br/>output: Yolo2, [1, 255, 52, 52], float32, scale: 1 | YOLO_MASKS: [6, 7, 8, 3, 4, 5, 0, 1, 2]<br />YOLO_ANCHORS: [10, 13, 16, 30, 33, 23, 30, 61, 62, 45,59, 119, 116, 90, 156, 198, 373, 326] |
-| yolov3_416_coco_int8_1b.bmodel | input: data, [1, 3, 416, 416], int8, scale: 128     | output: Yolo0, [1, 255, 13, 13], float32, scale: 0.0078125<br/>output: Yolo1, [1, 255, 26, 26], float32, scale: 0.0078125<br/>output: Yolo2, [1, 255, 52, 52], float32, scale: 0.0078125 | YOLO_MASKS: [6, 7, 8, 3, 4, 5, 0, 1, 2]<br />YOLO_ANCHORS: [10, 13, 16, 30, 33, 23, 30, 61, 62, 45,59, 119, 116, 90, 156, 198, 373, 326] |
 | yolov3_608_coco_fp32_1b.bmodel | input: data, [1, 3, 608, 608], float32, scale: 1    | output: Yolo0, [1, 255, 19, 19], float32, scale: 1<br/>output: Yolo1, [1, 255, 38, 38], float32, scale: 1<br/>output: Yolo2, [1, 255, 76, 76], float32, scale: 1 | YOLO_MASKS: [6, 7, 8, 3, 4, 5, 0, 1, 2]<br />YOLO_ANCHORS: [10, 13, 16, 30, 33, 23, 30, 61, 62, 45, 59, 119, 116, 90, 156, 198, 373, 326] |
 | yolov4_416_coco_fp32_1b.bmodel | input: data, [1, 3, 416, 416], float32, scale: 1    | output: Yolo0, [1, 255, 52, 52], float32, scale: 1<br/>output: Yolo1, [1, 255, 26, 26], float32, scale: 1<br/>output: Yolo2, [1, 255, 13, 13], float32, scale: 1 | YOLO_MASKS: [0, 1, 2, 3, 4, 5, 6, 7, 8]<br />YOLO_ANCHORS: [12, 16, 19, 36, 40, 28, 36, 75, 76, 55, 72, 146, 142, 110, 192, 243, 459, 401] |
 | yolov4_608_coco_fp32_1b.bmodel | input: data, [1, 3, 608, 608], float32, scale: 1    | output: Yolo0, [1, 255, 76, 76], float32, scale: 1<br/>output: Yolo1, [1, 255, 38, 38], float32, scale: 1<br/>output: Yolo2, [1, 255, 19, 19], float32, scale: 1 | YOLO_MASKS: [0, 1, 2, 3, 4, 5, 6, 7, 8]<br /> YOLO_ANCHORS: [12, 16, 19, 36, 40, 28, 36, 75, 76, 55, 72, 146, 142, 110, 192, 243, 459, 401] |
@@ -75,11 +75,11 @@ $ make -f Makefile.pcie # will generate yolo_test.pcie
 
 ```shell
 $ realpath ../../data/images/* > imagelist.txt
-$ ./yolo_test.pcie image imagelist.txt ../../data/models/yolov4_608_coco_fp32.bmodel 
+$ ./yolo_test.pcie image imagelist.txt ../../data/models/yolov4_416_coco_fp32_1b.bmodel 4 0
 
 # USAGE:
-#  ./yolo_test.pcie image <image list> <bmodel file> 
-#  ./yolo_test.pcie video <video list>  <bmodel file>
+#  ./yolo_test.pcie image <image list> <bmodel file> <test count> <device id>
+#  ./yolo_test.pcie video <video list>  <bmodel file> <test count> <device id>
 ```
 
 ### 2.3.2 for arm SoC
@@ -94,11 +94,11 @@ $ make -f Makefile.arm # will generate yolo_test.arm
 
 ```shell
 $ realpath ../../data/images/* > imagelist.txt
-$ ./yolo_test.arm image imagelist.txt ../../data/models/yolov4_608_coco_fp32.bmodel 
+$ ./yolo_test.arm image imagelist.txt ../../data/models/yolov4_416_coco_fp32_1b.bmodel 4 0
 
 # USAGE:
-#  ./yolo_test.arm image <image list> <bmodel file> 
-#  ./yolo_test.arm video <video list>  <bmodel file>
+#  ./yolo_test.arm image <image list> <bmodel file> <test count> <device id>
+#  ./yolo_test.arm video <video list>  <bmodel file> <test count> <device id>
 ```
 
 ## 2.4 python demo usage
@@ -117,6 +117,13 @@ cd /workspace/lib/sail/python3/pcie/py37
 pip3 install sophon-<x.y.z>-py3-none-any.whl
 ```
 
+you also need to install other requirements
+
+```bash
+# for example, python3.7 in docker
+pip3 install easydict
+```
+
 - for arm SoC, you need to set the environment variable:
 
 ```bash
@@ -133,6 +140,12 @@ you probably need to install NumPy, then you could use OpenCV and SAIL:
 sudo apt update
 sudo apt-get install python3-pip
 sudo pip3 install numpy==1.17.2
+```
+
+you also need to install other requirements
+
+```bash
+sudo pip3 install Pillow pyyaml easydict
 ```
 
 #### Usages

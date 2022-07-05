@@ -20,7 +20,7 @@ save_path = os.path.join(os.path.dirname(
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-args = update_config(BASE_DIR + "/configs/yolov3_416.yml")
+# args = update_config(BASE_DIR + "/configs/yolov3_416.yml")
 # args = update_config(BASE_DIR + "/configs/yolov3_608.yml")
 # args = update_config(BASE_DIR + "/configs/yolov4_416.yml")
 # args = update_config(BASE_DIR + "/configs/yolov4_608.yml")
@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--cfgfile',
                         type=str,
-                        default="./configs/yolov3_416.yml",
+                        default="./configs/yolov4_416.yml",
                         required=False,
                         help='config file path.')
 

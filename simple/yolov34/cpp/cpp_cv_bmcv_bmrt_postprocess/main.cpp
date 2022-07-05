@@ -73,10 +73,10 @@ static void detect(YOLO &net, vector<cv::Mat>& images,
 int main(int argc, char **argv) {
   cout.setf(ios::fixed);
 
-  if (argc < 4) {
+  if (argc < 6) {
     cout << "USAGE:" << endl;
-    cout << "  " << argv[0] << " image <image list> <bmodel file> " << endl;
-    cout << "  " << argv[0] << " video <video list> <bmodel file> " << endl;
+    cout << "  " << argv[0] << " image <image list> <bmodel file> <test count> <device id>" << endl;
+    cout << "  " << argv[0] << " video <video list> <bmodel file> <test count> <device id>" << endl;
     exit(1);
   }
 
@@ -102,7 +102,33 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  YOLO net(bmodel_file);
+  uint32_t test_loop;
+  test_loop = stoull(string(argv[4]), nullptr, 0);
+  if (test_loop < 1 && is_video) {
+    cout << "test loop must large 0." << endl;
+    exit(1);
+  }
+
+  // set device id
+  std::string dev_str = argv[5];
+  std::stringstream checkdevid(dev_str);
+  double t;
+  if (!(checkdevid >> t)) {
+    std::cout << "Is not a valid dev ID: " << dev_str << std::endl;
+    exit(1);
+  }
+  int dev_id = std::stoi(dev_str);
+  std::cout << "set device id: " << dev_id << std::endl;
+ 
+  int max_dev_id = 0;
+  bm_dev_getcount(&max_dev_id);
+  if (dev_id >= max_dev_id) {
+        std::cout << "ERROR: Input device id="<< dev_id
+        << " exceeds the maximum number " << max_dev_id << std::endl;
+        exit(-1);
+  }
+
+  YOLO net(bmodel_file, dev_id);
   int batch_size = net.getBatchSize();
   TimeStamp ts;
   net.enableProfile(&ts);
@@ -114,7 +140,7 @@ int main(int argc, char **argv) {
     while(fp_img_list.getline(image_path, 1024)) {
       ts.save("decode overall");
       ts.save("stage 0: decode");
-      cv::Mat img = cv::imread(image_path, cv::IMREAD_COLOR, 0);
+      cv::Mat img = cv::imread(image_path, cv::IMREAD_COLOR, dev_id);
       ts.save("stage 0: decode");
       if (img.empty()) {
          cout << "read image error!" << endl;
@@ -135,7 +161,7 @@ int main(int argc, char **argv) {
     vector <cv::VideoCapture> caps;
     vector <string> cap_srcs;
     while(fp_img_list.getline(image_path, 1024)) {
-      cv::VideoCapture cap(image_path);
+      cv::VideoCapture cap(image_path, cv::CAP_ANY, dev_id);
       cap.set(cv::CAP_PROP_OUTPUT_YUV, 1);
       caps.push_back(cap);
       cap_srcs.push_back(image_path);
@@ -147,7 +173,7 @@ int main(int argc, char **argv) {
     }
 
     uint32_t batch_id = 0;
-    const uint32_t run_frame_no = 200;
+    uint32_t run_frame_no = test_loop;
     uint32_t frame_id = 0;
     while(1) {
       if (frame_id == run_frame_no) {

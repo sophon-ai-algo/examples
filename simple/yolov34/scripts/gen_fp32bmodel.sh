@@ -15,5 +15,5 @@ bmnetd --model=${model_dir}/${src_model_name}.cfg \
        --shapes=[1,3,416,416] \
        --outdir=./out/${dst_model_name} \
        --target=BM1684
-cp out/${dst_model_name}/compilation.bmodel ./${dst_model_name}_f32_1b.bmodel
+cp out/${dst_model_name}/compilation.bmodel ./${dst_model_name}_fp32_1b.bmodel
 popd
