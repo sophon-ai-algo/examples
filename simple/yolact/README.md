@@ -280,7 +280,7 @@ Python代码无需编译，无论是x86 SC平台还是arm SE5平台配置好环�
 
 ```bash
 # 在容器里, 以python3.7的docker为例
-pip3 install /workspace/lib/sail/python3/pcie/py37/sophon-2.7.0-py3-none-any.whl
+pip3 install /workspace/lib/sail/python3/pcie/py37/sophon-3.0.0-py3-none-any.whl
 
 cd ${YOLACT}/python
 # yolact_sail.py使用方法与yolact_bmcv.py一致，如果使用yolact_sail.py，结果将保存在results_cv目录下；如果使用yolact_bmcv.py，结果将保存在results_bmcv目录下。
