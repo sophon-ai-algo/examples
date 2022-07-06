@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
         string img_name = img_file.substr(index + 1);
         batch_imgs.push_back(img);
         batch_names.push_back(img_name);
-        if (batch_imgs.size() == batch_size) {
+        if ((int)batch_imgs.size() == batch_size) {
           vector<string> results = detect(net, batch_imgs, ts);
           for(int i = 0; i < batch_size; i++){
             fs::path image_file(batch_names[i]);

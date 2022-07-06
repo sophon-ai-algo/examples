@@ -28,7 +28,7 @@ class LPRNet(object):
         # load bmodel
         model_path = opt.bmodel
         print("using model {}".format(model_path))
-        self.net = sail.Engine(model_path, opt.tpu_id, sail.IOMode.SYSIO)
+        self.net = sail.Engine(model_path, opt.tpu_id, sail.IOMode.SYSO)
         print("load bmodel success!")
         self.graph_name = self.net.get_graph_names()[0]
         self.input_name = self.net.get_input_names(self.graph_name)[0]
@@ -139,13 +139,15 @@ def main(opt):
         logging.info("img:{}, res:{}".format(opt.img_path, res_list[0]))
     else:
         Tp = 0
-        img_file_list = [os.path.join(opt.img_path, img_name) for img_name in os.listdir(opt.img_path)]
+        filenames=os.listdir(opt.img_path)
+        filenames.sort(key=lambda x:x[1:-4])
+        img_file_list = [os.path.join(opt.img_path, img_name) for img_name in filenames]
         
         t1 = time.time()
         res_list = lprnet(img_file_list)
         t2 = time.time()
 
-        for i, img_name in enumerate(os.listdir(opt.img_path)):
+        for i, img_name in enumerate(filenames):
             logging.info("img:{}, res:{}".format(img_name, res_list[i]))
             if opt.mode == 'val':
                 label = img_name.split('.')[0]

@@ -46,7 +46,7 @@ function gen_int8bmodel()
 pushd $model_dir
 #在制作lmdb过程中使用bm_opencv
 export PYTHONPATH=$PYTHONPATH:$REL_TOP/lib/opencv/pcie/opencv-python/
-create_lmdb
+# create_lmdb
 gen_fp32umodel
 gen_int8umodel
 # 1b

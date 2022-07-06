@@ -6,9 +6,10 @@
   * [目录](#目录)
   * [1. 简介](#1-简介)
   * [2. 数据集](#2-数据集)
-  * [3. 准备环境与数据](#3-准备环境与数据)
-    * [3.1 准备环境](#31-准备环境)
-    * [3.2 准备模型与数据](#32-准备模型与数据)
+  * [3. 准备工作](#3-准备工作)
+    * [3.1 准备移植例程](#31-准备移植例程)
+    * [3.2 准备开发环境](#32-准备开发环境)
+    * [3.3 准备模型与数据](#33-准备模型与数据)
   * [4. 模型转换](#4-模型转换)
     * [4.1 生成FP32 BModel](#41-生成fp32-bmodel)
     * [4.2 生成INT8 BModel](#42-生成int8-bmodel)
@@ -48,13 +49,18 @@ LPRNet的优点可以总结为如下三点：
 
 
 
-## 3. 准备环境与数据
-
-### 3.1 准备开发环境
+## 3. 准备工作
+### 3.1 准备移植例程
+我们可以从github上下载移植好的例程，LPRNet的例程位于examples/simple/lprnet/。
+```
+git clone https://github.com/sophon-ai-algo/examples.git
+```
+### 3.2 准备开发环境
 
 模型转换验证和程序编译必须在开发环境中完成，我们需要一台x86主机作为开发环境，并且在我们提供的基于Ubuntu18.04的docker镜像中，使用我们的SophonSDK进行模型转换和量化。如果我们的x86主机插有PCIe加速卡可使用PCIe模式，如果没有可使用CModel模式。
 
 - 从宿主机SDK根目录下执行脚本进入docker环境  
+进入docker容器时，我们应将LPRNet例程拷贝或映射至容器目录下。
 ```bash
 ./docker_run_<***>sdk.sh
 ```
@@ -69,7 +75,7 @@ source envsetup_pcie.sh    # for PCIE MODE
 # source envsetup_cmodel.sh  # for CMODEL MODE
 ```
 
-### 3.2 准备模型与数据
+### 3.3 准备模型与数据
 
 进入本例程的工作目录后，可通过运行`scripts/download.sh`将相关模型下载至`data/models`，将数据集下载并解压至`data/images/`。
 ```bash
@@ -84,7 +90,7 @@ lprnet_fp32_1b4b.bmodel: 编译后的FP32模型，包含batch_size=1和batch_siz
 lprnet_int8_1b4b.bmodel: 量化后的INT8模型，包含batch_size=1和batch_size=4
 下载的数据包括：
 test: 原始测试集
-test_md5: 用于量化的数据集
+test_md5_lmdb: 用于量化的lmdb数据集
 ```
 #### 3.2.1 准备模型
 
@@ -95,7 +101,7 @@ test_md5: 用于量化的数据集
 | 训练集   | 未说明                    | 
 | 运算量   | 148.75 MFlops            |
 | 输入数据 | [batch_size, 3, 24, 94], FP32，NCHW |
-| 输出数据 | [batch_size, 16, 68], FP32 |
+| 输出数据 | [batch_size, 68, 18], FP32 |
 | 前处理   | resize,减均值,除方差,HWC->CHW |
 | 后处理   | ctc_decode                 |
 
@@ -178,6 +184,12 @@ output: 237, [4, 68, 18], float32, scale: 1
 
 对于x86 with PCIe平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成。
 
+由于Python例程用到sail库，需安装Sophon Inference：
+```bash
+# 确认平台及python版本，然后进入相应目录，比如x86平台，python3.7
+pip3 install $REL_TOP/lib/sail/python3/pcie/py37/sophon-3.0.0-py3-none-any.whl
+```
+
 #### 5.1.2 arm SoC
 对于arm SoC平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
 
@@ -244,23 +256,24 @@ device id:用于推理的tpu设备id。
 
 ```bash
 ......
-皖KZ9660.jpg pred:皖KZ9660
-皖AF8381.jpg pred:皖AF8381
-皖AVU208.jpg pred:皖AVU208
-皖AV9G58.jpg pred:皖AV9G58
-皖AC037T.jpg pred:皖AC037T
-皖A226K3.jpg pred:皖A226K3
+豫RM6396.jpg pred:皖RM6396
+闽D33U29.jpg pred:皖D33U29
+鲁AW9V20.jpg pred:鲁AW9V20
+鲁BE31L9.jpg pred:鲁BE31L9
+鲁Q08F99.jpg pred:鲁Q08F99
+鲁R8D57Z.jpg pred:鲁R8D57Z
 ===========================
-Acc = 889/1000=0.889000
+Acc = 891/1000=0.891000
+
 ############################
 SUMMARY: lprnet detect
 ############################
-[      lprnet overall]  loops:    1 avg: 1531500 us
-[          read image]  loops:  100 avg: 524 us
-[           detection]  loops:  100 avg: 3918 us
-[  lprnet pre-process]  loops:  100 avg: 225 us
-[    lprnet inference]  loops:  100 avg: 3453 us
-[ lprnet post-process]  loops:  100 avg: 108 us
+[      lprnet overall]  loops:    1 avg: 2109893 us
+[          read image]  loops:  100 avg: 984 us
+[           detection]  loops:  100 avg: 3974 us
+[  lprnet pre-process]  loops:  100 avg: 201 us
+[    lprnet inference]  loops:  100 avg: 3482 us
+[ lprnet post-process]  loops:  100 avg: 124 us
 ```
 
 #### 5.2.2 arm平台 SoC
@@ -276,26 +289,16 @@ make -f Makefile.arm  # 生成lprnet_cv_cv_bmrt.arm
 
 
 ### 5.3 Python例程推理
-
-由于Python例程用到sail库，需安装Sophon Inference：
-
-```bash
-# 确认平台及python版本，然后进入相应目录，比如x86平台，python3.7
-cd $REL_TOP/lib/sail/python3/pcie/py37
-pip3 install sophon-x.x.x-py3-none-any.whl
-```
-
 Python代码无需编译，无论是x86 PCIe平台还是arm SoC平台配置好环境之后就可直接运行。
 
-工程目录下的inference/python目录提供了一系列python例程以供参考使用，具体情况如下：
+工程目录下的python目录提供了一系列python例程以供参考使用，具体情况如下：
 
 | #    | 例程主文件                 | 说明                                 |
 | ---- | ----------------------   | -----------------------------------  |
 | 1    | lprnet_cv_cv_sail.py     | 使用OpenCV解码、OpenCV前处理、SAIL推理 |
 | 2    | lprnet_sail_bmcv_sail.py | 使用SAIL解码、BMCV前处理、SAIL推理     |
 
-> **使用bm_opencv解码的注意事项：** lprnet_cv_cv_sail.py所使用的opencv为原生opencv，若使用bm_opencv解码可能会导致推理结果的差异。若要使用bm_opencv可在运行lprnet_cv_cv_sail.py前添加环境变量如下：
-
+> **使用bm_opencv解码的注意事项：** x86 PCIe平台默认使用原生opencv，arm SoC平台默认使用bm_opencv。使用bm_opencv解码可能会导致推理结果的差异。若要在x86 PCIe平台使用bm_opencv可添加环境变量如下：
 ```bash
 export PYTHONPATH=$PYTHONPATH:$REL_TOP/lib/opencv/pcie/opencv-python/
 ```
@@ -343,17 +346,17 @@ python3 python/lprnet_cv_cv_sail.py --mode val --img_path data/images/test --bmo
 
 ```bash
 ......
-INFO:root:img:皖KZ9660.jpg, res:皖KZ9660
-INFO:root:img:皖AF8381.jpg, res:皖AF8381
-INFO:root:img:皖AVU208.jpg, res:皖AVU208
-INFO:root:img:皖AV9G58.jpg, res:皖AV9G58
-INFO:root:img:皖AC037T.jpg, res:皖AC037T
-INFO:root:img:皖A226K3.jpg, res:皖A226K3
-INFO:root:ACC = 0.8950
+INFO:root:img:豫RM6396.jpg, res:皖RM6396
+INFO:root:img:皖S08407.jpg, res:皖S08407
+INFO:root:img:皖SYZ927.jpg, res:皖SYZ927
+INFO:root:img:皖SZ788K.jpg, res:皖SZ788K
+INFO:root:img:皖SZH382.jpg, res:皖SZH382
+INFO:root:img:川X90621.jpg, res:川X90621
+INFO:root:ACC = 0.9010
 INFO:root:------------------ Inference Time Info ----------------------
-INFO:root:inference_time(ms): 1.48
-INFO:root:total_time(ms): 1716.98, img_num: 1000
-INFO:root:average latency time(ms): 1.72, QPS: 582.417488
+INFO:root:inference_time(ms): 1.03
+INFO:root:total_time(ms): 1371.67, img_num: 1000
+INFO:root:average latency time(ms): 1.37, QPS: 729.037181
 ```
 
 
@@ -374,26 +377,26 @@ bmrt_test --bmodel {path_of_bmodel} --loopnum 5
 
 [LNRNet_Pytorch](https://github.com/sirius-ai/LPRNet_Pytorch)中模型在该测试集上的准确率为89.4%。
 
-在SC5+上，不同封装方式在不同模型的精度和性能测试结果如下：
+在x86 PCIe平台上，不同封装方式在不同模型的精度和性能测试结果如下：
 
 |  PL  |   封装方式    | 精度 |batch_size|  ACC  |bmrt_test|infer_time| QPS |
 |------|   ---------  | ---- | -------  | ----- |  -----  | -----    | --- |
-|python|  cv+cv+sail  | fp32 |   1      | 89.4% |  1.7ms  |  2.6ms   | 340 |
-|python|  cv+cv+sail  | fp32 |   4      | 89.5% |  0.9ms  |  1.48ms  | 580 |
-|python|  cv+cv+sail  | int8 |   1      | 88.8% |  0.7ms  |  1.4ms   | 580 |
-|python|  cv+cv+sail  | int8 |   4      | 89.2% |  0.23ms |  0.65ms  | 1100|
-|python|sail+bmcv+sail| fp32 |   1      | 88.2% |  1.7ms  |  1.8ms   | 350 | 
-|python|sail+bmcv+sail| fp32 |   4      | 88.1% |  0.9ms  |  0.9ms   | 650 |
-|python|sail+bmcv+sail| int8 |   1      | 87.4% |  0.7ms  |  0.8ms   | 650 |
-|python|sail+bmcv+sail| int8 |   4      | 87.8% |  0.23ms |  0.27ms  | 1250|
-| cpp  |  cv+cv+bmrt  | fp32 |   1      |  88%  |  1.7ms  |  1.7ms   | 410 |
-| cpp  |  cv+cv+bmrt  | fp32 |   4      | 88.9% |  0.9ms  |  0.9ms   | 660 |
-| cpp  |  cv+cv+bmrt  | int8 |   1      | 87.7% |  0.7ms  |  0.7ms   | 700 |
-| cpp  |  cv+cv+bmrt  | int8 |   4      | 88.3% |  0.23ms |  0.25ms  | 1300 |
-| cpp  | cv+bmcv+bmrt | fp32 |   1      |  88%  |  1.7ms  |  1.7ms   | 370 |
-| cpp  | cv+bmcv+bmrt | fp32 |   4      | 88.9% |  0.9ms  |  0.9ms   | 590 |
-| cpp  | cv+bmcv+bmrt | int8 |   1      | 87.7% |  0.7ms  |  0.7ms   | 660 |
-| cpp  | cv+bmcv+bmrt | int8 |   4      | 88.3% |  0.23ms |  0.26ms  | 1000 |
+|python|  cv+cv+sail  | fp32 |   1      | 89.4% |  1.7ms  |  2.25ms   | 370 |
+|python|  cv+cv+sail  | fp32 |   4      | 90.1% |  0.9ms  |  1.05ms  | 700 |
+|python|  cv+cv+sail  | int8 |   1      | 88.8% |  0.7ms  |  1.15ms   | 630 |
+|python|  cv+cv+sail  | int8 |   4      | 89.6% |  0.25ms |  0.4ms  | 1300|
+|python|sail+bmcv+sail| fp32 |   1      | 88.2% |  1.7ms  |  1.8ms   | 330 | 
+|python|sail+bmcv+sail| fp32 |   4      | 88.2% |  0.9ms  |  0.9ms   | 560 |
+|python|sail+bmcv+sail| int8 |   1      | 87.4% |  0.7ms  |  0.8ms   | 500 |
+|python|sail+bmcv+sail| int8 |   4      | 87.8% |  0.25ms |  0.28ms  | 900|
+| cpp  |  cv+cv+bmrt  | fp32 |   1      |  88%  |  1.7ms  |  1.7ms   | 530 |
+| cpp  |  cv+cv+bmrt  | fp32 |   4      | 89.1% |  0.9ms  |  0.9ms   | 1000 |
+| cpp  |  cv+cv+bmrt  | int8 |   1      | 87.7% |  0.7ms  |  0.7ms   | 1100 |
+| cpp  |  cv+cv+bmrt  | int8 |   4      | 88.5% |  0.25ms |  0.25ms  | 2500 |
+| cpp  | cv+bmcv+bmrt | fp32 |   1      |  88%  |  1.7ms  |  1.7ms   | 500 |
+| cpp  | cv+bmcv+bmrt | fp32 |   4      | 89.1% |  0.9ms  |  0.9ms   | 850 |
+| cpp  | cv+bmcv+bmrt | int8 |   1      | 87.7% |  0.7ms  |  0.7ms   | 920 |
+| cpp  | cv+bmcv+bmrt | int8 |   4      | 88.5% |  0.25ms |  0.26ms  | 1800 |
 
 ```
 bmrt_test: 使用bmrt_test计算出来的理论推理时间；
@@ -401,7 +404,10 @@ infer_time: 程序运行时每张图的实际推理时间；
 QPS: 程序每秒钟全流程处理的图片数。
 ```
 
-> **LPRNet多batch测试注意事项**：LPRNet网络中包含mean算子，会把所有batch数据加和求平均，因此同一张图片在不同的batch组合中可能会产生不同的推理结果。
+> **测试说明**：  
+1. lprnet_cv_cv_sail.py在x86 PCIe平台上所使用的opencv为原生opencv，若使用bm_opencv解码或在arm SoC平台，推理精度会有所差异;
+2. LPRNet网络中包含mean算子，会把所有batch数据加和求平均，当多batch推理时，同一张图片在不同的batch组合中可能会产生不同的推理结果;
+3. 性能测试的结果具有一定的波动性。
 
 ## 6. 流程化部署
 (暂无)

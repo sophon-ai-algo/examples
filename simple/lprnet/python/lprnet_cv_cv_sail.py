@@ -123,8 +123,10 @@ def main(opt):
         logging.info("img:{}, res:{}".format(opt.img_path, res[0]))
     else:
         img_list = []
+        filenames=os.listdir(opt.img_path)
+        filenames.sort(key=lambda x:x[1:-4])
         t1 = time.time()
-        for img_name in os.listdir(opt.img_path):
+        for img_name in filenames:
             img_file = os.path.join(opt.img_path, img_name)
             src_img = cv2.imdecode(np.fromfile(img_file, dtype=np.uint8), -1)
             img_list.append(src_img)
@@ -134,14 +136,14 @@ def main(opt):
         t2 = time.time()
         
         Tp = 0
-        for i, img_name in enumerate(os.listdir(opt.img_path)):
+        for i, img_name in enumerate(filenames):
             logging.info("img:{}, res:{}".format(img_name, res_list[i]))
             if opt.mode == 'val':
                 label = img_name.split('.')[0]
                 if res_list[i] == label:
                     Tp += 1
-                else:
-                    logging.info("***wrong***")
+                #else:
+                    #logging.info("predict wrong")
                     #logging.info("img:{}, res:{}".format(img_name, res_list[i]))
                     
         if opt.mode == 'val':
