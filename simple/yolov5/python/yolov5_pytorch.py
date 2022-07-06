@@ -11,20 +11,22 @@ from utils.colors import _COLORS
 # output: 170, [1, 25200, 85], float32, scale: 1
 
 class Detector(object):
-    def __init__(self, img_size):
+    def __init__(self, model_path, img_size, confThreshold=0.5, nmsThreshold=0.5, objThreshold=0.1):
         self.nl = 3
         anchors = [[10, 13, 16, 30, 33, 23], [30, 61, 62, 45, 59, 119], [116, 90, 156, 198, 373, 326]]
         self.anchor_grid = np.asarray(anchors, dtype=np.float32).reshape(self.nl, 1, -1, 1, 1, 2)
         self.grid = [np.zeros(1)] * self.nl
         self.stride = np.array([8., 16., 32.])
-        self.confThreshold = 0.5
-        self.nmsThreshold = 0.5
-        self.objThreshold = 0.5
+        self.confThreshold = confThreshold
+        self.nmsThreshold = nmsThreshold
+        self.objThreshold = objThreshold
         self.img_size = img_size
-        model_path = os.path.join(os.path.dirname(__file__),
-                                  "../data/models/yolov5s.torchscript.{}.1.pt".format(img_size))
+        self.model_path = model_path
+        if not os.path.exists(model_path):
+            raise FileNotFoundError('{} is not existed.'.format(model_path))
         print("using model {}".format(model_path))
         self.model = torch.jit.load(model_path)
+        self.model.eval()
         coco_path = os.path.join(os.path.dirname(__file__),
                                   "../data/coco.names")
         with open(coco_path, 'rt') as f:
@@ -35,6 +37,7 @@ class Detector(object):
         xv, yv = np.meshgrid(np.arange(ny), np.arange(nx))
         return np.stack((xv, yv), 2).reshape((1, 1, ny, nx, 2)).astype(np.float32)
 
+    @torch.no_grad()
     def predict(self, tensor):
         # blob = cv2.dnn.blobFromImage(img, 1 / 255.0, (640, 640), [0, 0, 0], swapRB=True, crop=False)
         input_tensor = torch.from_numpy(tensor)
@@ -142,13 +145,19 @@ class Detector(object):
 
 
 def main(opt):
-    img_name = opt.img_name
+    img_name = opt.input
     src_img = cv2.imread(img_name)
     if src_img is None:
         print("Error: reading image '{}'".format(img_name))
         return -1
 
-    YOLOv5 = Detector(opt.img_size)
+    YOLOv5 = Detector(
+        opt.model, 
+        opt.img_size,
+        confThreshold=opt.conf,
+        nmsThreshold=opt.nms,
+        objThreshold=opt.obj,
+    )
     img, padded_img, (ratio, tx1, ty1) = YOLOv5.preprocess(src_img)
     print("img.shape: {}".format(img.shape))
 
@@ -173,15 +182,42 @@ def main(opt):
         result_image = YOLOv5.drawPred(result_image, int(det[5]), det[4], round(
             left), round(top), round(right), round(bottom))
     print(result_image.shape)
-    cv2.imwrite(opt.out_name, result_image)
+    cv2.imwrite(opt.output, result_image)
 
 
 def parse_opt():
     parser = argparse.ArgumentParser(prog=__file__)
-    parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
-    image_path = os.path.join(os.path.dirname(__file__),"../data/images/zidane.jpg")
-    parser.add_argument('--img-name', type=str, default=image_path, help='input image name')
-    parser.add_argument('--out-name', type=str, default="torch.jpg", help='output image name')
+
+    parser.add_argument('--model',
+                        type=str,
+                        default="../data/models/yolov5s_coco_v6.1_3output.trace.pt",
+                        required=False,
+                        help='torchscript trace model file path.')
+
+    parser.add_argument('--img_size', type=int, default=640, help='inference size (pixels)')
+
+    parser.add_argument('--input',
+                        type=str,
+                        default="../data/images/bus.jpg",
+                        required=False,
+                        help='input pic/video file path.')
+
+    parser.add_argument("--conf",
+                        default=0.5,
+                        type=float,
+                        help="test conf threshold.")
+
+    parser.add_argument("--nms",
+                        default=0.5,
+                        type=float,
+                        help="test nms threshold.")
+
+    parser.add_argument("--obj",
+                        default=0.1,
+                        type=float,
+                        help="test obj conf.")
+
+    parser.add_argument('--output', type=str, default="torch.jpg", help='output image name')
     opt = parser.parse_args()
     return opt
 

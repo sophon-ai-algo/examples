@@ -1,5 +1,4 @@
-top_dir ?= ../../..
-sdk_dir := $(top_dir)
+sdk_dir := $(REL_TOP)
 install_dir = $(top_dir)/install
 
 CXX = aarch64-linux-gnu-g++

@@ -20,7 +20,7 @@ save_path = os.path.join(os.path.dirname(
 
 
 class YOLOV5_Detector(object):
-    def __init__(self, bmodel_path, tpu_id, class_names_path, confThreshold=0.1, nmsThreshold=0.5, objThreshold=0.1):
+    def __init__(self, bmodel_path, tpu_id, class_names_path, confThreshold=0.5, nmsThreshold=0.5, objThreshold=0.1):
         # load bmodel
         self.net = sail.Engine(bmodel_path, tpu_id, sail.IOMode.SYSIO)
         self.handle = self.net.get_handle()
@@ -40,7 +40,7 @@ class YOLOV5_Detector(object):
         self.input_scale = self.net.get_input_scale(self.graph_name, self.input_name)
 
         self.input = sail.Tensor(
-            self.handle, self.input_shape, self.input_dtype, False, False)
+            self.handle, self.input_shape, self.input_dtype, True, True)
         self.input_tensors = {self.input_name: self.input}
 
         self.output_name_large = self.net.get_output_names(self.graph_name)[0]
@@ -569,7 +569,7 @@ if __name__ == '__main__':
                         help='tpu dev id(0,1,2,...).')
 
     parser.add_argument("--conf",
-                        default=0.1,
+                        default=0.5,
                         type=float,
                         help="test conf threshold.")
 

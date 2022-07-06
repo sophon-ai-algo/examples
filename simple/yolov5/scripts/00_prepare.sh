@@ -48,6 +48,16 @@ function download_val_dataset()
     unzip coco2017val.zip
   fi
 
+  echo "choose 200 images and copy to ../build/coco_images_200"
+  # choose 200 images and copy to ./images
+  if [ ! -d "coco_images_200" ]; then
+    echo "create data dir: coco_images_200"
+    mkdir -p coco_images_200
+  fi
+  ls -l coco/images/val2017 | sed -n '2,201p' | awk -F " " '{print $9}' | xargs -t -i cp ./coco/images/val2017/{} ./coco_images_200/
+  echo "[Success] 200 jpg files has been located in ../build/coco_images_200"
+
+
 }
 
 function download_bmodel()

@@ -18,7 +18,7 @@ save_path = os.path.join(os.path.dirname(
 
 
 class YOLOV5_Detector(object):
-    def __init__(self, bmodel_path, tpu_id, class_names_path, confThreshold=0.1, nmsThreshold=0.5, objThreshold=0.1):
+    def __init__(self, bmodel_path, tpu_id, class_names_path, confThreshold=0.5, nmsThreshold=0.5, objThreshold=0.1):
         # load bmodel
         self.net = sail.Engine(bmodel_path, tpu_id, sail.IOMode.SYSIO)
         self.graph_name = self.net.get_graph_names()[0]
@@ -228,6 +228,7 @@ class YOLOV5_Detector(object):
         if len(indices.shape) == 2:
             indices = indices.squeeze(1)
 
+        result_image = frame.copy()
         for i in indices:
             box = boxes[i]
             # scale to the origin image
@@ -375,7 +376,7 @@ if __name__ == '__main__':
                         help='tpu dev id(0,1,2,...).')
 
     parser.add_argument("--conf",
-                        default=0.1,
+                        default=0.5,
                         type=float,
                         help="test conf threshold.")
 
