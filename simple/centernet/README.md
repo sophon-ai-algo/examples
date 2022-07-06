@@ -159,8 +159,8 @@ JIT（Just-In-Time）是一组编译工具，用于弥合PyTorch研究与生产�
 
 ```bash
 # 下载dlav0作为主干网的预训练模型
-sudo apt update
-sudo apt install curl
+apt update
+apt install curl
 cd /workspace/examples_test/simple/centernet/data/scripts/
 ./download_pt.sh
 # 下载成功后，文件位于../build/ctdet_coco_dlav0_1x.pth
@@ -194,7 +194,7 @@ cp ctdet_coco_dlav0_1x.torchscript.pt ../models
 我们选取其中的200张图片进行量化
 
 ```bash
-sudo apt install unzip
+apt install unzip
 cd ../scripts
 ./00_prepare.sh
 # 下载成功后，JPG文件位于../images文件夹中
