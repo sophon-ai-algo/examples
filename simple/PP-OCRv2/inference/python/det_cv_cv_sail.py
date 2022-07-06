@@ -340,7 +340,8 @@ def main(opt):
         #label = img_name.split('.')[0]
         img_file = os.path.join(opt.img_path, img_name)
         #print(img_file, label)
-        src_img = cv2.imdecode(np.fromfile(img_file, dtype=np.uint8), -1)
+        # src_img = cv2.imdecode(np.fromfile(img_file, dtype=np.uint8), -1)
+        src_img = cv2.imread(img_file)
         img_list.append(src_img)
     
     dt_boxes_list = ppocrv2_det(img_list)

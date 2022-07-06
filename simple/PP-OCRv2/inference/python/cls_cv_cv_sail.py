@@ -52,7 +52,7 @@ class PPOCRv2Cls(object):
     def predict(self, tensor):
         input_data = {self.input_name: np.array(tensor, dtype=np.float32)}
         outputs = self.net.process(self.graph_name, input_data)
-        return list(outputs.values())[-1]
+        return outputs['save_infer_model/scale_0.tmp_1']
 
     def postprocess(self, outputs):
         #outputs = list(outputs.values())[0]

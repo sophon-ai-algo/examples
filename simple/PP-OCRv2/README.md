@@ -141,6 +141,13 @@ TODO
 
 对于x86 PCIe平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成。
 
+由于Python例程用到sail库，需安装Sophon Inference：
+
+```bash
+# 确认平台及python版本，然后进入相应目录，比如x86平台，python3.7 
+pip3 install $REL_TOP/lib/sail/python3/pcie/py37/sophon-*-py3-none-any.whl
+```
+
 #### 5.1.2 arm SoC
 对于arm SoC平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
 
@@ -149,6 +156,11 @@ TODO
 export PATH=$PATH:/system/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/lib/:/system/usr/lib/aarch64-linux-gnu
 export PYTHONPATH=$PYTHONPATH:/system/lib
+```
+
+请预先安装libgeos-dev，以在Python中使用Shapely:
+```bash
+sudo apt-get install libgeos-dev
 ```
 
 如果您使用的设备是Debian系统，您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
@@ -179,27 +191,16 @@ TODO
 
 - 环境配置
 
-由于Python例程用到sail库，需安装Sophon Inference：
-
-```bash
-# 确认平台及python版本，然后进入相应目录，比如x86平台，python3.7
-cd $REL_TOP/lib/sail/python3/pcie/py37
-pip3 install sophon-*-py3-none-any.whl
-```
-
 还需安装其他第三方库：
 ```bash
-# 回到工程目录
-cd -
 pip3 install -r inference/python/requirements.txt
 ```
 
 Python代码无需编译，无论是x86 PCIe平台还是arm SoC平台配置好环境之后就可直接运行。
 
-> **使用bm_opencv解码的注意事项：** 默认使用原生opencv，若使用bm_opencv解码可能会导致推理结果的差异。若要使用bm_opencv可添加环境变量如下：
-
+> **使用bm_opencv解码的注意事项：** x86 PCIe平台默认使用原生opencv，arm SoC平台默认使用bm_opencv。使用bm_opencv解码可能会导致推理结果的差异。若要在x86 PCIe平台使用bm_opencv可添加环境变量如下：
 ```bash
-export PYTHONPATH=$PYTHONPATH:$REL_TOP/lib/opencv/x86/opencv-python/
+export PYTHONPATH=$PYTHONPATH:$REL_TOP/lib/opencv/pcie/opencv-python/
 ```
 
 出现中文无法正常显示的解决办法：
