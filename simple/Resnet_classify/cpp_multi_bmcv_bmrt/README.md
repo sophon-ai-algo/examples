@@ -14,7 +14,7 @@ To run the test, please follow the steps below.
 cd $sdk_dir/scripts
 ./install_lib.sh nntc
 
-#for pcie / soc
+#for x86 pcie
 source envsetup_pcie.sh
 
 #for arm_pcie
