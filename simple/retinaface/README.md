@@ -62,7 +62,13 @@ source envsetup_pcie.sh    # for PCIE MODE
 ## 5. 推理测试
 ### 5.1 环境配置
 #### 5.1.1 x86 PCIe
-对于x86平台PCIe，运行环境与开发环境是一致的，可以参考[2.1](#21-准备环境)在PCIE模式下配置运行环境。
+对于x86平台PCIe，运行环境与开发环境是一致的，可以参考[3.1](#31-准备开发环境)在PCIE模式下配置运行环境。
+
+由于Python例程用到sail库，需安装Sophon Inference：
+
+```bash
+# 确认平台及python版本，然后进入相应目录，比如x86平台，python3.7
+pip3 install $REL_TOP/lib/sail/python3/pcie/py37/sophon-*-py3-none-any.whl
 
 #### 5.1.2 arm SoC
 对于arm SoC平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
@@ -128,11 +134,7 @@ Python代码无需编译，无论是x86 PCIe平台还是arm SoC平台配置好�
 $ cd python
 $ pip3 install -r requirements.txt
 ```
-由于Python例程用到sail库，需安装Sophon Inference：
 
-```bash
-# 确认平台及python版本，然后进入相应目录，比如x86平台，python3.7
-pip3 install $REL_TOP/lib/sail/python3/pcie/py37/sophon-*-py3-none-any.whl
 ```
 #### 5.3.1  测试命令
 - 查看测试命令参数

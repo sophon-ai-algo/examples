@@ -43,7 +43,7 @@ class Retinaface_sophon(object):
         # Create a Context on sophon device
         tpu_count = sail.get_available_tpu_num()
         logger.debug('{} TPUs Detected, using TPU {} \n'.format(tpu_count, tpu_id))
-        self.engine = sail.Engine(bmodel_file_path, tpu_id, sail.IOMode.SYSIO)
+        self.engine = sail.Engine(bmodel_file_path, tpu_id, sail.IOMode.SYSO)
         self.handle = self.engine.get_handle()
         self.graph_name = self.engine.get_graph_names()[0]
         graph_count = len(self.engine.get_graph_names())
