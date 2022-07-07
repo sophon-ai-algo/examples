@@ -58,13 +58,13 @@ source envsetup_pcie.sh    # for PCIE MODE
 ```bash
 ./scripts/gen_fp32bmodel.sh
 ```
-执行成功后，会在data/models/fp32bmodel目录下生成ssd300_fp32_1b.bmodel、ssd300_fp32_4b.bmodel、ssd300_fp32_1b4b.bmodel文件。
+执行成功后，会在data/models/fp32bmodel目录下生成ssd300_fp32_1b.bmodel、ssd300_fp32_4b.bmodel文件。
 
 ### 4.2 生成INT8 BModel
 ```bash
 ./scripts/gen_int8bmodel.sh
 ```
-执行成功后，会在data/models/int8bmodel目录下生成ssd300_int8_1b.bmodel、ssd300_int8_4b.bmodel、ssd300_int8_1b4b.bmodel文件。
+执行成功后，会在data/models/int8bmodel目录下生成ssd300_int8_1b.bmodel、ssd300_int8_4b.bmodel文件。
 
 ## 5. 推理测试
 ### 5.1 环境配置

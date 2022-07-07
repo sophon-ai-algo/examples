@@ -63,13 +63,13 @@ function gen_int8bmodel()
   cp compilation/compilation.bmodel ../data/models/int8bmodel/ssd300_int8_4b.bmodel
 
 #combine bmodel
-  bm_model.bin --combine ../data/models/int8bmodel/ssd300_int8_1b.bmodel ../data/models/int8bmodel/ssd300_int8_4b.bmodel -o ../data/models/int8bmodel/ssd300_int8_1b4b.bmodel
-  if [ $? -ne 0 ]; then
-      echo "combine bmodel error"
-      exit 1
-  else
-      echo "combine bmodel ok"
-  fi
+#   bm_model.bin --combine ../data/models/int8bmodel/ssd300_int8_1b.bmodel ../data/models/int8bmodel/ssd300_int8_4b.bmodel -o ../data/models/int8bmodel/ssd300_int8_1b4b.bmodel
+#   if [ $? -ne 0 ]; then
+#       echo "combine bmodel error"
+#       exit 1
+#   else
+#       echo "combine bmodel ok"
+#   fi
 }
 
 pushd $model_dir

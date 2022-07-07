@@ -10,6 +10,7 @@ make -f Makefile.pcie
 
 # ffmpeg can support all common video codec
 # the output is in results with filename such as int8|fp32_dev_id_frame_id.jpg, you can use any picture tool to open it
+# only support bmodel of batch_size=1
 ```
 * arm pcie
 > make on aarch64 docker, but run on aarch64 PCIE host.
@@ -20,6 +21,7 @@ make -f Makefile.arm_pcie
 
 # ffmpeg can support all common video codec
 # the output is in results with filename such as int8|fp32_dev_id_frame_id.jpg, you can use any picture tool to open it
+# only support bmodel of batch_size=1
 ```
 
 * SOC
@@ -31,6 +33,7 @@ make -f Makefile.arm
 
 # ffmpeg can support all common video codec
 # the output is in results with filename such as int8|fp32_dev_id_frame_id.jpg, you can use any picture tool to open it
+# only support bmodel batch size of 1
 ```
 
 

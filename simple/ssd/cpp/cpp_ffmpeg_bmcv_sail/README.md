@@ -9,7 +9,7 @@
 ```shell
 make -f Makefile.arm
 
-# bmodel: bmodel path, can be fp32 or int8 model
+# bmodel: bmodel path, only support batch_size=1, can be fp32 or int8 model 
 # input:  input path, can be image/video file or rtsp stream
 # loops:  frames count to be detected, default: 1
 ./ssd300_ffmpeg_bmcv_sail.arm \
@@ -26,7 +26,7 @@ make -f Makefile.arm
 ```shell
 make -f Makefile.pcie
 
-# bmodel: bmodel path, can be fp32 or int8 model
+# bmodel: bmodel path, only support batch_size=1, can be fp32 or int8 model
 # input:  input path, can be image/video file or rtsp stream
 # loops:  frames count to be detected, default: 1
 ./ssd300_ffmpeg_bmcv_sail.pcie \

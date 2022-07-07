@@ -20,7 +20,7 @@ bmnetc --model=../data/models/ssd300_deploy.prototxt \
        --target=BM1684
 cp compilation/compilation.bmodel ../data/models/fp32bmodel/ssd300_fp32_1b.bmodel
 
-#generate 4 batch bmodel
+generate 4 batch bmodel
 bmnetc --model=../data/models/ssd300_deploy.prototxt \
        --weight=../data/models/ssd300.caffemodel \
        --shapes=[4,3,300,300] \
@@ -29,7 +29,7 @@ bmnetc --model=../data/models/ssd300_deploy.prototxt \
 cp compilation/compilation.bmodel ../data/models/fp32bmodel/ssd300_fp32_4b.bmodel
 
 #combine bmodel
-bm_model.bin --combine ../data/models/fp32bmodel/ssd300_fp32_1b.bmodel ../data/models/fp32bmodel/ssd300_fp32_4b.bmodel -o ../data/models/fp32bmodel/ssd300_fp32_1b4b.bmodel
+# bm_model.bin --combine ../data/models/fp32bmodel/ssd300_fp32_1b.bmodel ../data/models/fp32bmodel/ssd300_fp32_4b.bmodel -o ../data/models/fp32bmodel/ssd300_fp32_1b4b.bmodel
 
 rm -rf compilation
 popd

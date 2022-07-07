@@ -19,7 +19,7 @@ You may obtain a copy of the License at
 #else
 #include <getopt.h>
 #endif
-
+#include <boost/filesystem.hpp>
 #include <sstream>
 #include <string>
 #include <numeric>
@@ -28,6 +28,7 @@ You may obtain a copy of the License at
 #include "engine.h"
 #include "processor.h"
 
+namespace fs = boost::filesystem;
 /**
  * @brief Load a bmodel and do inference.
  *
@@ -84,6 +85,17 @@ bool inference(
   // use bm-ffmpeg to decode video. default output format is compressed NV12
   sail::Decoder decoder(input_path, true, tpu_id);
   bool status = true;
+  string name;
+  if (input_path.find("rtsp://") == std::string::npos) {
+    fs::path image_file(input_path);
+    string filename = image_file.filename().string();
+    name = filename.substr(0, filename.rfind("."));
+  }else{
+    name = "video";
+  }
+  if (!fs::exists("./results")) {
+    fs::create_directory("results");
+  }
   // pipeline of inference
   for (int i = 0; i < loops; ++i) {
     // read an image from a image file or a video file
@@ -124,7 +136,11 @@ bool inference(
       }
       // save image with boxes
       std::stringstream ss;
-      ss << "result-" << i + 1 << ".jpg";
+      if (is_fp32){
+        ss << "results/out-batch-fp32-" << "t_" << i << "_dev_" << tpu_id << "_" << name <<".jpg";
+      }else{
+        ss << "results/out-batch-int8-" << "t_" << i << "_dev_" << tpu_id << "_" << name <<".jpg";
+      }
       bmcv.imwrite(ss.str(), img0);
     } else {
       status = false;

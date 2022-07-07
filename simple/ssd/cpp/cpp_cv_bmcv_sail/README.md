@@ -9,12 +9,11 @@
 ```shell
 make -f Makefile.arm
 
-# bmodel: bmodel path, can be fp32 or int8 model
+# bmodel: bmodel path, only support batch_size=1, can be fp32 or int8 model
 # input:  input path, can be image/video file or rtsp stream
 # loops:  frames count to be detected, default: 1
 ./ssd300_cv_bmcv_sail.arm \
     --bmodel your-path-to-bmodel \
     --input your-path-to-input \
-    --loops frames_count_to_detect \
-    --tpu_id tpu_id
+    --loops frames_count_to_detect
 ```
