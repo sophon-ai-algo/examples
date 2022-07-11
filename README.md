@@ -31,7 +31,7 @@ SophonSDK是算能科技基于其自主研发的 AI 芯片所定制的深度学�
 
 ## 使用指南
 
-1.根据设备形态按按照如下步骤搭建合设环境
+1.根据设备形态按照如下步骤搭建合适环境
 
 请参考在线入门文档：[https://sophgo-doc.gitbook.io/sophonsdk3/](https://sophgo-doc.gitbook.io/sophonsdk3/)
 
