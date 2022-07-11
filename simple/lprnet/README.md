@@ -68,17 +68,17 @@ LPRNet的优点可以总结为如下三点：
 
 #### 3.1.2 SDK软件包下载：
 
-- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/all.html)，Ubuntu 16.04 with Python 3.7
+- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/44.html)，Ubuntu 16.04 with Python 3.7
 
-```bash  
-wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
-```
+  ```bash
+  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
+  ```
 
-- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/all/all.html)，BMNNSDK 2.7.0
+- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/17/45.html)
 
-```bash
-wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/05/19/12/bmnnsdk2_bm1684_v2.7.0.zip
-```
+  ```bash
+  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/05/31/11/bmnnsdk2_bm1684_v2.7.0_20220531patched.zip
+  ```
 
 > **注意：** LPRNet模型量化需在20220317之后版本的SDK中进行！
 

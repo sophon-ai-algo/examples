@@ -82,13 +82,13 @@ bash ./01_prepare_test_data.sh
 
 #### 3.1.2 SDK软件包下载：
 
-- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://sophon.cn/drive/44.html)，Ubuntu 16.04 with Python 3.7
+- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/44.html)，Ubuntu 16.04 with Python 3.7
 
   ```bash
   wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
   ```
 
-- SDK软件包：[点击前往官网下载SDK软件包](https://sophon.cn/drive/45.html)，BMNNSDK 2.7.0 patched
+- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/17/45.html)
 
   ```bash
   wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/05/31/11/bmnnsdk2_bm1684_v2.7.0_20220531patched.zip
@@ -217,6 +217,7 @@ BMNNSDK2中的PyTorch模型编译工具BMNETP只接受PyTorch的JIT模型（Torc
 JIT（Just-In-Time）是一组编译工具，用于弥合PyTorch研究与生产之间的差距。它允许创建可以在不依赖Python解释器的情况下运行的模型，并且可以更积极地进行优化。在已有PyTorch的Python模型（基类为torch.nn.Module）的情况下，通过torch.jit.trace就可以得到JIT模型，如`torch.jit.trace(python_model, torch.rand(input_shape)).save('jit_model')`。BMNETP暂时不支持带有控制流操作（如if语句或循环）的JIT模型，因此不能使用torch.jit.script，而要使用torch.jit.trace，它仅跟踪和记录张量上的操作，不会记录任何控制流操作。这部分操作yolov5已经为我们写好，只需运行如下命令即可导出符合要求的JIT模型：
 
 ```bash
+# export.py为YOLOv5官方仓库提供的模型导出脚本，请下载官方仓库代码使用，下述脚本可能会根据不用版本的YOLOv5有所调整，请以官方仓库说明为准
 python3 export.py --weights ${PATH_TO_YOLOV5S_MODEL}/yolov5s.pt --include torchscript
 ```
 

@@ -80,17 +80,17 @@ bash ./01_prepare_test_data.sh
 
 #### 3.1.2 SDK软件包下载
 
-- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/all.html)，Ubuntu 18.04 with Python 3.7
+- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/44.html)，Ubuntu 16.04 with Python 3.7
 
-```bash
-wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
-```
+  ```bash
+  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
+  ```
 
-- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/17/all.html)，BMNNSDK 2.7.0_20220316_022200
+- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/17/45.html)
 
-```bash
-wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/04/14/10/bmnnsdk2_bm1684_v2.7.0_20220316_patched_0413.zip
-```
+  ```bash
+  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/05/31/11/bmnnsdk2_bm1684_v2.7.0_20220531patched.zip
+  ```
 
 #### 3.1.3 创建docker开发环境
 
