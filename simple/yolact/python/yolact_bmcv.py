@@ -99,10 +99,10 @@ class Detector(object):
         return out
 
 
-def decode_image_bmcv(image_path, process_handle, img):
+def decode_image_bmcv(image_path, process_handle, img, dev_id):
     # img = sail.BMImage()
     # img = sail.BMImageArray4D()
-    decoder = sail.Decoder(image_path, True, 0)
+    decoder = sail.Decoder(image_path, True, dev_id)
     if isinstance(img, sail.BMImage):
         ret = decoder.read(process_handle, img)
     else:
@@ -141,7 +141,7 @@ def main(opt):
                     batch_size)
             )
         # decode
-        decoder = sail.Decoder(input_path, True, 0)
+        decoder = sail.Decoder(input_path, True, opt.dev_id)
         if decoder.is_opened():
             print("create decoder success")
             frame = sail.BMImage()
@@ -212,7 +212,7 @@ def main(opt):
         images = []
         for ino in range(img_num):
             image = sail.BMImage()
-            ret = decode_image_bmcv(input_list[ino], yolact.handle, image)
+            ret = decode_image_bmcv(input_list[ino], yolact.handle, image, opt.dev_id)
             if not ret:
                 # decode failed.
                 print('skip: decode failed: {}'.format(input_list[ino]))
