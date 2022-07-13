@@ -9,5 +9,5 @@
              --fp32_layer_list '30,33,36' \
              --convert_bmodel_cmd_opt '--max_n=4 '
 
-cp ../models/ctdet_dlav0/compilation.bmodel ../models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel
+cp ../models/ctdet_dlav0_batch4/compilation.bmodel ../models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel
 echo "[Success] ../models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel generated."

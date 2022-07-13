@@ -139,10 +139,14 @@ CenterNet 是一种 anchor-free 的目标检测网络，不仅可以用于目标
   # for x86
   pip3 install ../lib/sail/python3/pcie/py3x/sophon-?.?.?-py3-none-any.whl --user
   ```
-#### 3.1.4 拷贝examples_test到容器
-从[github](https://github.com/sophon-ai-algo/examples)或者FAE处获取3.0.0版本的examples_test压缩包。
-解压后，通过`docker cp -r examples_test <container-id>:/workspace`的方式，拷贝到上一步的docker容器中
-> 下面操作，默认examples_test在docker容器中路径为/workspace/examples_test
+#### 3.1.4 拷贝examples代码到容器
+请从[github](https://github.com/sophon-ai-algo/examples)下载代码，拷贝到容器内编译测试。
+github上centernet例程位于examples/simple/centernet/。
+
+`git clone https://github.com/sophon-ai-algo/examples.git`
+
+下载后，通过`docker cp <examples-dir> <container-id>:/workspace`的方式，拷贝到上一步的docker容器中
+> 下面操作，默认centernet路径在容器中路径为/workspace/examples_test
 
 ### 3.2 准备模型
 
@@ -260,7 +264,7 @@ input: input.1, [4, 3, 512, 512], int8, scale: 60.4494
 output: 40, [4, 84, 128, 128], float32, scale: 1
 
 device mem size: 78307080 (coeff: 18616328, instruct: 147200, runtime: 59543552)
-host mem size: 0 (coeff: 0, runtime: 0
+host mem size: 0 (coeff: 0, runtime: 0)
 ```
 
 ## 5. 部署测试
@@ -305,7 +309,7 @@ sudo pip3 install numpy==1.17.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```bash
 $ cd /workspace/examples_test/simple/centernet/cpp_bmcv_sail
 # 先手动修改Makefile.pcie里的top_dir地址，指向实际SDK的根路径
-# docker容器中，默认为/workspace
+# docker容器中，默认为/workspace，请根据实际挂载的SDK路径进行修改
 $ make -f Makefile.pcie # 生成centernet_bmcv_sail.pcie
 ```
 
@@ -320,7 +324,7 @@ $ ./centernet_bmcv_sail.pcie --bmodel=../data/models/ctdet_coco_dlav0_1output_51
 # 4batch
 $ ./centernet_bmcv_sail.pcie --bmodel=../data/models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --image=../data/ctdet_test.jpg
 # 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx-bx.jpg格式的图片
-# 按照量化结果差异，图片上检测出11-12个目标，均属正常范围
+# 按照量化结果差异，图片上检测出11-13个目标，均属正常范围
 ```
 
 #### 5.2.2 arm平台SE5
@@ -331,6 +335,8 @@ $ ./centernet_bmcv_sail.pcie --bmodel=../data/models/ctdet_coco_dlav0_1output_51
 
 ```bash
 $ cd cpp_bmcv_sail
+# 先手动修改Makefile.arm里的top_dir地址，指向实际SDK的根路径
+# docker容器中，默认为/workspace，请根据实际挂载的SDK路径进行修改
 $ make -f Makefile.arm # 生成centernet_bmcv_sail.arm
 ```
 
@@ -349,7 +355,7 @@ $ ./centernet_bmcv_sail.arm --bmodel=ctdet_coco_dlav0_1output_512_fp32_1batch.bm
 # 4batch
 $ ./centernet_bmcv_sail.arm --bmodel=ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --image=ctdet_test.jpg
 # 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx_bx.jpg格式的图片
-# 按照量化结果差异，图片上检测出11-12个目标，均属正常范围
+# 按照量化结果差异，图片上检测出11-13个目标，均属正常范围
 ```
 
 ### 5.3 Python例程部署测试
@@ -373,11 +379,11 @@ python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../data/models/ctdet_coco_dlav
 # 4batch
 python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../data/models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --input=../data/ctdet_test.jpg
 # 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx_b_x.jpg格式的图片
-# 按照量化结果差异，图片上检测出11-12个目标，均属正常范围
+# 按照量化结果差异，图片上检测出11-13个目标，均属正常范围
 ```
 
 1. 如果是fp32的模型，图片有11个框
-2. 如果是int8的模型，按照量化结果差异，图片上检测出11-12个目标，均属正常范围
+2. 如果是int8的模型，按照量化结果差异，图片上检测出11-13个目标，均属正常范围
 
 > **使用SAIL模块的注意事项：**对于INT8 BModel来说，当输入输出为int8时，含有scale，需要在处理时将输入输出乘以相应的scale。使用SAIL接口推理时，当sail.Engine.process()接口输入为numpy时，SAIL内部会自动乘以scale，用户无需操作；而输入为Tensor时，需要手动在数据送入推理接口前乘以scale。
 > 这是因为Tensor作为输入的话，一般图像来源就是bm_image，这样就可以直接调用vpp进行scale等操作，所以推理之前由用户乘以scale更高效；而在python接口中，当numpy作为输入的话，推理之前没办法调用vpp，sail内部使用SSE指令进行了加速。
