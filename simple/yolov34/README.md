@@ -20,6 +20,8 @@ bash ./0_prepare_test_data.sh
 
 ## 2.2 prepare bmodel
 
+Bmodel must be compiled in SophonSDK dev docker. 
+
 ### 2.2.1 fp32 bmodel
 
 use `scripts/download.sh` to download the yolov4.weights and yolov4.cfg, then use `scripts/gen_fp32bmodel.sh` to generate fp32 bmodel from `.cfg` and `.weights`, and `.bmodel` will be saved in `../data/models/`:
@@ -145,8 +147,11 @@ sudo pip3 install numpy==1.17.2
 you also need to install other requirements
 
 ```bash
+sudo apt-get install -y libjpeg-dev zlib1g-dev
 sudo pip3 install Pillow pyyaml easydict
 ```
+
+finally you need to copy the prepared `data/images`, `data/videos` and `data/models` in SophonSDK dev docker to `${yolov34}/data` directory.
 
 #### Usages
 
