@@ -304,7 +304,7 @@ python3 yolact_bmcv.py --cfgfile configs/yolact_base.cfg --model ../data/models/
 ```bash
 cd ${YOLACT}/python
 # yolact_sail.py使用方法与yolact_bmcv.py一致，如果使用yolact_sail.py，结果将保存在results_cv目录下；如果使用yolact_bmcv.py，结果将保存在results_bmcv目录下。
-# 如果使用yolact_pytorch.py测试，<model>为JIT模型路径，结果将保存在results_pt目录下
+# SoC模式下不具备torch环境，不建议使用yolact_pytorch.py测试
 # yoloact base
 # image
 python3 yolact_bmcv.py --cfgfile configs/yolact_base.cfg --model ../data/models/yolact_base_54_800000_fp32_b1.bmodel --input_path ../data/images/
