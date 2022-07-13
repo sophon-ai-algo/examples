@@ -7,6 +7,10 @@ cd <sdk_path>/scripts  #进入对应版本的sdk脚本文件夹
 ./install_lib.sh nntc #安装nntoolchain
 source ./envsetup_cmodel.sh  #配置不同平台的运行环境
 ```
+##进入examples所在目录
+```bash
+cd {EXAMPLES_TOP}/calibration/create_lmdb_demo
+```
 ##运行脚本
 ```bash
 bash download_coco128.sh

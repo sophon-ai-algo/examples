@@ -32,11 +32,11 @@ cd <sdk_path>/scripts  #进入对应版本的sdk脚本文件夹
 ./install_lib.sh nntc #安装nntoolchain
 source ./envsetup_cmodel.sh  #配置不同平台的运行环境
 ```
-## 首先参照 {EXAMPLES_TOP}/examples/calibration/yolov5s_demo/auto_cali_demo/README.md描述将网络进行量化。
+## 首先参照 {EXAMPLES_TOP}/calibration/yolov5s_demo/auto_cali_demo/README.md描述将网络进行量化。
 
 ## 进入量化网络所在目录
 ```bash
-cd {EXAMPLES_TOP}/examples/calibration/yolov5s_demo/view_demo
+cd {EXAMPLES_TOP}/calibration/yolov5s_demo/view_demo
 ```
 ## 运行脚本
 ```bash
