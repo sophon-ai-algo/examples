@@ -377,7 +377,7 @@ bmrt_test --bmodel {path_of_bmodel} --loopnum 5
 
 [LNRNet_Pytorch](https://github.com/sirius-ai/LPRNet_Pytorch)中模型在该测试集上的准确率为89.4%。
 
-在x86 PCIe平台上，不同封装方式在不同模型的精度和性能测试结果如下：
+在SC5上，不同封装方式在不同模型的精度和性能测试结果如下：
 
 |  PL  |   封装方式    | 精度 |batch_size|  ACC  |bmrt_test|infer_time| QPS |
 |------|   ---------  | ---- | -------  | ----- |  -----  | -----    | --- |
@@ -397,6 +397,27 @@ bmrt_test --bmodel {path_of_bmodel} --loopnum 5
 | cpp  | cv+bmcv+bmrt | fp32 |   4      | 89.1% |  0.9ms  |  0.9ms   | 850 |
 | cpp  | cv+bmcv+bmrt | int8 |   1      | 87.7% |  0.7ms  |  0.7ms   | 920 |
 | cpp  | cv+bmcv+bmrt | int8 |   4      | 88.5% |  0.25ms |  0.26ms  | 1800 |
+
+在SE5上，不同封装方式在不同模型的精度和性能测试结果如下：
+
+|  PL  |   封装方式    | 精度 |batch_size|  ACC  |bmrt_test|infer_time| QPS |
+|------|   ---------  | ---- | -------  | ----- |  -----  | -----    | --- |
+|python|  cv+cv+sail  | fp32 |   1      | 88% |  1.7ms  |  1.9ms   | 380 |
+|python|  cv+cv+sail  | fp32 |   4      | 89.1% |  0.9ms  |  1.00ms  | 606 |
+|python|  cv+cv+sail  | int8 |   1      | 87.7% |  0.7ms  |  0.93ms   | 606 |
+|python|  cv+cv+sail  | int8 |   4      | 88.5% |  0.25ms |  0.38ms  | 975|
+|python|sail+bmcv+sail| fp32 |   1      | 88.2% |  1.7ms  |  1.7ms   | 365 | 
+|python|sail+bmcv+sail| fp32 |   4      | 88.2% |  0.9ms  |  0.9ms   | 615 |
+|python|sail+bmcv+sail| int8 |   1      | 87.4% |  0.7ms  |  0.72ms   | 570 |
+|python|sail+bmcv+sail| int8 |   4      | 87.8% |  0.25ms |  0.27ms  | 1000|
+| cpp  |  cv+cv+bmrt  | fp32 |   1      |  88%  |  1.7ms  |  1.7ms   | 550 |
+| cpp  |  cv+cv+bmrt  | fp32 |   4      | 89.3% |  0.9ms  |  0.9ms   | 1000 |
+| cpp  |  cv+cv+bmrt  | int8 |   1      | 87.7% |  0.7ms  |  0.6ms   | 1250 |
+| cpp  |  cv+cv+bmrt  | int8 |   4      | 88.1% |  0.25ms |  0.25ms  | 2500 |
+| cpp  | cv+bmcv+bmrt | fp32 |   1      |  88%  |  1.7ms  |  1.6ms   | 550 |
+| cpp  | cv+bmcv+bmrt | fp32 |   4      | 89.3% |  0.9ms  |  0.9ms   | 1000 |
+| cpp  | cv+bmcv+bmrt | int8 |   1      | 87.7% |  0.7ms  |  0.6ms   | 1250 |
+| cpp  | cv+bmcv+bmrt | int8 |   4      | 88.1% |  0.25ms |  0.25ms  | 2800 |
 
 ```
 bmrt_test: 使用bmrt_test计算出来的理论推理时间；
