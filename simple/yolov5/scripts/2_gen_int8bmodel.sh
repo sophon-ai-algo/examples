@@ -29,7 +29,7 @@ if [ ! -d "$dst_model_dir" ]; then
     mkdir -p $dst_model_dir
 fi
 
-cp "${build_dir}/${dst_model_prefix}/compilation.bmodel" "$dst_model_dir/${dst_model_prefix}_${img_size}_${dst_model_postfix}_int8_${batch_size}b.bmodel"
+cp "${build_dir}/${dst_model_prefix}_batch${batch_size}/compilation.bmodel" "$dst_model_dir/${dst_model_prefix}_${img_size}_${dst_model_postfix}_int8_${batch_size}b.bmodel"
 echo "[Success] $dst_model_dir/${dst_model_prefix}_${img_size}_${dst_model_postfix}_int8_${batch_size}b.bmodel is generated."
 
 
