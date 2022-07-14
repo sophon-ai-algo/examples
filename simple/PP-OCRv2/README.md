@@ -158,21 +158,20 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/lib/:/system/usr/lib/aarch64-lin
 export PYTHONPATH=$PYTHONPATH:/system/lib
 ```
 
-请预先安装libgeos-dev，以在Python中使用Shapely:
-```bash
-sudo apt-get install libgeos-dev
-```
-
 如果您使用的设备是Debian系统，您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
-
 ```bash
 # 对于Debian9，请指定numpy版本为1.17.2
 sudo apt update
 sudo apt-get install python3-pip
 sudo pip3 install numpy==1.17.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
-
 如果您使用的设备是Ubuntu20.04系统，系统内已经集成了numpy环境，不需要进行额外的安装。
+
+您还需要安装以下依赖和工具:
+```bash
+sudo apt-get install -y libgeos-dev libjpeg-dev zlib1g-dev
+pip3 install setuptools-scm
+```
 
 ### 5.2 C++例程推理
 
@@ -294,7 +293,7 @@ usage:rec_cv_cv_sail.py [--tpu_id] [--img_path] [--rec_model] [--rec_batch_size]
 ```bash
 python3 inference/python/rec_cv_cv_sail.py --tpu_id 0  --img_path data/images/ppocr_img/imgs_words/ch --rec_model data/models/fp32bmodel/ch_PP-OCRv2_rec_fp32_b1b4.bmodel --rec_batch_size 4 --char_dict_path ppocr_keys_v1.txt  --use_space_char True
 ```
-执行完成后，会打印预测的类别及置信度如下：
+执行完成后，会打印预测的文本内容及置信度如下：
 
 ```bash
 INFO:root:img_name:word_4.jpg, conf:0.966046, pred:实力活力
