@@ -39,7 +39,7 @@ static std::vector<std::string> split(const std::string& s){
 
 int main(int argc, char *argv[])
 {
-  const char *keys="{bmodel | ../data/models/yolov5s_fp32_640_1.bmodel | bmodel file path}"
+  const char *keys="{bmodel | ../data/models/yolov5s_640_coco_v6.1_3output_fp32_1b.bmodel | bmodel file path}"
     "{tpuid | 0 | TPU device id}"
     "{conf | 0.5 | confidence threshold for filter boxes}"
     "{obj | 0.5 | object score threshold for filter boxes}"
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     "{help | 0 | Print help information.}"
     "{is_video | 0 | input video file path}"
     "{frame_num | 0 | number of frames in video to process, 0 means processing all frames}"
-    "{input |../data/images/bus.jpg | input stream file path}"
+    "{input |../data/images/dog.jpg | input stream file path}"
     "{classnames |../data/coco.names | class names' file path}";
 
   // profiling
