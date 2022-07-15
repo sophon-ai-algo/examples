@@ -157,7 +157,7 @@ INT8 BModel的生成需要先制作lmdb量化数据集，然后经历中间格�
 ./scripts/gen_int8bmodel.sh
 ```
 
-上述脚本会在`data/models/int8bmodel/`下生成`lprnet_int8_1b4b.bmodel、lprnet_int8_4b.bmodel、lprnet_int8_1b.bmodel`文件，即转换好的FP32 BModel，使用`bm_model.bin --info {path_of_bmodel}`查看`lprnet_int8_1b4b.bmodel`具体信息如下：
+上述脚本会在`data/models/int8bmodel/`下生成`lprnet_int8_1b4b.bmodel、lprnet_int8_4b.bmodel、lprnet_int8_1b.bmodel`文件，即转换好的INT8 BModel，使用`bm_model.bin --info {path_of_bmodel}`查看`lprnet_int8_1b4b.bmodel`具体信息如下：
 
 ```bash
 ==========================================
