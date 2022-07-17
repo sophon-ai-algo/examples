@@ -17,7 +17,7 @@ make -f Makefile.pcie
 ```
 * arm pcie
 
-> make on aarch64 docker, but run on aarch64 PCIE host.
+> build in arm pcie host,  run on arm pcie host.
 
 ```shell
 make -f Makefile.arm_pcie
