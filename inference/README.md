@@ -57,9 +57,9 @@ sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
    如果需要本地显示最终的结果需要手工编辑./compile.sh 找到USE_QTGUI 选项， 设置为ON。
    SOC平台，需要下载自定义的QT支持库，可以联系技术支持。
    
-   > TARGET_ARCH=x86 表示x86平台
-   TARGET_ARCH=soc 表示小盒子上编译
-   TARGET_ARCH=arm64 表示国产ARM CPU上编译
+   > TARGET_ARCH=x86 表示编译的程序在x86平台的机器上运行
+   TARGET_ARCH=soc 表示编译的程序在小盒子上运行
+   TARGET_ARCH=arm64 表示编译的程序在国产ARM CPU的机器上运行
    
    > appname=face_detect 人脸检测
      appname=openpose    人体骨骼检测
