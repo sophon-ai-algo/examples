@@ -12,7 +12,7 @@ SophonSDK是算能科技基于其自主研发的 AI 芯片所定制的深度学�
 
 | Examples分支 | 是否维护 | 适用SDK版本 |
 |---|---|---|
-| master | 是 | SDK 3.0.0 |
+| 3.0.0 | 是 | [SDK 3.0.0](https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/07/18/11/sophonsdk_v3.0.0_20220716.zip) |
 | 2.7.0 | 是 | [SDK-2.7.0](https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/05/31/11/bmnnsdk2_bm1684_v2.7.0_20220531patched.zip) |
 | 2.6.0 | 否 | [SDK-2.6.0](https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/02/10/18/bmnnsdk2_bm1684_v2.6.0.zip) |
 
@@ -25,7 +25,6 @@ SophonSDK是算能科技基于其自主研发的 AI 芯片所定制的深度学�
 | [multimedia](./multimedia) | 基于ffmpeg/opencv的使用示例 |
 | [nntc](./nntc) | NNToolChain模型转换工具使用示例 |
 | [other](./other) | TODO，其他参考示例，如推流、websocket推图片流到web显示等 |
-| [sail](./sail) | SAIL接口使用示例 |
 | [simple](./simple) | 单个模型推理示例 |
 
 
@@ -43,9 +42,9 @@ SophonSDK是算能科技基于其自主研发的 AI 芯片所定制的深度学�
 
 算能社区鼓励开发者多交流，共学习。开发者可以通过以下渠道进行交流和学习。
 
-算能社区网站：sophgo.com
+算能社区网站：https://www.sophgo.com/
 
-算能开发者论坛：[https://developer.sophon.cn/forum/view/43.html](https://developer.sophon.cn/forum/view/43.html)
+算能开发者论坛：[https://developer.sophgo.com/forum/index.html](https://developer.sophgo.com/forum/index.html)
 
 算能官方qq群：【待发布】
 
