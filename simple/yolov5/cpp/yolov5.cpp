@@ -29,6 +29,7 @@ YoloV5::YoloV5(std::shared_ptr<BMNNContext> context):m_bmContext(context) {
 
 YoloV5::~YoloV5() {
   std::cout << "YoloV5 dtor ..." << std::endl;
+  bm_image_free_contiguous_mem(max_batch, m_resized_imgs.data());
   for(int i=0; i<max_batch; i++){
     bm_image_destroy(m_converto_imgs[i]);
     bm_image_destroy(m_resized_imgs[i]);
@@ -359,7 +360,7 @@ int YoloV5::post_process(const std::vector<cv::Mat> &images, std::vector<YoloV5B
           float *ptr = tensor_data + anchor_idx*feature_size;
           for (int i = 0; i < area; i++) {
             dst[0] = (sigmoid(ptr[0]) * 2 - 0.5 + i % feat_w) / feat_w * m_net_w;
-            dst[1] = (sigmoid(ptr[1]) * 2 - 0.5 + i / feat_h) / feat_h * m_net_h;
+            dst[1] = (sigmoid(ptr[1]) * 2 - 0.5 + i / feat_w) / feat_h * m_net_h;
             dst[2] = pow((sigmoid(ptr[2]) * 2), 2) * anchors[tidx][anchor_idx][0];
             dst[3] = pow((sigmoid(ptr[3]) * 2), 2) * anchors[tidx][anchor_idx][1];
             dst[4] = sigmoid(ptr[4]);
