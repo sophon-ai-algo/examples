@@ -29,7 +29,7 @@ YoloV5::YoloV5(std::shared_ptr<BMNNContext> context):m_bmContext(context) {
 
 YoloV5::~YoloV5() {
   std::cout << "YoloV5 dtor ..." << std::endl;
-  bm_image_free_contiguous_mem(mMaxBatch, m_resized_imgs.data());
+  bm_image_free_contiguous_mem(max_batch, m_resized_imgs.data());
   for(int i=0; i<max_batch; i++){
     bm_image_destroy(m_converto_imgs[i]);
     bm_image_destroy(m_resized_imgs[i]);
